@@ -59,9 +59,11 @@ function ModalShell({ children }: { children: React.ReactNode }) {
 /** Étape 1 — début de journée : le capitaine choisit UNIQUEMENT le sens du débat. */
 export function DebateSetupModal({
   captainName,
+  captainMuted,
   onConfirm,
 }: {
   captainName?: string;
+  captainMuted?: boolean;
   onConfirm: (d: RotationDirection) => void;
 }) {
   const { t } = useI18n();
@@ -78,6 +80,12 @@ export function DebateSetupModal({
           ? t("captainDirText", { name: captainName })
           : t("noCaptainDir")}
       </p>
+
+      {captainMuted && (
+        <p className="rounded-xl border border-destructive/50 p-3 text-xs text-muted-foreground">
+          {t("captainMutedHint")}
+        </p>
+      )}
 
       <div className="space-y-2 text-start">
         <p className="text-[10px] tracking-widest text-muted-foreground uppercase">
@@ -100,9 +108,11 @@ export function DebateSetupModal({
 /** Étape 2 — fin du débat : le capitaine règle le sens du vote et son moment. */
 export function VoteSetupModal({
   captainName,
+  captainMuted,
   onConfirm,
 }: {
   captainName?: string;
+  captainMuted?: boolean;
   onConfirm: (s: { voteDirection: RotationDirection; captainVotesFirst: boolean }) => void;
 }) {
   const { t } = useI18n();
@@ -120,6 +130,12 @@ export function VoteSetupModal({
           ? t("voteSetupText", { name: captainName })
           : t("noCaptainDir")}
       </p>
+
+      {captainMuted && (
+        <p className="rounded-xl border border-destructive/50 p-3 text-xs text-muted-foreground">
+          {t("captainMutedHint")}
+        </p>
+      )}
 
       <div className="space-y-2 text-start">
         <p className="text-[10px] tracking-widest text-muted-foreground uppercase">
@@ -178,8 +194,11 @@ export function DebateWheel({
   onFinish: () => void;
 }) {
   const { t } = useI18n();
+  // Loup Noir : un joueur réduit au silence ne prend aucun tour de parole.
+  // Pour le capitaine, cela retire aussi ses discours d'ouverture et de clôture,
+  // mais il conserve tous ses choix tactiques (sens du débat, sens et ordre du vote).
   const queue = buildDebateQueue(seating, captainId, direction).filter(
-    (s) => !s.player.mutedForDay || s.role !== "normal",
+    (s) => !s.player.mutedForDay,
   );
   const [i, setI] = useState(0);
   const [left, setLeft] = useState(seconds);

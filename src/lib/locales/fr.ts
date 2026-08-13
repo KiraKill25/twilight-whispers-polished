@@ -129,6 +129,7 @@ export const fr = {
     debateTitle: "Débat — Jour {n}",
     debateText:
       "Le capitaine ouvre les débats, chaque joueur s'exprime, puis le capitaine conclut.",
+    captainMutedHint: "Le capitaine est réduit au silence : il ne prend aucun temps de parole (ni ouverture, ni clôture), mais il garde tous ses choix — sens du débat, sens du vote et ordre de son vote.",
     mutedBy: "Réduit(s) au silence par le Loup Noir : {names}",
     dawnTitle: "Aube — Jour {n}",
     bavardWordOfDay: "Loup Bavard, ton mot du jour :",

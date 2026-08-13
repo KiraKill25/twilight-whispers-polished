@@ -120,6 +120,7 @@ export const en: Dictionary = {
     debateTitle: "Debate — Day {n}",
     debateText:
       "The captain opens the debate, every player speaks, then the captain concludes.",
+    captainMutedHint: "The captain is silenced: they skip all speaking turns (opening and closing), but keep every choice — debate direction, vote direction and their voting order.",
     mutedBy: "Silenced by the Black Wolf: {names}",
     dawnTitle: "Dawn — Day {n}",
     bavardWordOfDay: "Talkative Wolf, your word of the day:",

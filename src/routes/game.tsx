@@ -295,6 +295,10 @@ function GamePage() {
           captainName={
             state.players.find((p) => p.id === state.villageCaptainId)?.name
           }
+          captainMuted={
+            !!state.players.find((p) => p.id === state.villageCaptainId)
+              ?.mutedForDay
+          }
           onConfirm={(d) => {
             setDirection(d);
             setDirectionDay(state.day);
@@ -306,6 +310,10 @@ function GamePage() {
         <VoteSetupModal
           captainName={
             state.players.find((p) => p.id === state.villageCaptainId)?.name
+          }
+          captainMuted={
+            !!state.players.find((p) => p.id === state.villageCaptainId)
+              ?.mutedForDay
           }
           onConfirm={(setup) => {
             setVoteDirection(setup.voteDirection);
