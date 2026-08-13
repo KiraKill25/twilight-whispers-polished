@@ -1,41 +1,37 @@
 import { motion } from "framer-motion";
 
 const TEXT = "Mourad's Ville";
-const TITLE_URL = "/media/title-mourads-ville.png";
+const LINE_1 = "/media/title-line-1.png";
+const LINE_2 = "/media/title-line-2.png";
 
-const IMG =
-  "absolute top-0 left-0 block w-full mix-blend-screen pointer-events-none";
-const OFFSET = { marginTop: "-39%" } as const;
+const slideDown = {
+  hidden: { opacity: 0, y: -20 },
+  visible: { opacity: 1, y: 0 },
+};
 
 /**
- * Titre de l'accueil : image fournie, fond noir neutralisé via mix-blend-screen,
- * avec un halo néon pulsé dédié à la ligne « MOURAD'S ».
+ * Titre de l'accueil : deux lignes transparentes (« MOURAD'S » puis « - VILLE - »)
+ * qui descendent l'une après l'autre, sans aucun fond ni cadre.
  */
 export function TitleImage() {
   return (
-    <h1 className="relative mx-auto w-full max-w-[20rem] sm:max-w-[26rem]">
+    <h1 className="relative mx-auto flex w-full max-w-[20rem] flex-col items-center gap-1 bg-transparent sm:max-w-[26rem]">
       <span className="sr-only">{TEXT}</span>
-      <div
+
+      <motion.div
         aria-hidden
-        className="relative w-full overflow-hidden"
-        style={{ aspectRatio: "1243 / 420" }}
+        className="w-full bg-transparent"
+        variants={slideDown}
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <img
-          src={TITLE_URL}
-          alt=""
-          width={1243}
-          height={1243}
-          className={IMG}
-          style={OFFSET}
-        />
-        {/* Halo néon pulsé — uniquement autour de « MOURAD'S » */}
         <motion.img
-          src={TITLE_URL}
+          src={LINE_1}
           alt=""
-          width={1243}
-          height={1243}
-          className={IMG}
-          style={{ ...OFFSET, clipPath: "inset(41% 0 39% 0)" }}
+          width={1105}
+          height={264}
+          className="block w-full bg-transparent"
           animate={{
             filter: [
               "drop-shadow(0 0 6px #FF2A85)",
@@ -45,7 +41,20 @@ export function TitleImage() {
           }}
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
         />
-      </div>
+      </motion.div>
+
+      <motion.img
+        aria-hidden
+        src={LINE_2}
+        alt=""
+        width={711}
+        height={93}
+        className="block w-[64%] bg-transparent"
+        variants={slideDown}
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.25 }}
+      />
     </h1>
   );
 }
