@@ -1,24 +1,87 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { TitleImage } from "@/components/TitleImage";
+import { VideoLogo } from "@/components/VideoLogo";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { MuteButton } from "@/components/MuteButton";
+import { useI18n } from "@/lib/i18n";
+import { clearBgm, startBgm, unlockAudio } from "@/lib/audio";
+import { preloadRoleMedia } from "@/lib/preload-media";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+const TITLE = "Mourad's Ville";
+const DESC =
+  "Meneur de jeu numérique pour Loup-Garou : 24 rôles illustrés, moteur de nuit complet et vote du village.";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: TITLE },
+      { name: "description", content: DESC },
+      { property: "og:title", content: TITLE },
+      { property: "og:description", content: DESC },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const { t } = useI18n();
+  const [showTitle, setShowTitle] = useState(false);
+
+  useEffect(() => {
+    clearBgm();
+    preloadRoleMedia();
+  }, []);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
+    <main
+      onPointerDown={unlockAudio}
+      className="flex min-h-screen w-full max-w-full flex-col items-center gap-7 box-border overflow-x-hidden px-5 pt-20 pb-12"
     >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-end gap-3 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <MuteButton />
+        </div>
+      </header>
+
+      <VideoLogo label={t("logoAlt")} onFinished={() => setShowTitle(true)} />
+
+      <div className="flex w-full flex-col items-center gap-5 bg-transparent">
+        {showTitle && <TitleImage />}
+        <motion.p
+          initial={{ opacity: 0, y: -20 }}
+          animate={showTitle ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.5 }}
+          className="-mt-2 text-sm text-muted-foreground"
+        >
+          {t("tagline")}
+        </motion.p>
+      </div>
+
+
+      <div className="flex w-full max-w-xs flex-col gap-3">
+        <Link
+          to="/setup"
+          onClick={() => { unlockAudio(); startBgm("LOBBY"); }}
+          className="gradient-neon rounded-full px-6 py-4 text-center font-black text-primary-foreground transition hover:shadow-[0_0_30px_oklch(0.589_0.239_359.7/0.6)]"
+        >
+          {t("newGame")}
+        </Link>
+        <Link
+          to="/roles"
+          className="glass-neon-btn rounded-full px-6 py-4 text-center font-semibold text-foreground"
+        >
+          {t("grimoire")}
+        </Link>
+      </div>
+
+      <p className="mt-4 text-[11px] tracking-[0.35em] text-muted-foreground uppercase">
+        {t("footer")}
+      </p>
+    </main>
   );
 }
