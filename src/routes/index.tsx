@@ -7,7 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import { clearBgm, startBgm, unlockAudio } from "@/lib/audio";
 import { preloadRoleMedia } from "@/lib/preload-media";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { Typewriter } from "@/components/Typewriter";
 
 const TITLE = "Mourad's Ville";
 const DESC =
