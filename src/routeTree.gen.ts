@@ -10,33 +10,128 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CompositionRouteImport } from './routes/composition'
+import { Route as DistributionRouteImport } from './routes/distribution'
+import { Route as GameRouteImport } from './routes/game'
+import { Route as GamemasterRouteImport } from './routes/gamemaster'
+import { Route as RolesRouteImport } from './routes/roles'
+import { Route as SeatingRouteImport } from './routes/seating'
+import { Route as SetupRouteImport } from './routes/setup'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompositionRoute = CompositionRouteImport.update({
+  id: '/composition',
+  path: '/composition',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DistributionRoute = DistributionRouteImport.update({
+  id: '/distribution',
+  path: '/distribution',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GameRoute = GameRouteImport.update({
+  id: '/game',
+  path: '/game',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamemasterRoute = GamemasterRouteImport.update({
+  id: '/gamemaster',
+  path: '/gamemaster',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesRoute = RolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SeatingRoute = SeatingRouteImport.update({
+  id: '/seating',
+  path: '/seating',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/composition': typeof CompositionRoute
+  '/distribution': typeof DistributionRoute
+  '/game': typeof GameRoute
+  '/gamemaster': typeof GamemasterRoute
+  '/roles': typeof RolesRoute
+  '/seating': typeof SeatingRoute
+  '/setup': typeof SetupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/composition': typeof CompositionRoute
+  '/distribution': typeof DistributionRoute
+  '/game': typeof GameRoute
+  '/gamemaster': typeof GamemasterRoute
+  '/roles': typeof RolesRoute
+  '/seating': typeof SeatingRoute
+  '/setup': typeof SetupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/composition': typeof CompositionRoute
+  '/distribution': typeof DistributionRoute
+  '/game': typeof GameRoute
+  '/gamemaster': typeof GamemasterRoute
+  '/roles': typeof RolesRoute
+  '/seating': typeof SeatingRoute
+  '/setup': typeof SetupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/composition'
+    | '/distribution'
+    | '/game'
+    | '/gamemaster'
+    | '/roles'
+    | '/seating'
+    | '/setup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/composition'
+    | '/distribution'
+    | '/game'
+    | '/gamemaster'
+    | '/roles'
+    | '/seating'
+    | '/setup'
+  id:
+    | '__root__'
+    | '/'
+    | '/composition'
+    | '/distribution'
+    | '/game'
+    | '/gamemaster'
+    | '/roles'
+    | '/seating'
+    | '/setup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CompositionRoute: typeof CompositionRoute
+  DistributionRoute: typeof DistributionRoute
+  GameRoute: typeof GameRoute
+  GamemasterRoute: typeof GamemasterRoute
+  RolesRoute: typeof RolesRoute
+  SeatingRoute: typeof SeatingRoute
+  SetupRoute: typeof SetupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +143,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/composition': {
+      id: '/composition'
+      path: '/composition'
+      fullPath: '/composition'
+      preLoaderRoute: typeof CompositionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/distribution': {
+      id: '/distribution'
+      path: '/distribution'
+      fullPath: '/distribution'
+      preLoaderRoute: typeof DistributionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/game': {
+      id: '/game'
+      path: '/game'
+      fullPath: '/game'
+      preLoaderRoute: typeof GameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gamemaster': {
+      id: '/gamemaster'
+      path: '/gamemaster'
+      fullPath: '/gamemaster'
+      preLoaderRoute: typeof GamemasterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles': {
+      id: '/roles'
+      path: '/roles'
+      fullPath: '/roles'
+      preLoaderRoute: typeof RolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seating': {
+      id: '/seating'
+      path: '/seating'
+      fullPath: '/seating'
+      preLoaderRoute: typeof SeatingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CompositionRoute: CompositionRoute,
+  DistributionRoute: DistributionRoute,
+  GameRoute: GameRoute,
+  GamemasterRoute: GamemasterRoute,
+  RolesRoute: RolesRoute,
+  SeatingRoute: SeatingRoute,
+  SetupRoute: SetupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

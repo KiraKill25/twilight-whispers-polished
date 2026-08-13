@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { I18nProvider, useI18n } from "../lib/i18n";
+import { Toaster } from "@/components/ui/sonner";
+import { initAudioPrefs } from "../lib/audio";
 
 function NotFoundComponent() {
   return (
@@ -77,21 +80,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Mourad's Ville" },
+      {
+        name: "description",
+        content:
+          "Meneur de jeu numérique pour Loup-Garou : rôles illustrés, moteur de nuit et vote du village.",
+      },
+      { property: "og:title", content: "Mourad's Ville" },
+      {
+        property: "og:description",
+        content:
+          "Meneur de jeu numérique pour Loup-Garou : rôles illustrés, moteur de nuit et vote du village.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Mourad's Ville" },
+      { name: "twitter:description", content: "Meneur de jeu numérique pour Loup-Garou : rôles illustrés, moteur de nuit et vote du village." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8b7b3f33-f48c-4e89-bc07-dde31a427789/id-preview-f0ec2dcc--74030ee1-8ec9-4852-9a00-03a10048caf9.lovable.app-1785758711610.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8b7b3f33-f48c-4e89-bc07-dde31a427789/id-preview-f0ec2dcc--74030ee1-8ec9-4852-9a00-03a10048caf9.lovable.app-1785758711610.png" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.json" },
     ],
   }),
   shellComponent: RootShell,
@@ -102,7 +112,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <HeadContent />
       </head>
@@ -117,10 +127,31 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    initAudioPrefs();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <I18nProvider>
+        <LandscapeNotice />
+        <div className="landscape-hide">
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </div>
+        <Toaster position="top-center" />
+      </I18nProvider>
     </QueryClientProvider>
+  );
+}
+
+function LandscapeNotice() {
+  const { t } = useI18n();
+  return (
+    <div className="landscape-block fixed inset-0 z-[100] flex-col items-center justify-center gap-4 bg-background px-8 text-center">
+      <span className="text-4xl">📱</span>
+      <h2 className="neon-text text-xl font-black">{t("rotateTitle")}</h2>
+      <p className="text-sm text-muted-foreground">{t("rotateText")}</p>
+    </div>
   );
 }
