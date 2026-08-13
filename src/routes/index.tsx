@@ -50,15 +50,17 @@ function Index() {
 
       <VideoLogo label={t("logoAlt")} onFinished={() => setShowTitle(true)} />
 
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={showTitle ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-        className="flex w-full flex-col items-center gap-5"
-      >
-        <TitleImage />
-        <p className="-mt-2 text-sm text-muted-foreground">{t("tagline")}</p>
-      </motion.div>
+      <div className="flex w-full flex-col items-center gap-5 bg-transparent">
+        {showTitle && <TitleImage />}
+        <motion.p
+          initial={{ opacity: 0, y: -20 }}
+          animate={showTitle ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.5 }}
+          className="-mt-2 text-sm text-muted-foreground"
+        >
+          {t("tagline")}
+        </motion.p>
+      </div>
 
 
       <div className="flex w-full max-w-xs flex-col gap-3">
