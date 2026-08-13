@@ -51,16 +51,15 @@ function Index() {
       <VideoLogo label={t("logoAlt")} onFinished={() => setShowTitle(true)} />
 
       <div className="flex w-full flex-col items-center gap-5 bg-transparent">
-        {showTitle && <TitleImage />}
-        <motion.p
-          initial={{ opacity: 0, y: -20 }}
-          animate={showTitle ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.5 }}
-          className="-mt-2 text-sm text-muted-foreground"
-        >
-          {t("tagline")}
-        </motion.p>
+        {/* Espace réservé : le titre n'influence jamais la position des boutons */}
+        <div className="flex min-h-[110px] w-full items-start justify-center bg-transparent sm:min-h-[142px]">
+          {showTitle && <TitleImage />}
+        </div>
+        <p className="-mt-2 flex min-h-5 items-center text-sm text-muted-foreground">
+          <Typewriter text={t("tagline")} start={showTitle} delay={1000} />
+        </p>
       </div>
+
 
 
       <div className="flex w-full max-w-xs flex-col gap-3">
