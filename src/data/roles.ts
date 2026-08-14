@@ -14,56 +14,13 @@ export interface RoleDef {
   videoUrl?: string;
 }
 
-/** Rôles dont les médias vivent dans public/ sous un nom de fichier dédié. */
-const PUBLIC_MEDIA_NAME: Record<string, string> = {
-  voleur: "thief",
-  "trois-faces": "3-faces",
-  maniaque: "maniac",
-};
-
-const images = import.meta.glob("../assets/roles/*.jpg", {
-  eager: true,
-  import: "default",
-}) as Record<string, string>;
-
+/** Tous les rôles chargent leurs médias depuis /public, sans exception. */
 export function roleImage(id: string): string {
-  const publicName = PUBLIC_MEDIA_NAME[id];
-  if (publicName) return `/images/roles/${publicName}.png`;
-  const key = Object.keys(images).find((k) => k.endsWith(`/${id}.jpg`));
-  return key ? images[key] : "";
+  return `/images/roles/${id}.png`;
 }
 
 export function roleVideo(id: string): string | undefined {
-  const publicName = PUBLIC_MEDIA_NAME[id];
-  if (publicName) return `/videos/roles/${publicName}.mp4`;
-  const availableVideos = new Set([
-    "ancien",
-    "ange",
-    "chaperon-rouge",
-    "chasseur",
-    "corbeau",
-    "cupidon",
-    "enfant-sauvage",
-    "general",
-    "geolier",
-    "idiot-du-village",
-    "joueur-de-flute",
-    "juge",
-    "loup-bavard",
-    "loup-blanc",
-    "loup-garou",
-    "loup-matriarche",
-    "loup-noir",
-    "mime",
-    "montreur-dours",
-    "petite-fille",
-    "salvateur",
-    "simple-villageois",
-    "sorciere",
-    "tavernier",
-    "voyante",
-  ]);
-  return availableVideos.has(id) ? `/videos/roles/${id}.mp4` : undefined;
+  return `/videos/roles/${id}.mp4`;
 }
 
 
