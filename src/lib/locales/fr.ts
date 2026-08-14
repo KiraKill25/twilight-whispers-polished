@@ -409,6 +409,7 @@ export const fr = {
 
     newWordPlaceholder: "Nouveau mot…",
     cancel: "Annuler",
+    roleWakeAlt: "Réveil du rôle {role}",
 
     // Étoiles du Maître du Jeu
     starAward: "Donner une étoile à {name}",
