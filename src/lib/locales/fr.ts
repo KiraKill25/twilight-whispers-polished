@@ -409,7 +409,49 @@ export const fr = {
 
     newWordPlaceholder: "Nouveau mot…",
     cancel: "Annuler",
-    roleWakeAlt: "Réveil du rôle {role}",
+
+    // Étoiles du Maître du Jeu
+    starAward: "Donner une étoile à {name}",
+    starRemove: "Retirer une étoile à {name}",
+    starsLabel: "Étoiles",
+    starsHint: "Touche ⭐ sur un joueur pour récompenser une bonne déduction. Appui long pour retirer une étoile.",
+    starsEarned: "{n} ⭐",
+    badgeStarTown: "L'Enquêteur d'Élite",
+    badgeStarTownDesc: "Le villageois le plus étoilé par le Maître du Jeu.",
+    badgeStarWolf: "Le Maître de la Manipulation",
+    badgeStarWolfDesc: "Le loup le plus étoilé pour ses manipulations.",
+
+    // Guide du Meneur
+    guideButton: "Guide du Meneur",
+    guideTitle: "Guide du Meneur",
+    guideStepOf: "Étape {i} / {n}",
+    guideClose: "Fermer le guide",
+    guideStart: "C'est parti !",
+    guideStep1Kicker: "Étape 1",
+    guideStep1Title: "Configuration & joueurs",
+    guideStep1Body:
+      "Saisis le nom de chaque joueur puis touche « + Ajouter un joueur ». Choisis ensuite la réserve de rôles et le minuteur de débat avant de lancer la partie.",
+    guideStep2Kicker: "Étape 2",
+    guideStep2Title: "Distribution & rôles secrets",
+    guideStep2Body:
+      "Fais tourner le téléphone : chaque joueur découvre sa carte en secret, la mémorise, puis la referme avant de passer l'appareil au suivant.",
+    guideStep3Kicker: "Étape 3",
+    guideStep3Title: "Le déroulé de la nuit",
+    guideStep3Body:
+      "Le meneur réveille les rôles un par un (Loups-Garous, Voyante, Sorcière…). Touche l'avatar d'un joueur pour appliquer l'action : dévorer, sauver, sonder ou réduire au silence.",
+    guideStep4Kicker: "Étape 4",
+    guideStep4Title: "Jour, débat & étoiles ⭐",
+    guideStep4Body:
+      "Lis le rapport de la nuit, laisse le capitaine choisir le sens du débat, puis lance la roue. Les joueurs réduits au silence sautent leur tour. Touche l'étoile sur une carte pour récompenser une déduction brillante ou une manipulation parfaite.",
+    guideStep5Kicker: "Étape 5",
+    guideStep5Title: "Vote & éliminations",
+    guideStep5Body:
+      "Enregistre les voix joueur par joueur. La voix du capitaine tranche les égalités, sinon un revote est proposé. Le mort révèle son rôle et déclenche ses pouvoirs (Chasseur, amoureux…).",
+    guideStep6Kicker: "Étape 6",
+    guideStep6Title: "Fin de partie & évaluation",
+    guideStep6Body:
+      "À la victoire, la carte d'évaluation classe les joueurs : précision des votes, efficacité du rôle, étoiles gagnées, blasons et titres d'honneur du village.",
+
 
     // Orientation
     rotateTitle: "Tourne ton téléphone",
