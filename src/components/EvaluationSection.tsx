@@ -12,6 +12,7 @@ import {
   Skull,
   Users,
   Crosshair,
+  Star,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { effectiveRoleId, type GameState, type Player } from "@/game/engine";
