@@ -76,11 +76,16 @@ function Index() {
         >
           {t("grimoire")}
         </Link>
+        <button
+          type="button"
+          onClick={() => setGuide(true)}
+          className="glass-neon-btn rounded-full px-6 py-4 text-center font-semibold text-foreground"
+        >
+          {t("guideButton")}
+        </button>
       </div>
 
-      <p className="mt-4 text-[11px] tracking-[0.35em] text-muted-foreground uppercase">
-        {t("footer")}
-      </p>
+      {guide && <GuideModal onClose={() => setGuide(false)} />}
     </main>
   );
 }
