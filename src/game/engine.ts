@@ -218,6 +218,7 @@ export function createGame(
     retainsOriginalPowers: true,
     hasUsedLifePotion: false,
     hasUsedDeathPotion: false,
+    stars: 0,
   }));
 
   // Le capitaine est désigné par index (élection faite avant la partie).
