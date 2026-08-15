@@ -161,6 +161,8 @@ type BadgeDef = {
     | "badgeBandwagoner"
     | "badgeBlindSniper"
     | "badgeIceCold"
+    | "badgeStarTown"
+    | "badgeStarWolf"
     | "badgeSuicidal";
   descKey: string;
   icon: typeof Award;
