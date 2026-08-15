@@ -112,13 +112,15 @@ export function buildScorecards(state: GameState, voteHistory: VoteRecord[]): Sc
       roleEfficiency = Math.min(100, roleEfficiency);
 
       const accuracy = total > 0 ? Math.round((good / total) * 100) : 0;
+      const stars = p.stars ?? 0;
       const score = Math.round(
         accuracy * 0.5 +
           roleEfficiency * 0.4 +
           leaderCount * 6 +
           followerCount * 2 +
           deception * 5 +
-          clutch * 8 -
+          clutch * 8 +
+          stars * 10 -
           (suicided ? 30 : 0) +
           (p.alive ? 8 : 0),
       );
@@ -134,11 +136,13 @@ export function buildScorecards(state: GameState, voteHistory: VoteRecord[]): Sc
         clutch,
         rescues,
         suicided,
+        stars,
         score,
       };
     })
     .sort((a, b) => b.score - a.score);
 }
+
 
 /** Note de camp : moyenne des scores individuels du camp. */
 function factionRating(cards: Scorecard[], pick: (p: Player) => boolean) {
