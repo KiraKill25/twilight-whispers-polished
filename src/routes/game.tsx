@@ -23,6 +23,7 @@ import {
   DebateWheel,
   VoteSetupModal,
 } from "@/components/DebateWheel";
+import { StarPanel } from "@/components/StarPanel";
 import { VoteWheel } from "@/components/VoteWheel";
 import type { RotationDirection } from "@/components/SeatingWheel";
 import { EliminationReveal } from "@/components/EliminationReveal";
