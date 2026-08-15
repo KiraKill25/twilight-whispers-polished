@@ -260,6 +260,32 @@ export function buildBadges(cards: Scorecard[]): BadgeDef[] {
       holders: worstAccuracy(),
     },
     {
+      id: "starTown",
+      key: "badgeStarTown",
+      descKey: "badgeStarTownDesc",
+      icon: Star,
+      tone: "text-gold border-gold/50",
+      holders: best(
+        cards,
+        (c) => c.stars,
+        1,
+        (c) => !isWolf(c.player),
+      ),
+    },
+    {
+      id: "starWolf",
+      key: "badgeStarWolf",
+      descKey: "badgeStarWolfDesc",
+      icon: Star,
+      tone: "text-destructive border-destructive/50",
+      holders: best(
+        cards,
+        (c) => c.stars,
+        1,
+        (c) => isWolf(c.player),
+      ),
+    },
+    {
       id: "suicidal",
       key: "badgeSuicidal",
       descKey: "badgeSuicidalDesc",
