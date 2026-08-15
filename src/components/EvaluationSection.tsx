@@ -483,6 +483,11 @@ export function EvaluationSection({
                     {t("evalClutch")} ×{c.clutch}
                   </span>
                 )}
+                {c.stars > 0 && (
+                  <span className="rounded-full bg-gold/15 px-2 py-0.5 text-gold">
+                    {t("starsEarned", { n: c.stars })}
+                  </span>
+                )}
                 {c.suicided && (
                   <span className="rounded-full bg-destructive/20 px-2 py-0.5 text-destructive">
                     {t("badgeSuicidal")}
