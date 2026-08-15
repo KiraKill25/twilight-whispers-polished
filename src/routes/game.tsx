@@ -1291,6 +1291,20 @@ function DawnPanel({
           armed={setupDone}
           onFinish={onDebateDone}
         />
+        <StarPanel
+          players={alive}
+          onChange={(id, delta) =>
+            onChange({
+              ...state,
+              players: state.players.map((p) =>
+                p.id === id
+                  ? { ...p, stars: Math.max(0, (p.stars ?? 0) + delta) }
+                  : p,
+              ),
+            })
+          }
+        />
+
       </NarratorCard>
     );
 
