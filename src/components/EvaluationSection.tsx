@@ -12,6 +12,7 @@ import {
   Skull,
   Users,
   Crosshair,
+  Star,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { effectiveRoleId, type GameState, type Player } from "@/game/engine";
@@ -37,8 +38,11 @@ export interface Scorecard {
   rescues: number;
   /** Éliminé pour suicide / révélation d'identité. */
   suicided: boolean;
+  /** Étoiles attribuées par le meneur pendant les débats. */
+  stars: number;
   score: number;
 }
+
 
 const isWolf = (p: Player) => p.team === "WEREWOLVES" || !!p.isConvertedToWolf;
 
@@ -109,13 +113,15 @@ export function buildScorecards(state: GameState, voteHistory: VoteRecord[]): Sc
       roleEfficiency = Math.min(100, roleEfficiency);
 
       const accuracy = total > 0 ? Math.round((good / total) * 100) : 0;
+      const stars = p.stars ?? 0;
       const score = Math.round(
         accuracy * 0.5 +
           roleEfficiency * 0.4 +
           leaderCount * 6 +
           followerCount * 2 +
           deception * 5 +
-          clutch * 8 -
+          clutch * 8 +
+          stars * 10 -
           (suicided ? 30 : 0) +
           (p.alive ? 8 : 0),
       );
@@ -131,11 +137,13 @@ export function buildScorecards(state: GameState, voteHistory: VoteRecord[]): Sc
         clutch,
         rescues,
         suicided,
+        stars,
         score,
       };
     })
     .sort((a, b) => b.score - a.score);
 }
+
 
 /** Note de camp : moyenne des scores individuels du camp. */
 function factionRating(cards: Scorecard[], pick: (p: Player) => boolean) {
@@ -154,6 +162,8 @@ type BadgeDef = {
     | "badgeBandwagoner"
     | "badgeBlindSniper"
     | "badgeIceCold"
+    | "badgeStarTown"
+    | "badgeStarWolf"
     | "badgeSuicidal";
   descKey: string;
   icon: typeof Award;
@@ -249,6 +259,32 @@ export function buildBadges(cards: Scorecard[]): BadgeDef[] {
       icon: Crosshair,
       tone: "text-muted-foreground border-border",
       holders: worstAccuracy(),
+    },
+    {
+      id: "starTown",
+      key: "badgeStarTown",
+      descKey: "badgeStarTownDesc",
+      icon: Star,
+      tone: "text-gold border-gold/50",
+      holders: best(
+        cards,
+        (c) => c.stars,
+        1,
+        (c) => !isWolf(c.player),
+      ),
+    },
+    {
+      id: "starWolf",
+      key: "badgeStarWolf",
+      descKey: "badgeStarWolfDesc",
+      icon: Star,
+      tone: "text-destructive border-destructive/50",
+      holders: best(
+        cards,
+        (c) => c.stars,
+        1,
+        (c) => isWolf(c.player),
+      ),
     },
     {
       id: "suicidal",
@@ -445,6 +481,11 @@ export function EvaluationSection({
                 {c.clutch > 0 && (
                   <span className="rounded-full bg-sky-400/15 px-2 py-0.5 text-sky-300">
                     {t("evalClutch")} ×{c.clutch}
+                  </span>
+                )}
+                {c.stars > 0 && (
+                  <span className="rounded-full bg-gold/15 px-2 py-0.5 text-gold">
+                    {t("starsEarned", { n: c.stars })}
                   </span>
                 )}
                 {c.suicided && (
