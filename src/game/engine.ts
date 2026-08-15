@@ -83,6 +83,9 @@ export interface Player {
   ultimateShieldUsed?: boolean;
   /** 3 faces : pouvoirs déjà utilisés ("protect" | "potion" | "inspect"). */
   facesUsed?: string[];
+  /** Étoiles attribuées par le meneur pendant les débats. */
+  stars: number;
+
 }
 
 export interface Step {
