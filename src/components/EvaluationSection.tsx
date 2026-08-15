@@ -37,8 +37,11 @@ export interface Scorecard {
   rescues: number;
   /** Éliminé pour suicide / révélation d'identité. */
   suicided: boolean;
+  /** Étoiles attribuées par le meneur pendant les débats. */
+  stars: number;
   score: number;
 }
+
 
 const isWolf = (p: Player) => p.team === "WEREWOLVES" || !!p.isConvertedToWolf;
 
