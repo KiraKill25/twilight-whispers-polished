@@ -10,17 +10,27 @@ import {
 import { fr, type Dictionary, type UiKey } from "./locales/fr";
 import { en } from "./locales/en";
 import { ar } from "./locales/ar";
+import { es } from "./locales/es";
+import { zh } from "./locales/zh";
+import { pt } from "./locales/pt";
+import { ru } from "./locales/ru";
+import { de } from "./locales/de";
 import { ROLE_BY_ID } from "@/data/roles";
 
-export type Lang = "fr" | "en" | "ar";
+export type Lang = "fr" | "en" | "ar" | "es" | "zh" | "pt" | "ru" | "de";
 
 export const LANGS: { code: Lang; label: string; name: string }[] = [
   { code: "fr", label: "FR", name: "Français" },
   { code: "en", label: "EN", name: "English" },
   { code: "ar", label: "AR", name: "العربية" },
+  { code: "es", label: "ES", name: "Español" },
+  { code: "zh", label: "ZH", name: "中文" },
+  { code: "pt", label: "PT", name: "Português" },
+  { code: "ru", label: "RU", name: "Русский" },
+  { code: "de", label: "DE", name: "Deutsch" },
 ];
 
-const DICTS: Record<Lang, Dictionary> = { fr, en, ar };
+const DICTS: Record<Lang, Dictionary> = { fr, en, ar, es, zh, pt, ru, de };
 
 export type TranslationKey = UiKey;
 
