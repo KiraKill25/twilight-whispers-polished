@@ -8,6 +8,7 @@ import { clearBgm, startBgm, unlockAudio } from "@/lib/audio";
 import { preloadRoleMedia } from "@/lib/preload-media";
 import { useEffect, useState } from "react";
 import { Typewriter } from "@/components/Typewriter";
+import { GuideModal } from "@/components/GuideModal";
 
 const TITLE = "Mourad's Ville";
 const DESC =
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { t } = useI18n();
   const [showTitle, setShowTitle] = useState(false);
+  const [guide, setGuide] = useState(false);
 
   useEffect(() => {
     clearBgm();

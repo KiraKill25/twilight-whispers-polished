@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider, useI18n } from "../lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { initAudioPrefs } from "../lib/audio";
+import { preloadRoleMedia } from "../lib/preload-media";
 
 function NotFoundComponent() {
   return (
@@ -129,6 +130,7 @@ function RootComponent() {
 
   useEffect(() => {
     initAudioPrefs();
+    preloadRoleMedia();
   }, []);
 
   return (
