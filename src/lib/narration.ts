@@ -30,7 +30,7 @@ export function nrole(roleId: string): string {
 
 type Table = Record<string, string>;
 
-const NARRATION: Record<Lang, Table> = {
+const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
   fr: {
     logVoteTally: "Jour {d} — Vote : [{tally}] → Éliminé(s) : {names}",
     lovers: "{a} et {b} sont désormais amoureux.",
@@ -387,7 +387,7 @@ const NARRATION: Record<Lang, Table> = {
   },
 };
 
-const ROLE_NAMES: Record<Lang, Record<string, { name?: string }>> = {
+const ROLE_NAMES: Partial<Record<Lang, Record<string, { name?: string }>>> = {
   fr: frDict.roles,
   en: enDict.roles,
   ar: arDict.roles,
