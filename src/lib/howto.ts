@@ -2,16 +2,30 @@
 
 import type { Lang } from "@/lib/i18n";
 
-export const SLIDE_TIMESTAMPS: Record<Lang, number[]> = {
+const SLIDE_TIMESTAMPS_BASE = {
   fr: [2, 11, 56, 75, 95],
   en: [2, 11, 53, 72, 90],
   ar: [2, 12, 63, 87, 109],
+};
+
+export const SLIDE_TIMESTAMPS: Record<Lang, number[]> = {
+  ...SLIDE_TIMESTAMPS_BASE,
+  es: SLIDE_TIMESTAMPS_BASE.en,
+  zh: SLIDE_TIMESTAMPS_BASE.en,
+  pt: SLIDE_TIMESTAMPS_BASE.en,
+  ru: SLIDE_TIMESTAMPS_BASE.en,
+  de: SLIDE_TIMESTAMPS_BASE.en,
 };
 
 export const NARRATION_SRC: Record<Lang, string> = {
   fr: "/audio/narration_fr.mp3",
   en: "/audio/narration_en.mp3",
   ar: "/audio/narration_ar.mp3",
+  es: "/audio/narration_en.mp3",
+  zh: "/audio/narration_en.mp3",
+  pt: "/audio/narration_en.mp3",
+  ru: "/audio/narration_en.mp3",
+  de: "/audio/narration_en.mp3",
 };
 
 export interface HowToSlide {
@@ -34,7 +48,7 @@ export interface HowToCopy {
   slides: HowToSlide[];
 }
 
-export const HOWTO: Record<Lang, HowToCopy> = {
+const HOWTO_BASE = {
   fr: {
     openLabel: "Guide du Meneur",
     title: "Comment jouer",
@@ -155,4 +169,13 @@ export const HOWTO: Record<Lang, HowToCopy> = {
       },
     ],
   },
+} satisfies Record<"fr" | "en" | "ar", HowToCopy>;
+
+export const HOWTO: Record<Lang, HowToCopy> = {
+  ...HOWTO_BASE,
+  es: HOWTO_BASE.en,
+  zh: HOWTO_BASE.en,
+  pt: HOWTO_BASE.en,
+  ru: HOWTO_BASE.en,
+  de: HOWTO_BASE.en,
 };
