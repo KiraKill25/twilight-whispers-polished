@@ -184,6 +184,7 @@ export function DebateWheel({
   direction,
   armed,
   onFinish,
+  onStar,
 }: {
   seating: Player[];
   seconds: number;
@@ -192,6 +193,8 @@ export function DebateWheel({
   /** Le timer ne démarre qu'après validation des choix du capitaine. */
   armed?: boolean;
   onFinish: () => void;
+  /** Attribution d'étoiles à l'orateur actif (tap = +1, appui long = -1). */
+  onStar?: (playerId: string, delta: number) => void;
 }) {
   const { t } = useI18n();
   // Loup Noir : un joueur réduit au silence ne prend aucun tour de parole.
@@ -229,11 +232,52 @@ export function DebateWheel({
     }
   }, [left]);
 
+  // Gestes étoiles sur le nom de l'orateur (tap = +1, appui long = -1).
+  const [pops, setPops] = useState<{ id: number; delta: number }[]>([]);
+  const [namePulse, setNamePulse] = useState(false);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressed = useRef(false);
+
   const current = queue[i];
+  const currentStars = current?.player.stars ?? 0;
+
+  const pulse = () => {
+    setNamePulse(true);
+    setTimeout(() => setNamePulse(false), 220);
+  };
+  const pop = (delta: number) => {
+    const id = Date.now() + Math.random();
+    setPops((p) => [...p, { id, delta }]);
+    setTimeout(() => setPops((p) => p.filter((x) => x.id !== id)), 900);
+  };
+  const award = (delta: number) => {
+    if (!current) return;
+    if (delta < 0 && currentStars <= 0) return;
+    onStar?.(current.player.id, delta);
+    pulse();
+    pop(delta);
+  };
+  const pressStart = () => {
+    longPressed.current = false;
+    holdTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      award(-1);
+    }, 500);
+  };
+  const pressCancel = () => {
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+  };
+  const pressEnd = () => {
+    pressCancel();
+    if (longPressed.current) return;
+    award(1);
+  };
+
   if (!current) return null;
   const pct = Math.max(0, Math.min(1, left / Math.max(1, seconds)));
   const R = 42;
   const C = 2 * Math.PI * R;
+
 
   return (
     <div className="space-y-4">
@@ -279,15 +323,45 @@ export function DebateWheel({
                 style={{ transition: "stroke-dashoffset 1s linear" }}
               />
             </svg>
-            <div className="relative z-10 px-2">
-              <p className="truncate text-[10px] font-bold tracking-widest text-primary uppercase">
-                {current.player.name}
-              </p>
+            <div className="relative z-10 px-2 text-center">
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label={t("starAward", { name: current.player.name })}
+                  onPointerDown={pressStart}
+                  onPointerUp={pressEnd}
+                  onPointerLeave={pressCancel}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className={`max-w-full truncate text-[10px] font-bold tracking-widest text-primary uppercase transition-transform duration-200 select-none ${
+                    namePulse ? "scale-110" : "scale-100"
+                  }`}
+                >
+                  {current.player.name}
+                </button>
+                {pops.map((p) => (
+                  <span
+                    key={p.id}
+                    className={`pointer-events-none absolute left-1/2 -translate-x-1/2 text-[11px] font-black whitespace-nowrap ${
+                      p.delta > 0
+                        ? "animate-star-float text-gold"
+                        : "animate-star-drop text-destructive"
+                    }`}
+                  >
+                    ⭐ {p.delta > 0 ? "+1" : "-1"}
+                  </span>
+                ))}
+              </div>
               <p
                 className={`text-2xl font-black tabular-nums ${left === 0 ? "animate-danger-pulse text-destructive" : "text-foreground"}`}
               >
                 {String(Math.floor(left / 60)).padStart(2, "0")}:
                 {String(left % 60).padStart(2, "0")}
+              </p>
+              <p
+                key={`stars-${currentStars}`}
+                className="animate-counter-pop text-[11px] font-bold text-gold"
+              >
+                ⭐ {currentStars}
               </p>
               <p className="text-[9px] tracking-widest text-muted-foreground uppercase">
                 {t("currentSpeaker")}

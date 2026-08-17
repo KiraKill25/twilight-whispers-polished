@@ -165,6 +165,7 @@ export const de: Dictionary = {
     "factionVillage": "Dorf",
     "factionSolo": "Solo-Rollen",
     "currentSpeaker": "Sprecher",
+    "villageLegend": "Dorflegende",
     "startTimer": "Start",
     "pauseTimer": "Pause",
     "resetTimer": "Reset",

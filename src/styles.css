@@ -492,3 +492,22 @@
   animation: bar-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: 0.3s;
 }
+
+@keyframes star-float {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -34px) scale(1.35); }
+}
+@utility animate-star-float { animation: star-float 0.8s ease-out forwards; }
+
+@keyframes star-drop {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 26px) scale(0.6); }
+}
+@utility animate-star-drop { animation: star-drop 0.8s ease-in forwards; }
+
+@keyframes counter-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+@utility animate-counter-pop { animation: counter-pop 0.35s ease-out; }

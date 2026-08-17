@@ -23,7 +23,6 @@ import {
   DebateWheel,
   VoteSetupModal,
 } from "@/components/DebateWheel";
-import { StarPanel } from "@/components/StarPanel";
 import { VoteWheel } from "@/components/VoteWheel";
 import type { RotationDirection } from "@/components/SeatingWheel";
 import { EliminationReveal } from "@/components/EliminationReveal";
@@ -1291,10 +1290,7 @@ function DawnPanel({
           direction={direction}
           armed={setupDone}
           onFinish={onDebateDone}
-        />
-        <StarPanel
-          players={alive}
-          onChange={(id, delta) =>
+          onStar={(id, delta) =>
             onChange({
               ...state,
               players: state.players.map((p) =>

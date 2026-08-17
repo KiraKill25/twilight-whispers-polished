@@ -165,6 +165,7 @@ export const ru: Dictionary = {
     "factionVillage": "Деревня",
     "factionSolo": "Одиночки",
     "currentSpeaker": "Говорит",
+    "villageLegend": "Легенда деревни",
     "startTimer": "Старт",
     "pauseTimer": "Пауза",
     "resetTimer": "Сброс",

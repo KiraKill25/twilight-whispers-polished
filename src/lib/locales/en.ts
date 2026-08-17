@@ -183,6 +183,7 @@ export const en: Dictionary = {
     factionVillage: "Village",
     factionSolo: "Solo roles",
     currentSpeaker: "Speaker",
+    villageLegend: "Village Legend",
     startTimer: "Start",
     pauseTimer: "Pause",
     resetTimer: "Reset",

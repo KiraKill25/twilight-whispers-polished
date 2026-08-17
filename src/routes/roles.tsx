@@ -38,7 +38,11 @@ function RolesPage() {
       <p className="mt-1 mb-6 text-sm text-muted-foreground">{t("grimoireHint")}</p>
 
       <div className="mb-8">
-        <NarratorCard title={t("narratorTitle")} text={t("narratorIntro")} />
+        <NarratorCard
+          title={t("narratorTitle")}
+          text={t("narratorIntro")}
+          guideLabel={t("villageLegend")}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
