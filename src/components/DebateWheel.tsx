@@ -279,15 +279,45 @@ export function DebateWheel({
                 style={{ transition: "stroke-dashoffset 1s linear" }}
               />
             </svg>
-            <div className="relative z-10 px-2">
-              <p className="truncate text-[10px] font-bold tracking-widest text-primary uppercase">
-                {current.player.name}
-              </p>
+            <div className="relative z-10 px-2 text-center">
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label={t("starAward", { name: current.player.name })}
+                  onPointerDown={pressStart}
+                  onPointerUp={pressEnd}
+                  onPointerLeave={pressCancel}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className={`max-w-full truncate text-[10px] font-bold tracking-widest text-primary uppercase transition-transform duration-200 select-none ${
+                    namePulse ? "scale-110" : "scale-100"
+                  }`}
+                >
+                  {current.player.name}
+                </button>
+                {pops.map((p) => (
+                  <span
+                    key={p.id}
+                    className={`pointer-events-none absolute left-1/2 -translate-x-1/2 text-[11px] font-black whitespace-nowrap ${
+                      p.delta > 0
+                        ? "animate-star-float text-gold"
+                        : "animate-star-drop text-destructive"
+                    }`}
+                  >
+                    ⭐ {p.delta > 0 ? "+1" : "-1"}
+                  </span>
+                ))}
+              </div>
               <p
                 className={`text-2xl font-black tabular-nums ${left === 0 ? "animate-danger-pulse text-destructive" : "text-foreground"}`}
               >
                 {String(Math.floor(left / 60)).padStart(2, "0")}:
                 {String(left % 60).padStart(2, "0")}
+              </p>
+              <p
+                key={`stars-${currentStars}`}
+                className="animate-counter-pop text-[11px] font-bold text-gold"
+              >
+                ⭐ {currentStars}
               </p>
               <p className="text-[9px] tracking-widest text-muted-foreground uppercase">
                 {t("currentSpeaker")}
