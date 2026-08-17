@@ -165,6 +165,7 @@ export const zh: Dictionary = {
     "factionVillage": "好人阵营",
     "factionSolo": "第三方阵营",
     "currentSpeaker": "当前发言人",
+    "villageLegend": "村庄传说",
     "startTimer": "开始",
     "pauseTimer": "暂停",
     "resetTimer": "重置",

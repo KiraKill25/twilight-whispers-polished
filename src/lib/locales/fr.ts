@@ -193,6 +193,7 @@ export const fr = {
     factionVillage: "Village",
     factionSolo: "R\u00f4les solo",
     currentSpeaker: "Orateur",
+    villageLegend: "Légende du Village",
     startTimer: "Démarrer",
     pauseTimer: "Pause",
     resetTimer: "Réinitialiser",

@@ -165,6 +165,7 @@ export const pt: Dictionary = {
     "factionVillage": "Aldeia",
     "factionSolo": "Funções solo",
     "currentSpeaker": "Orador atual",
+    "villageLegend": "Lenda da Aldeia",
     "startTimer": "Iniciar",
     "pauseTimer": "Pausar",
     "resetTimer": "Reiniciar",

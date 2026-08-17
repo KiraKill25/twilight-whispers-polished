@@ -181,6 +181,7 @@ export const ar: Dictionary = {
     factionVillage: "\u0627\u0644\u0642\u0631\u064a\u0629",
     factionSolo: "\u0627\u0644\u0623\u062f\u0648\u0627\u0631 \u0627\u0644\u0641\u0631\u062f\u064a\u0629",
     currentSpeaker: "المتحدث",
+    villageLegend: "أسطورة القرية",
     startTimer: "ابدأ",
     pauseTimer: "إيقاف مؤقت",
     resetTimer: "إعادة ضبط",
