@@ -1291,10 +1291,7 @@ function DawnPanel({
           direction={direction}
           armed={setupDone}
           onFinish={onDebateDone}
-        />
-        <StarPanel
-          players={alive}
-          onChange={(id, delta) =>
+          onStar={(id, delta) =>
             onChange({
               ...state,
               players: state.players.map((p) =>
