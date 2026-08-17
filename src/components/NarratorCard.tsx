@@ -10,16 +10,19 @@ const VIDEO_URL = "/media/game-master.mp4";
 export function NarratorCard({
   title,
   text,
+  guideLabel: guideLabelProp,
   children,
 }: {
   title?: string;
   text: string;
+  /** Libellé personnalisé du bouton de guide (ex. « Légende du Village »). */
+  guideLabel?: string;
   children?: React.ReactNode;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const { lang, t } = useI18n();
   const [guide, setGuide] = useState(false);
-  const guideLabel = HOWTO[lang].openLabel;
+  const guideLabel = guideLabelProp ?? HOWTO[lang].openLabel;
   const heading = title ?? t("narratorTitle");
 
 
