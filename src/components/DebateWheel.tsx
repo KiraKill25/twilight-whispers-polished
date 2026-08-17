@@ -184,6 +184,7 @@ export function DebateWheel({
   direction,
   armed,
   onFinish,
+  onStar,
 }: {
   seating: Player[];
   seconds: number;
@@ -192,6 +193,8 @@ export function DebateWheel({
   /** Le timer ne démarre qu'après validation des choix du capitaine. */
   armed?: boolean;
   onFinish: () => void;
+  /** Attribution d'étoiles à l'orateur actif (tap = +1, appui long = -1). */
+  onStar?: (playerId: string, delta: number) => void;
 }) {
   const { t } = useI18n();
   // Loup Noir : un joueur réduit au silence ne prend aucun tour de parole.
