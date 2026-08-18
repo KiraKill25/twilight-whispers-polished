@@ -22,11 +22,17 @@ workflows:
 
       - name: Generate Android App Icon
         script: |
-          # Automatically detects icon.png in either assets/ or public/
+          # Create assets directory if it doesn't exist
+          mkdir -p assets
+
+          # Copy icon from public/ into assets/ for Capacitor CLI
+          if [ -f "public/icon.png" ]; then
+            cp public/icon.png assets/icon.png
+          fi
+
+          # Generate native Android launcher icons
           if [ -f "assets/icon.png" ]; then
             npx @capacitor/assets generate --android
-          elif [ -f "public/icon.png" ]; then
-            npx @capacitor/assets generate --android --iconSource public/icon.png
           fi
 
       - name: Build Web Assets & Configure Capacitor
