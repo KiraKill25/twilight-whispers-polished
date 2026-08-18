@@ -17,30 +17,37 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          export NITRO_PRESET=static
+          # Clean previous build artifacts
+          rm -rf dist .output
+
+          # Execute Vite build
           npx vite build
 
-          BUILD_DIR=".output/public"
-          if [ ! -d "$BUILD_DIR" ]; then
-            BUILD_DIR="dist"
+          # Automatically locate the compiled web assets directory
+          if [ -f "dist/index.html" ]; then
+            WEB_DIR="dist"
+          elif [ -f ".output/public/index.html" ]; then
+            WEB_DIR=".output/public"
+          else
+            echo "BUILD ERROR: index.html not found! Printing workspace structure:"
+            ls -la
+            ls -la .output 2>/dev/null || true
+            exit 1
           fi
 
-          # Ensure index.html exists in web assets
-          if [ ! -f "$BUILD_DIR/index.html" ] && [ -f "index.html" ]; then
-            cp index.html $BUILD_DIR/index.html
-          fi
+          echo "Target web directory found at: $WEB_DIR"
 
-          # Fix relative pathing for local Android WebView assets
-          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|href="/|href="./|g' {} + 2>/dev/null || \
-          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|href="/|href="./|g' {} + 2>/dev/null || true
-          
-          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|src="/|src="./|g' {} + 2>/dev/null || \
-          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|src="/|src="./|g' {} + 2>/dev/null || true
+          # Fix asset pathing for WebView loading
+          find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|href="/|href="./|g' {} + 2>/dev/null || \
+          find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|href="/|href="./|g' {} + 2>/dev/null || true
 
-          # Generate Capacitor Config
-          echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"$BUILD_DIR\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
+          find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|src="/|src="./|g' {} + 2>/dev/null || \
+          find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|src="/|src="./|g' {} + 2>/dev/null || true
 
-          # Sync native Android project
+          # Create Capacitor Config pointing to verified directory
+          echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"$WEB_DIR\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
+
+          # Sync with Android Project
           npx cap add android || true
           npx cap copy android
           npx cap sync android
