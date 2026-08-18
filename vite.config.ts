@@ -10,7 +10,7 @@ export default defineConfig({
       nitro: {
         build: {
           rollupOptions: {
-            input: {},
+            input: "src/entry-client.tsx",
           },
         },
       },
