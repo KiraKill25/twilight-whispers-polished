@@ -6,5 +6,14 @@ export default defineConfig({
   },
   vite: {
     base: "./",
+    environments: {
+      nitro: {
+        build: {
+          rollupOptions: {
+            input: {},
+          },
+        },
+      },
+    },
   },
 });
