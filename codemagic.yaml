@@ -7,6 +7,12 @@ workflows:
       node: 20
       java: 21
     scripts:
+      - name: Clean build cache & dependencies
+        script: |
+          # Remove cached dependencies, Vite cache, and old build outputs
+          rm -rf node_modules package-lock.json .vite dist .output android/app/build android/.gradle
+          npm cache clean --force
+
       - name: Install dependencies
         script: |
           npm install
@@ -17,9 +23,6 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          # Clean previous build artifacts
-          rm -rf dist .output
-
           # Execute Vite build
           npx vite build
 
