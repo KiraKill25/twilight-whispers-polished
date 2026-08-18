@@ -9,7 +9,6 @@ workflows:
     scripts:
       - name: Clean build cache & dependencies
         script: |
-          # Remove cached dependencies, Vite cache, and old build outputs
           rm -rf node_modules package-lock.json .vite dist .output android/app/build android/.gradle
           npm cache clean --force
 
@@ -17,9 +16,18 @@ workflows:
         script: |
           npm install
 
-      - name: Install Capacitor CLI & Core
+      - name: Install Capacitor CLI & Assets Tool
         script: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
+
+      - name: Generate Android App Icon
+        script: |
+          # Automatically detects icon.png in either assets/ or public/
+          if [ -f "assets/icon.png" ]; then
+            npx @capacitor/assets generate --android
+          elif [ -f "public/icon.png" ]; then
+            npx @capacitor/assets generate --android --iconSource public/icon.png
+          fi
 
       - name: Build Web Assets & Configure Capacitor
         script: |
