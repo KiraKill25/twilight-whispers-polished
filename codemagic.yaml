@@ -16,24 +16,38 @@ workflows:
         script: |
           npm install
 
-      - name: Install Capacitor CLI & ImageMagick
+      - name: Install Capacitor CLI
         script: |
-          brew install imagemagick
           npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Generate Android App Icons Directly
+      - name: Generate Android App Icons Natively
         script: |
-          # Define Android mipmap sizes
-          declare -A sizes=( ["mipmap-mdpi"]=48 ["mipmap-hdpi"]=72 ["mipmap-xhdpi"]=96 ["mipmap-xxhdpi"]=144 ["mipmap-xxxhdpi"]=192 )
+          # Automatically find icon.png in either assets/ or public/
+          ICON_PATH=""
+          if [ -f "assets/icon.png" ]; then
+            ICON_PATH="assets/icon.png"
+          elif [ -f "public/icon.png" ]; then
+            ICON_PATH="public/icon.png"
+          fi
 
-          # Generate PNG icons directly into native Android folders
-          for folder in "${!sizes[@]}"; do
-            size=${sizes[$folder]}
+          if [ -z "$ICON_PATH" ]; then
+            echo "Error: icon.png not found in assets/ or public/!"
+            exit 1
+          fi
+
+          # Clean old cached icons
+          rm -rf android/app/src/main/res/mipmap-*
+
+          # Generate mipmap icons using macOS native 'sips' tool (Bash 3.2 safe)
+          for item in "mipmap-mdpi:48" "mipmap-hdpi:72" "mipmap-xhdpi:96" "mipmap-xxhdpi:144" "mipmap-xxxhdpi:192"; do
+            folder="${item%%:*}"
+            size="${item##*:}"
             target_dir="android/app/src/main/res/$folder"
             mkdir -p "$target_dir"
-            magick assets/icon.png -resize ${size}x${size} "$target_dir/ic_launcher.png"
-            magick assets/icon.png -resize ${size}x${size} "$target_dir/ic_launcher_round.png"
-            magick assets/icon.png -resize ${size}x${size} "$target_dir/ic_launcher_foreground.png"
+            
+            sips -z "$size" "$size" "$ICON_PATH" --out "$target_dir/ic_launcher.png" > /dev/null
+            sips -z "$size" "$size" "$ICON_PATH" --out "$target_dir/ic_launcher_round.png" > /dev/null
+            sips -z "$size" "$size" "$ICON_PATH" --out "$target_dir/ic_launcher_foreground.png" > /dev/null
           done
 
       - name: Build Web Assets & Configure Capacitor
