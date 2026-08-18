@@ -15,24 +15,34 @@ workflows:
         script: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Generate Capacitor Config & Web Build
+      - name: Build Web Application
         script: |
+          npm run build
+
+      - name: Configure Capacitor & Sync
+        script: |
+          # Detect whether Vite outputted to dist or build
+          WEB_DIR="dist"
+          if [ -d "build" ]; then
+            WEB_DIR="build"
+          fi
+
+          echo "Using web directory: $WEB_DIR"
+
+          # Write capacitor configuration
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.mouradsville.game",
             "appName": "Mourad's Ville",
-            "webDir": "dist",
+            "webDir": "$WEB_DIR",
             "server": {
               "androidScheme": "https"
             }
           }
           EOF
 
-          npm run build
-
-      - name: Add Android Platform & Sync
-        script: |
-          npx cap add android
+          # Add Android platform and copy assets
+          npx cap add android || true
           npx cap sync android
 
       - name: Build Android Debug APK
