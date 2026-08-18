@@ -19,6 +19,11 @@ export function LanguageSwitcher() {
     return () => window.removeEventListener("pointerdown", onDown);
   }, [open]);
 
+  const handleSelectLanguage = (code: string) => {
+    setLang(code);
+    setOpen(false);
+  };
+
   return (
     <div ref={ref} className="relative" aria-label={t("language")}>
       <button
@@ -51,10 +56,11 @@ export function LanguageSwitcher() {
                   type="button"
                   role="option"
                   aria-selected={l.code === lang}
-                  onClick={() => {
-                    setLang(l.code);
-                    setOpen(false);
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    handleSelectLanguage(l.code);
                   }}
+                  onClick={() => handleSelectLanguage(l.code)}
                   className={`w-full rounded-xl px-3 py-2 text-xs font-bold tracking-widest uppercase transition ${
                     l.code === lang
                       ? "gradient-neon text-primary-foreground"
