@@ -6,20 +6,20 @@ interface SplashScreenProps {
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
-    // Show image for 2 seconds then transition to app
+    // Displays image for 2.5 seconds before transitioning
     const timer = setTimeout(() => {
       onComplete();
-    }, 2000);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black overflow-hidden select-none">
       <img
         src="/splash.png"
         alt="Splash Screen"
-        className="h-full w-full object-cover"
+        className="w-full h-auto object-contain max-h-screen"
       />
     </div>
   );
