@@ -22,25 +22,16 @@ workflows:
 
       - name: Generate Android App Icon
         script: |
-          # Create assets directory if it doesn't exist
-          mkdir -p assets
-
-          # Copy icon from public/ into assets/ for Capacitor CLI
-          if [ -f "public/icon.png" ]; then
-            cp public/icon.png assets/icon.png
-          fi
-
-          # Wipe out old cached Android launcher icons before generating new ones
+          # Clean old cached icons
           rm -rf android/app/src/main/res/mipmap-*
 
-          # Generate fresh native Android launcher icons directly into Android res folder
+          # Generate native launcher icons directly from root assets folder
           if [ -f "assets/icon.png" ]; then
-            npx @capacitor/assets generate --android --assetPath android/app/src/main/res
+            npx @capacitor/assets generate --android
           fi
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          # Execute Vite build
           npx vite build
 
           # Fix relative asset paths for Android WebView
@@ -61,10 +52,8 @@ workflows:
             fixPaths("dist");
           '
 
-          # Create Capacitor Config pointing to dist
           echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"dist\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
 
-          # Sync with Android
           npx cap add android || true
           npx cap copy android
           npx cap sync android
@@ -73,7 +62,6 @@ workflows:
         script: |
           cd android
 
-          # Exclude legacy Kotlin JDK modules to fix duplicate class errors
           cat << 'EOF' >> app/build.gradle
 
           configurations.all {
