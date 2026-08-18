@@ -33,9 +33,9 @@ workflows:
           # Wipe out old cached Android launcher icons before generating new ones
           rm -rf android/app/src/main/res/mipmap-*
 
-          # Generate fresh native Android launcher icons
+          # Generate fresh native Android launcher icons directly into Android res folder
           if [ -f "assets/icon.png" ]; then
-            npx @capacitor/assets generate --android
+            npx @capacitor/assets generate --android --assetPath android/app/src/main/res
           fi
 
       - name: Build Web Assets & Configure Capacitor
