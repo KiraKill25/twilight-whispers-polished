@@ -26,42 +26,17 @@ workflows:
             exit 1
           fi
 
-          # Generate required index.html entry point for Capacitor if missing
-          if [ ! -f ".output/public/index.html" ]; then
-            echo "Creating entry index.html in .output/public..."
-            JS_FILE=$(basename $(ls .output/public/assets/index-*.js 2>/dev/null | head -n 1))
-            CSS_FILE=$(basename $(ls .output/public/assets/styles-*.css 2>/dev/null | head -n 1))
+          # Find compiled entry assets
+          JS_FILE=$(ls .output/public/assets/index-*.js 2>/dev/null | head -n 1 | xargs -n 1 basename)
+          CSS_FILE=$(ls .output/public/assets/styles-*.css 2>/dev/null | head -n 1 | xargs -n 1 basename)
 
-            cat <<EOF > .output/public/index.html
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-              <meta charset="UTF-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <title>Mourad's Ville</title>
-              <link rel="stylesheet" href="./assets/${CSS_FILE}">
-            </head>
-            <body>
-              <div id="root"></div>
-              <script type="module" src="./assets/${JS_FILE}"></script>
-            </body>
-            </html>
-            EOF
-          fi
+          # Write single-line index.html entry point
+          echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mourads Ville</title><link rel="stylesheet" href="./assets/'$CSS_FILE'"></head><body><div id="root"></div><script type="module" src="./assets/'$JS_FILE'"></script></body></html>' > .output/public/index.html
 
-          # Configure Capacitor configuration
-          cat <<EOF > capacitor.config.json
-          {
-            "appId": "com.mouradsville.game",
-            "appName": "Mourad's Ville",
-            "webDir": ".output/public",
-            "server": {
-              "androidScheme": "https"
-            }
-          }
-          EOF
+          # Write Capacitor configuration
+          echo '{"appId":"com.mouradsville.game","appName":"Mourads Ville","webDir":".output/public","server":{"androidScheme":"https"}}' > capacitor.config.json
 
-          # Add Android platform and copy assets
+          # Add Android platform and sync assets
           npx cap add android || true
           npx cap copy android
           npx cap sync android
