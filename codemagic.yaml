@@ -32,20 +32,18 @@ workflows:
               ENTRY_JS=$(ls $BUILD_DIR/assets/*.js | head -n 1 | xargs -n 1 basename)
             fi
 
-            cat << EOF > $BUILD_DIR/index.html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Mourads Ville</title>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="./assets/$ENTRY_JS"></script>
-</body>
-</html>
-EOF
+            echo '<!DOCTYPE html>' > $BUILD_DIR/index.html
+            echo '<html lang="en">' >> $BUILD_DIR/index.html
+            echo '<head>' >> $BUILD_DIR/index.html
+            echo '  <meta charset="UTF-8" />' >> $BUILD_DIR/index.html
+            echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />' >> $BUILD_DIR/index.html
+            echo '  <title>Mourads Ville</title>' >> $BUILD_DIR/index.html
+            echo '</head>' >> $BUILD_DIR/index.html
+            echo '<body>' >> $BUILD_DIR/index.html
+            echo '  <div id="root"></div>' >> $BUILD_DIR/index.html
+            echo "  <script type=\"module\" src=\"./assets/$ENTRY_JS\"></script>" >> $BUILD_DIR/index.html
+            echo '</body>' >> $BUILD_DIR/index.html
+            echo '</html>' >> $BUILD_DIR/index.html
           fi
 
           # Fix absolute path resolution for Capacitor WebView
