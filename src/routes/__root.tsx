@@ -9,12 +9,9 @@ export const Route = createRootRoute({
 function RootComponent() {
   const [showSplash, setShowSplash] = useState(true);
 
-  return (
-    <>
-      {showSplash && (
-        <SplashScreen onComplete={() => setShowSplash(false)} />
-      )}
-      <Outlet />
-    </>
-  );
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
+
+  return <Outlet />;
 }
