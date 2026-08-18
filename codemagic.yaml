@@ -17,41 +17,14 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          NITRO_PRESET=static npx vite build
+          npx vite build
 
           BUILD_DIR=".output/public"
           if [ ! -d "$BUILD_DIR" ]; then
             BUILD_DIR="dist"
           fi
 
-          ENTRY_JS=$(grep -l -E "createRoot|render|ClientRouter" $BUILD_DIR/assets/*.js 2>/dev/null | head -n 1 | xargs -n 1 basename)
-          
-          if [ -z "$ENTRY_JS" ]; then
-            ENTRY_JS=$(ls $BUILD_DIR/assets/*.js 2>/dev/null | head -n 1 | xargs -n 1 basename)
-          fi
-
-          echo '<!DOCTYPE html>' > $BUILD_DIR/index.html
-          echo '<html lang="en">' >> $BUILD_DIR/index.html
-          echo '<head>' >> $BUILD_DIR/index.html
-          echo '  <meta charset="UTF-8" />' >> $BUILD_DIR/index.html
-          echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />' >> $BUILD_DIR/index.html
-          echo '  <title>Mourads Ville</title>' >> $BUILD_DIR/index.html
-          echo '  <script>' >> $BUILD_DIR/index.html
-          echo '    window.addEventListener("error", function(e) {' >> $BUILD_DIR/index.html
-          echo '      document.body.innerHTML = "<div style=\"color:red;padding:20px;font-family:sans-serif;word-break:break-all;\"><h2>Runtime Error:</h2><pre>" + e.message + "\n\nFile: " + e.filename + ":" + e.lineno + "</pre></div>";' >> $BUILD_DIR/index.html
-          echo '    });' >> $BUILD_DIR/index.html
-          echo '    window.addEventListener("unhandledrejection", function(e) {' >> $BUILD_DIR/index.html
-          echo '      document.body.innerHTML = "<div style=\"color:red;padding:20px;font-family:sans-serif;word-break:break-all;\"><h2>Unhandled Promise Rejection:</h2><pre>" + (e.reason ? (e.reason.stack || e.reason) : e) + "</pre></div>";' >> $BUILD_DIR/index.html
-          echo '    });' >> $BUILD_DIR/index.html
-          echo '  </script>' >> $BUILD_DIR/index.html
-          echo '</head>' >> $BUILD_DIR/index.html
-          echo '<body>' >> $BUILD_DIR/index.html
-          echo '  <div id="root"></div>' >> $BUILD_DIR/index.html
-          echo "  <script type=\"module\" src=\"./assets/$ENTRY_JS\"></script>" >> $BUILD_DIR/index.html
-          echo '</body>' >> $BUILD_DIR/index.html
-          echo '</html>' >> $BUILD_DIR/index.html
-
-          # Fix relative path resolution for Capacitor WebView assets
+          # Fix relative path resolution for Capacitor WebView
           find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|href="/|href="./|g' {} + 2>/dev/null || \
           find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|href="/|href="./|g' {} + 2>/dev/null || true
           
