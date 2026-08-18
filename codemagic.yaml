@@ -17,9 +17,25 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          # Strip BOM characters from source files
-          find src -type f \( -name "*.ts" -o -name "*.tsx" \) -exec sed -i '' '1s/^\xEF\xBB\xBF//' {} + 2>/dev/null || \
-          find src -type f \( -name "*.ts" -o -name "*.tsx" \) -exec sed -i '1s/^\xEF\xBB\xBF//' {} + 2>/dev/null || true
+          # Remove UTF-8 BOM characters recursively using Node.js
+          node -e '
+            const fs = require("fs"), path = require("path");
+            function cleanBOM(dir) {
+              for (const file of fs.readdirSync(dir)) {
+                const fullPath = path.join(dir, file);
+                if (fs.statSync(fullPath).isDirectory()) {
+                  cleanBOM(fullPath);
+                } else if (fullPath.endsWith(".ts") || fullPath.endsWith(".tsx") || fullPath.endsWith(".js")) {
+                  let content = fs.readFileSync(fullPath, "utf8");
+                  if (content.charCodeAt(0) === 0xFEFF) {
+                    fs.writeFileSync(fullPath, content.slice(1), "utf8");
+                    console.log("Stripped BOM from:", fullPath);
+                  }
+                }
+              }
+            }
+            cleanBOM("./src");
+          '
 
           # Clean previous build artifacts
           rm -rf dist .output
@@ -38,12 +54,24 @@ workflows:
             exit 1
           fi
 
-          # Fix asset pathing for WebView
-          find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|href="/|href="./|g' {} + 2>/dev/null || \
-          find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|href="/|href="./|g' {} + 2>/dev/null || true
-
-          find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|src="/|src="./|g' {} + 2>/dev/null || \
-          find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|src="/|src="./|g' {} + 2>/dev/null || true
+          # Fix relative asset pathing for WebView
+          node -e '
+            const fs = require("fs"), path = require("path");
+            const webDir = process.env.WEB_DIR || "dist";
+            function fixPaths(dir) {
+              for (const file of fs.readdirSync(dir)) {
+                const fullPath = path.join(dir, file);
+                if (fs.statSync(fullPath).isDirectory()) {
+                  fixPaths(fullPath);
+                } else if (fullPath.endsWith(".html") || fullPath.endsWith(".js") || fullPath.endsWith(".css")) {
+                  let content = fs.readFileSync(fullPath, "utf8");
+                  content = content.replace(/href="\//g, "href=\"./").replace(/src="\//g, "src=\"./");
+                  fs.writeFileSync(fullPath, content, "utf8");
+                }
+              }
+            }
+            if (fs.existsSync(webDir)) fixPaths(webDir);
+          '
 
           # Create Capacitor Config
           echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"$WEB_DIR\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
