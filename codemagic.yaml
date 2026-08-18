@@ -17,17 +17,39 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          # Build project (Nitro generates assets in .output/public)
+          # Build web assets via Vite / Nitro
           npx vite build
 
-          # Verify output directory
+          # Verify output directory exists
           if [ ! -d ".output/public" ]; then
             echo "Error: .output/public directory missing."
-            ls -la
             exit 1
           fi
 
-          # Point Capacitor to Nitro's static output folder
+          # Generate required index.html entry point for Capacitor if missing
+          if [ ! -f ".output/public/index.html" ]; then
+            echo "Creating entry index.html in .output/public..."
+            JS_FILE=$(basename $(ls .output/public/assets/index-*.js 2>/dev/null | head -n 1))
+            CSS_FILE=$(basename $(ls .output/public/assets/styles-*.css 2>/dev/null | head -n 1))
+
+            cat <<EOF > .output/public/index.html
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Mourad's Ville</title>
+              <link rel="stylesheet" href="./assets/${CSS_FILE}">
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="./assets/${JS_FILE}"></script>
+            </body>
+            </html>
+            EOF
+          fi
+
+          # Configure Capacitor configuration
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.mouradsville.game",
