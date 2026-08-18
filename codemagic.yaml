@@ -30,36 +30,7 @@ workflows:
           JS_FILE=$(ls .output/public/assets/index-*.js 2>/dev/null | head -n 1 | xargs -n 1 basename)
           CSS_FILE=$(ls .output/public/assets/styles-*.css 2>/dev/null | head -n 1 | xargs -n 1 basename)
 
-          cat << EOF > .output/public/index.html
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-            <meta charset="UTF-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-            <title>Mourads Ville</title>
-            <script>
-              window.onerror = function(msg, url, line, col, error) {
-                var el = document.createElement('div');
-                el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#000;color:#ff5555;padding:20px;z-index:999999;font-family:monospace;font-size:12px;overflow:auto;white-space:pre-wrap;word-break:break-all;';
-                el.innerHTML = '<h2>⚠️ Crash Log</h2><br><b>Error:</b> ' + msg + '<br><br><b>File:</b> ' + url + ':' + line + ':' + col + '<br><br><b>Stack:</b><br>' + (error && error.stack ? error.stack : 'N/A');
-                document.body.appendChild(el);
-              };
-              window.addEventListener('unhandledrejection', function(e) {
-                var el = document.createElement('div');
-                el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#000;color:#ff5555;padding:20px;z-index:999999;font-family:monospace;font-size:12px;overflow:auto;white-space:pre-wrap;word-break:break-all;';
-                el.innerHTML = '<h2>⚠️ Unhandled Rejection</h2><br>' + (e.reason && e.reason.stack ? e.reason.stack : e.reason);
-                document.body.appendChild(el);
-              });
-            </script>
-            <link rel="stylesheet" href="./assets/$CSS_FILE">
-          </head>
-          <body>
-            <div id="root"></div>
-            <div id="app"></div>
-            <script type="module" src="./assets/$JS_FILE"></script>
-          </body>
-          </html>
-          EOF
+          echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mourads Ville</title><link rel="stylesheet" href="./assets/'$CSS_FILE'"></head><body><div id="root"></div><script type="module" src="./assets/'$JS_FILE'"></script></body></html>' > .output/public/index.html
 
           echo '{"appId":"com.mouradsville.game","appName":"Mourads Ville","webDir":".output/public","server":{"androidScheme":"https"}}' > capacitor.config.json
 
