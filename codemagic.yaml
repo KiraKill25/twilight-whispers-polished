@@ -17,38 +17,20 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          npx vite build
+          # Build with static preset to generate offline index.html
+          NITRO_PRESET=static npx vite build
 
           BUILD_DIR=".output/public"
           if [ ! -d "$BUILD_DIR" ]; then
             BUILD_DIR="dist"
           fi
 
-          if [ ! -f "$BUILD_DIR/index.html" ]; then
-            echo "Generating index.html entry point..."
-            ENTRY_JS=$(grep -l -E "createRoot|render|ClientRouter" $BUILD_DIR/assets/*.js 2>/dev/null | head -n 1 | xargs -n 1 basename)
-            
-            if [ -z "$ENTRY_JS" ]; then
-              ENTRY_JS=$(ls $BUILD_DIR/assets/*.js | head -n 1 | xargs -n 1 basename)
-            fi
-
-            echo '<!DOCTYPE html>' > $BUILD_DIR/index.html
-            echo '<html lang="en">' >> $BUILD_DIR/index.html
-            echo '<head>' >> $BUILD_DIR/index.html
-            echo '  <meta charset="UTF-8" />' >> $BUILD_DIR/index.html
-            echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />' >> $BUILD_DIR/index.html
-            echo '  <title>Mourads Ville</title>' >> $BUILD_DIR/index.html
-            echo '</head>' >> $BUILD_DIR/index.html
-            echo '<body>' >> $BUILD_DIR/index.html
-            echo '  <div id="root"></div>' >> $BUILD_DIR/index.html
-            echo "  <script type=\"module\" src=\"./assets/$ENTRY_JS\"></script>" >> $BUILD_DIR/index.html
-            echo '</body>' >> $BUILD_DIR/index.html
-            echo '</html>' >> $BUILD_DIR/index.html
-          fi
-
-          # Fix absolute path resolution for Capacitor WebView
-          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|/assets/|./assets/|g' {} + 2>/dev/null || \
-          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|/assets/|./assets/|g' {} + 2>/dev/null || true
+          # Fix absolute paths for Capacitor WebView
+          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|href="/|href="./|g' {} + 2>/dev/null || \
+          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|href="/|href="./|g' {} + 2>/dev/null || true
+          
+          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|src="/|src="./|g' {} + 2>/dev/null || \
+          find $BUILD_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|src="/|src="./|g' {} + 2>/dev/null || true
 
           # Generate Capacitor Config
           echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"$BUILD_DIR\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
