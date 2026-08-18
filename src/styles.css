@@ -511,3 +511,5 @@
   100% { transform: scale(1); }
 }
 @utility animate-counter-pop { animation: counter-pop 0.35s ease-out; }
+
+@utility touch-callout-none { -webkit-touch-callout: none; }
