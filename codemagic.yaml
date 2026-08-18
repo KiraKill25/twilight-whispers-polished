@@ -17,29 +17,29 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          # Force Vite build to generate web assets into dist
+          # Build project (Nitro generates assets in .output/public)
           npx vite build
 
-          # Verify dist directory creation
-          if [ ! -d "dist" ]; then
-            echo "Error: Build output directory missing."
+          # Verify output directory
+          if [ ! -d ".output/public" ]; then
+            echo "Error: .output/public directory missing."
             ls -la
             exit 1
           fi
 
-          # Write Capacitor configuration
+          # Point Capacitor to Nitro's static output folder
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.mouradsville.game",
             "appName": "Mourad's Ville",
-            "webDir": "dist",
+            "webDir": ".output/public",
             "server": {
               "androidScheme": "https"
             }
           }
           EOF
 
-          # Add Android platform and sync assets
+          # Add Android platform and copy assets
           npx cap add android || true
           npx cap copy android
           npx cap sync android
