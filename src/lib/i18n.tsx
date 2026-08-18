@@ -65,20 +65,9 @@ function interpolate(s: string, vars?: Record<string, string | number>) {
   );
 }
 
-const fallback: Ctx = {
-  lang: "fr",
-  setLang: () => {},
-  t: (k, vars) => interpolate(fr.ui[k], vars),
-  role: (id) => roleTextFor("fr", id),
-  roleName: (id) => roleTextFor("fr", id).name,
-  prompt: (id) => fr.prompts[id] ?? "",
-  team: (t) => fr.teams[t] ?? t,
-  dir: "ltr",
-};
-
 function roleTextFor(lang: Lang, id: string): RoleText {
   const base = ROLE_BY_ID[id];
-  const over = DICTS[lang].roles[id];
+  const over = DICTS[lang]?.roles?.[id];
   return {
     name: over?.name ?? base?.name ?? id,
     description: over?.description ?? base?.description ?? "",
@@ -86,41 +75,65 @@ function roleTextFor(lang: Lang, id: string): RoleText {
   };
 }
 
-const I18nContext = createContext<Ctx>(fallback);
+// ── Standalone Reactive State Store (bypasses missing Provider) ──────
+function getInitialLang(): Lang {
+  if (typeof window === "undefined") return "fr";
+  try {
+    const saved = localStorage.getItem(KEY) as Lang | null;
+    if (saved && DICTS[saved]) return saved;
+  } catch {}
+  return "fr";
+}
+
+let globalLang: Lang = getInitialLang();
+const listeners = new Set<() => void>();
+
+function notifyListeners() {
+  if (typeof document !== "undefined") {
+    const dir = globalLang === "ar" ? "rtl" : "ltr";
+    document.documentElement.setAttribute("dir", dir);
+    document.documentElement.setAttribute("lang", globalLang);
+  }
+  listeners.forEach((l) => l());
+}
+
+export function setGlobalLang(l: Lang) {
+  if (!DICTS[l]) return;
+  globalLang = l;
+  try {
+    localStorage.setItem(KEY, l);
+  } catch {}
+  notifyListeners();
+}
+
+const I18nContext = createContext<Ctx | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("fr");
+  const [lang, setLangState] = useState<Lang>(globalLang);
 
   useEffect(() => {
-    const saved = localStorage.getItem(KEY) as Lang | null;
-    if (saved && DICTS[saved]) setLangState(saved);
+    const handleChange = () => setLangState(globalLang);
+    listeners.add(handleChange);
+    notifyListeners();
+    return () => {
+      listeners.delete(handleChange);
+    };
   }, []);
 
-  useEffect(() => {
-    const dir = lang === "ar" ? "rtl" : "ltr";
-    document.documentElement.setAttribute("dir", dir);
-    document.documentElement.setAttribute("lang", lang);
-  }, [lang]);
-
   const setLang = useCallback((l: Lang) => {
-    setLangState(l);
-    try {
-      localStorage.setItem(KEY, l);
-    } catch {
-      /* ignore */
-    }
+    setGlobalLang(l);
   }, []);
 
   const value = useMemo<Ctx>(() => {
-    const dict = DICTS[lang];
+    const dict = DICTS[lang] ?? fr;
     return {
       lang,
       setLang,
-      t: (k, vars) => interpolate(dict.ui[k] ?? fr.ui[k] ?? String(k), vars),
+      t: (k, vars) => interpolate(dict.ui?.[k] ?? fr.ui[k] ?? String(k), vars),
       role: (id) => roleTextFor(lang, id),
       roleName: (id) => roleTextFor(lang, id).name,
-      prompt: (id) => dict.prompts[id] ?? fr.prompts[id] ?? "",
-      team: (t) => dict.teams[t] ?? fr.teams[t] ?? t,
+      prompt: (id) => dict.prompts?.[id] ?? fr.prompts[id] ?? "",
+      team: (t) => dict.teams?.[t] ?? fr.teams[t] ?? t,
       dir: lang === "ar" ? "rtl" : "ltr",
     };
   }, [lang, setLang]);
@@ -128,4 +141,31 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
-export const useI18n = () => useContext(I18nContext);
+export const useI18n = (): Ctx => {
+  const ctx = useContext(I18nContext);
+  const [localLang, setLocalLang] = useState<Lang>(globalLang);
+
+  useEffect(() => {
+    if (ctx) return;
+    const handleChange = () => setLocalLang(globalLang);
+    listeners.add(handleChange);
+    return () => {
+      listeners.delete(handleChange);
+    };
+  }, [ctx]);
+
+  if (ctx) return ctx;
+
+  const activeLang = localLang;
+  const dict = DICTS[activeLang] ?? fr;
+  return {
+    lang: activeLang,
+    setLang: setGlobalLang,
+    t: (k, vars) => interpolate(dict.ui?.[k] ?? fr.ui[k] ?? String(k), vars),
+    role: (id) => roleTextFor(activeLang, id),
+    roleName: (id) => roleTextFor(activeLang, id).name,
+    prompt: (id) => dict.prompts?.[id] ?? fr.prompts[id] ?? "",
+    team: (t) => dict.teams?.[t] ?? fr.teams[t] ?? t,
+    dir: activeLang === "ar" ? "rtl" : "ltr",
+  };
+};
