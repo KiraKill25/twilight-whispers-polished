@@ -30,7 +30,10 @@ workflows:
             cp public/icon.png assets/icon.png
           fi
 
-          # Generate native Android launcher icons
+          # Wipe out old cached Android launcher icons before generating new ones
+          rm -rf android/app/src/main/res/mipmap-*
+
+          # Generate fresh native Android launcher icons
           if [ -f "assets/icon.png" ]; then
             npx @capacitor/assets generate --android
           fi
