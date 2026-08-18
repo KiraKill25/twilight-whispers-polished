@@ -17,7 +17,6 @@ workflows:
 
       - name: Generate Capacitor Config & Web Build
         script: |
-          # Create capacitor configuration on the fly
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.mouradsville.game",
@@ -29,7 +28,6 @@ workflows:
           }
           EOF
 
-          # Build web app into /dist directory
           npm run build
 
       - name: Add Android Platform & Sync
@@ -45,8 +43,3 @@ workflows:
 
     artifacts:
       - android/app/build/outputs/apk/debug/*.apk
-
-    publishing:
-      email:
-        events:
-          - build_status
