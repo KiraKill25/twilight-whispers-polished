@@ -18,7 +18,7 @@ workflows:
 
       - name: Install Capacitor CLI
         script: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/splash-screen
 
       - name: Build Web Assets & Configure Capacitor
         script: |
@@ -43,19 +43,60 @@ workflows:
             fixPaths("dist");
           '
 
-          # 3. Create Capacitor Config pointing to dist
-          echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"dist\",\"server\":{\"androidScheme\":\"https\"},\"plugins\":{\"SplashScreen\":{\"launchShowDuration\":0}}}" > capacitor.config.json
+          # 3. Configure Capacitor with dark splash theme settings
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.mouradsville.game",
+            "appName": "Mourads Ville",
+            "webDir": "dist",
+            "server": {
+              "androidScheme": "https"
+            },
+            "plugins": {
+              "SplashScreen": {
+                "launchShowDuration": 0,
+                "launchAutoHide": true,
+                "backgroundColor": "#000000",
+                "androidScaleType": "CENTER_CROP",
+                "showSpinner": false
+              }
+            }
+          }
+          EOF
 
-          # 4. Force create the android folder if missing
+          # 4. Sync Android platform
           if [ ! -d "android" ]; then
             npx cap add android
           fi
           npx cap copy android
           npx cap sync android
 
+          # 5. Force Android Native Theme window background to pure black (#000000)
+          cat << 'EOF' > android/app/src/main/res/values/styles.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+                  <item name="colorPrimary">#000000</item>
+                  <item name="colorPrimaryDark">#000000</item>
+                  <item name="colorAccent">#000000</item>
+                  <item name="android:windowBackground">#000000</item>
+              </style>
+
+              <style name="AppTheme.NoActionBar" parent="AppTheme">
+                  <item name="windowActionBar">false</item>
+                  <item name="windowNoTitle">true</item>
+                  <item name="android:background">#000000</item>
+              </style>
+
+              <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+                  <item name="android:background">#000000</item>
+                  <item name="android:windowBackground">#000000</item>
+              </style>
+          </resources>
+          EOF
+
       - name: Generate Android App Icons Natively
         script: |
-          # Automatically find icon.png in either assets/ or public/
           ICON_PATH=""
           if [ -f "assets/icon.png" ]; then
             ICON_PATH="assets/icon.png"
@@ -68,10 +109,8 @@ workflows:
             exit 1
           fi
 
-          # Clean old cached icons
           rm -rf android/app/src/main/res/mipmap-*
 
-          # Generate mipmap icons using macOS native 'sips' tool
           for item in "mipmap-mdpi:48" "mipmap-hdpi:72" "mipmap-xhdpi:96" "mipmap-xxhdpi:144" "mipmap-xxxhdpi:192"; do
             folder="${item%%:*}"
             size="${item##*:}"
@@ -87,7 +126,6 @@ workflows:
         script: |
           cd android
 
-          # Exclude legacy Kotlin JDK modules to fix duplicate class errors
           cat << 'EOF' >> app/build.gradle
 
           configurations.all {
