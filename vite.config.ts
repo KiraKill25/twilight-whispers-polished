@@ -1,19 +1,17 @@
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
 
 export default defineConfig({
-  tanstackStart: {
-    spa: {},
-  },
-  vite: {
-    base: "./",
-    environments: {
-      nitro: {
-        build: {
-          rollupOptions: {
-            input: "src/router.tsx",
-          },
-        },
-      },
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
+  },
+  base: "./",
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
   },
 });
