@@ -1,0 +1,52 @@
+workflows:
+  android-offline-apk:
+    name: Build Offline Android APK
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      node: 20
+      java: 17
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+
+      - name: Install Capacitor CLI & Core
+        script: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Generate Capacitor Config & Web Build
+        script: |
+          # Create capacitor configuration on the fly
+          cat <<EOF > capacitor.config.json
+          {
+            "appId": "com.mouradsville.game",
+            "appName": "Mourad's Ville",
+            "webDir": "dist",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          EOF
+
+          # Build web app into /dist directory
+          npm run build
+
+      - name: Add Android Platform & Sync
+        script: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Android Debug APK
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk
+
+    publishing:
+      email:
+        events:
+          - build_status
