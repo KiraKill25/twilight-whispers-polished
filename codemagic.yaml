@@ -30,7 +30,7 @@ workflows:
           JS_FILE=$(ls .output/public/assets/index-*.js 2>/dev/null | head -n 1 | xargs -n 1 basename)
           CSS_FILE=$(ls .output/public/assets/styles-*.css 2>/dev/null | head -n 1 | xargs -n 1 basename)
 
-          echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mourads Ville</title><script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script><link rel="stylesheet" href="./assets/'$CSS_FILE'"></head><body><div id="root"></div><div id="app"></div><script type="module" src="./assets/'$JS_FILE'"></script></body></html>' > .output/public/index.html
+          echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mourads Ville</title><script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script><link rel="stylesheet" href="./assets/'$CSS_FILE'"></head><body><div id="root"></div><script type="module" src="./assets/'$JS_FILE'"></script></body></html>' > .output/public/index.html
 
           echo '{"appId":"com.mouradsville.game","appName":"Mourads Ville","webDir":".output/public","server":{"androidScheme":"https"}}' > capacitor.config.json
 
