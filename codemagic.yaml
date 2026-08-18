@@ -17,37 +17,38 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
+          # Strip BOM characters from source files
+          find src -type f \( -name "*.ts" -o -name "*.tsx" \) -exec sed -i '' '1s/^\xEF\xBB\xBF//' {} + 2>/dev/null || \
+          find src -type f \( -name "*.ts" -o -name "*.tsx" \) -exec sed -i '1s/^\xEF\xBB\xBF//' {} + 2>/dev/null || true
+
           # Clean previous build artifacts
           rm -rf dist .output
 
           # Execute Vite build
           npx vite build
 
-          # Automatically locate the compiled web assets directory
+          # Locate generated web directory
           if [ -f "dist/index.html" ]; then
             WEB_DIR="dist"
           elif [ -f ".output/public/index.html" ]; then
             WEB_DIR=".output/public"
           else
-            echo "BUILD ERROR: index.html not found! Printing workspace structure:"
-            ls -la
+            echo "BUILD ERROR: index.html not found! Directory contents:"
             ls -la .output 2>/dev/null || true
             exit 1
           fi
 
-          echo "Target web directory found at: $WEB_DIR"
-
-          # Fix asset pathing for WebView loading
+          # Fix asset pathing for WebView
           find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|href="/|href="./|g' {} + 2>/dev/null || \
           find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|href="/|href="./|g' {} + 2>/dev/null || true
 
           find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i '' 's|src="/|src="./|g' {} + 2>/dev/null || \
           find $WEB_DIR -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's|src="/|src="./|g' {} + 2>/dev/null || true
 
-          # Create Capacitor Config pointing to verified directory
+          # Create Capacitor Config
           echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"$WEB_DIR\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
 
-          # Sync with Android Project
+          # Sync with Android
           npx cap add android || true
           npx cap copy android
           npx cap sync android
