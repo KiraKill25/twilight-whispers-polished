@@ -16,19 +16,25 @@ workflows:
         script: |
           npm install
 
-      - name: Install Capacitor CLI & Assets Tool
+      - name: Install Capacitor CLI & ImageMagick
         script: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
+          brew install imagemagick
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Generate Android App Icon
+      - name: Generate Android App Icons Directly
         script: |
-          # Clean old cached icons
-          rm -rf android/app/src/main/res/mipmap-*
+          # Define Android mipmap sizes
+          declare -A sizes=( ["mipmap-mdpi"]=48 ["mipmap-hdpi"]=72 ["mipmap-xhdpi"]=96 ["mipmap-xxhdpi"]=144 ["mipmap-xxxhdpi"]=192 )
 
-          # Generate native launcher icons directly from root assets folder
-          if [ -f "assets/icon.png" ]; then
-            npx @capacitor/assets generate --android
-          fi
+          # Generate PNG icons directly into native Android folders
+          for folder in "${!sizes[@]}"; do
+            size=${sizes[$folder]}
+            target_dir="android/app/src/main/res/$folder"
+            mkdir -p "$target_dir"
+            magick assets/icon.png -resize ${size}x${size} "$target_dir/ic_launcher.png"
+            magick assets/icon.png -resize ${size}x${size} "$target_dir/ic_launcher_round.png"
+            magick assets/icon.png -resize ${size}x${size} "$target_dir/ic_launcher_foreground.png"
+          done
 
       - name: Build Web Assets & Configure Capacitor
         script: |
@@ -52,7 +58,8 @@ workflows:
             fixPaths("dist");
           '
 
-          echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"dist\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
+          # Disable native splash screen to avoid white screen before webview loads
+          echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"dist\",\"server\":{\"androidScheme\":\"https\"},\"plugins\":{\"SplashScreen\":{\"launchShowDuration\":0}}}" > capacitor.config.json
 
           npx cap add android || true
           npx cap copy android
