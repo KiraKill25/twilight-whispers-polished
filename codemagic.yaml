@@ -17,47 +17,15 @@ workflows:
 
       - name: Build Web Assets & Configure Capacitor
         script: |
-          # Remove UTF-8 BOM characters recursively using Node.js
-          node -e '
-            const fs = require("fs"), path = require("path");
-            function cleanBOM(dir) {
-              for (const file of fs.readdirSync(dir)) {
-                const fullPath = path.join(dir, file);
-                if (fs.statSync(fullPath).isDirectory()) {
-                  cleanBOM(fullPath);
-                } else if (fullPath.endsWith(".ts") || fullPath.endsWith(".tsx") || fullPath.endsWith(".js")) {
-                  let content = fs.readFileSync(fullPath, "utf8");
-                  if (content.charCodeAt(0) === 0xFEFF) {
-                    fs.writeFileSync(fullPath, content.slice(1), "utf8");
-                    console.log("Stripped BOM from:", fullPath);
-                  }
-                }
-              }
-            }
-            cleanBOM("./src");
-          '
-
           # Clean previous build artifacts
           rm -rf dist .output
 
           # Execute Vite build
           npx vite build
 
-          # Locate generated web directory
-          if [ -f "dist/index.html" ]; then
-            WEB_DIR="dist"
-          elif [ -f ".output/public/index.html" ]; then
-            WEB_DIR=".output/public"
-          else
-            echo "BUILD ERROR: index.html not found! Directory contents:"
-            ls -la .output 2>/dev/null || true
-            exit 1
-          fi
-
-          # Fix relative asset pathing for WebView
+          # Ensure relative asset paths for Android WebView
           node -e '
             const fs = require("fs"), path = require("path");
-            const webDir = process.env.WEB_DIR || "dist";
             function fixPaths(dir) {
               for (const file of fs.readdirSync(dir)) {
                 const fullPath = path.join(dir, file);
@@ -70,11 +38,11 @@ workflows:
                 }
               }
             }
-            if (fs.existsSync(webDir)) fixPaths(webDir);
+            fixPaths("dist");
           '
 
-          # Create Capacitor Config
-          echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"$WEB_DIR\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
+          # Create Capacitor Config pointing to dist
+          echo "{\"appId\":\"com.mouradsville.game\",\"appName\":\"Mourads Ville\",\"webDir\":\"dist\",\"server\":{\"androidScheme\":\"https\"}}" > capacitor.config.json
 
           # Sync with Android
           npx cap add android || true
@@ -84,16 +52,6 @@ workflows:
       - name: Build Android Debug APK
         script: |
           cd android
-
-          echo "" >> app/build.gradle
-          echo "configurations.all {" >> app/build.gradle
-          echo "    resolutionStrategy {" >> app/build.gradle
-          echo "        force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'" >> app/build.gradle
-          echo "        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'" >> app/build.gradle
-          echo "        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'" >> app/build.gradle
-          echo "    }" >> app/build.gradle
-          echo "}" >> app/build.gradle
-
           chmod +x gradlew
           ./gradlew assembleDebug
 
