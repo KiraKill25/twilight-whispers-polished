@@ -299,7 +299,7 @@ export function DebateWheel({
         captainId={captainId}
         center={
           <div className="relative flex size-full items-center justify-center">
-            <svg viewBox="0 0 100 100" className="absolute size-full -rotate-90">
+            <svg viewBox="0 0 100 100" className="absolute size-full -rotate-90 z-0 pointer-events-none">
               <circle
                 cx="50"
                 cy="50"
@@ -331,8 +331,9 @@ export function DebateWheel({
                   onPointerDown={pressStart}
                   onPointerUp={pressEnd}
                   onPointerLeave={pressCancel}
+                  onTouchStart={(e) => e.preventDefault()}
                   onContextMenu={(e) => e.preventDefault()}
-                  className={`max-w-full truncate text-[10px] font-bold tracking-widest text-primary uppercase transition-transform duration-200 select-none ${
+                  className={`relative z-20 cursor-pointer pointer-events-auto touch-manipulation touch-callout-none select-none max-w-full truncate text-[10px] font-bold tracking-widest text-primary uppercase transition-transform duration-200 ${
                     namePulse ? "scale-110" : "scale-100"
                   }`}
                 >
