@@ -1,4 +1,4 @@
-workflows:
+Workflows:
   android-offline-apk:
     name: Build Offline Android APK
     max_build_duration: 60
@@ -70,7 +70,11 @@ workflows:
           npx cap add android
           npx cap sync android
 
-          # 7. Apply native styles
+          # 7. Generate and inject app icon directly from public/icon.png
+          npm install @capacitor/assets --save-dev
+          npx capacitor-assets generate --icon public/icon.png --android
+
+          # 8. Apply native styles
           cat << 'EOF' > android/app/src/main/res/values/styles.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -94,7 +98,7 @@ workflows:
           </resources>
           EOF
 
-          # 8. Fix Kotlin stdlib conflicts
+          # 9. Fix Kotlin stdlib conflicts
           cat << 'EOF' >> android/app/build.gradle
 
           configurations.all {
@@ -103,7 +107,7 @@ workflows:
           }
           EOF
 
-          # 9. Execute Gradle build
+          # 10. Execute Gradle build
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
