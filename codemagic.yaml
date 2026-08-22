@@ -7,17 +7,14 @@ workflows:
       node: 20
       java: 21
     scripts:
-      - name: Install Dependencies
+      - name: Install Node Dependencies
         script: |
           npm install
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/splash-screen
 
-      - name: Build Web Code & Add Android Native Platform
+      - name: Compile Web App
         script: |
-          # 1. Compile web bundle (Vite)
           npx vite build
-
-          # 2. Convert root paths to relative for Android WebView
           node -e '
             const fs = require("fs"), path = require("path");
             function fixPaths(dir) {
@@ -35,7 +32,9 @@ workflows:
             fixPaths("dist");
           '
 
-          # 3. Create Capacitor Configuration
+      - name: Generate Native Android Shell & Build APK
+        script: |
+          # 1. Create capacitor configuration
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.mouradsville.game",
@@ -56,11 +55,17 @@ workflows:
           }
           EOF
 
-          # 4. GENERATE THE MISSING ANDROID FOLDER & LINK CAPACITOR
+          # 2. Re-create android platform from scratch
+          rm -rf android
           npx cap add android
           npx cap sync android
 
-          # 5. Apply dark native theme
+          # 3. Create missing capacitor.settings.gradle if Capacitor skipped it
+          if [ ! -f "android/capacitor.settings.gradle" ]; then
+            echo "// Auto-generated settings" > android/capacitor.settings.gradle
+          fi
+
+          # 4. Set native theme black background
           cat << 'EOF' > android/app/src/main/res/values/styles.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -84,38 +89,8 @@ workflows:
           </resources>
           EOF
 
-      - name: Generate App Icons
-        script: |
-          ICON_PATH=""
-          if [ -f "assets/icon.png" ]; then
-            ICON_PATH="assets/icon.png"
-          elif [ -f "public/icon.png" ]; then
-            ICON_PATH="public/icon.png"
-          fi
-
-          if [ -z "$ICON_PATH" ]; then
-            echo "Error: icon.png not found in assets/ or public/!"
-            exit 1
-          fi
-
-          rm -rf android/app/src/main/res/mipmap-*
-
-          for item in "mipmap-mdpi:48" "mipmap-hdpi:72" "mipmap-xhdpi:96" "mipmap-xxhdpi:144" "mipmap-xxxhdpi:192"; do
-            folder="${item%%:*}"
-            size="${item##*:}"
-            target_dir="android/app/src/main/res/$folder"
-            mkdir -p "$target_dir"
-            
-            sips -z "$size" "$size" "$ICON_PATH" --out "$target_dir/ic_launcher.png" > /dev/null
-            sips -z "$size" "$size" "$ICON_PATH" --out "$target_dir/ic_launcher_round.png" > /dev/null
-            sips -z "$size" "$size" "$ICON_PATH" --out "$target_dir/ic_launcher_foreground.png" > /dev/null
-          done
-
-      - name: Build Android Debug APK
-        script: |
-          cd android
-
-          cat << 'EOF' >> app/build.gradle
+          # 5. Fix Kotlin stdlib conflicts inside app build.gradle
+          cat << 'EOF' >> android/app/build.gradle
 
           configurations.all {
               exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
@@ -123,6 +98,8 @@ workflows:
           }
           EOF
 
+          # 6. Execute Gradle build
+          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
