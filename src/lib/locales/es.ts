@@ -409,7 +409,8 @@ export const es: Dictionary = {
     "montreur-dours": "El oso olfatea a sus vecinos…",
     "trois-faces": "Elige una de tus tres caras: proteger, una poción o inspeccionar.",
     "voleur": "Roba el rol de un jugador: se convertirá en un simple Aldeano.",
-    "maniaque": "Elige a la víctima que nada podrá proteger."
+    "maniaque": "Elige a la víctima que nada podrá proteger.",
+    "marionnettiste": "El Titiritero recibe el ataque en lugar de la marioneta y permanece en silencio."
   },
   "teams": {
     "VILLAGEOIS": "Aldeanos",
@@ -558,6 +559,11 @@ export const es: Dictionary = {
       "name": "El Maníaco",
       "description": "Un alma caótica e independiente que no sirve ni a la aldea ni a la manada: simplemente quiere ser el último en pie.",
       "power": "Cada noche mata a un objetivo, independientemente de los lobos. Su ataque ignora cualquier protección (Guardián, poción de vida). Si es inspeccionado, aparece como un Aldeano simple. Gana si queda solo o llega al duelo final."
+    },
+    "marionnettiste": {
+      "name": "Titiritero",
+      "description": "Un maestro de la manipulación que ata hilos invisibles a otro aldeano, tomando el control de su destino desde las sombras.",
+      "power": "Designa a una marioneta: si la marioneta es objetivo de un ataque, el Titiritero recibe el golpe en su lugar y permanece en silencio."
     }
   }
 };
