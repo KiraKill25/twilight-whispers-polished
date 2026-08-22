@@ -9,7 +9,7 @@ workflows:
     scripts:
       - name: Clean build cache & dependencies
         script: |
-          rm -rf node_modules package-lock.json .vite dist .output android/app/build android/.gradle
+          rm -rf node_modules package-lock.json .vite dist .output android/app/build android/.gradle android
           npm cache clean --force
 
       - name: Install dependencies
@@ -64,12 +64,11 @@ workflows:
           }
           EOF
 
-          # 4. Sync Android platform and ensure capacitor.settings.gradle is generated
-          if [ ! -d "android" ]; then
-            npx cap add android
-          fi
+          # 4. Generate fresh Android platform shell and sync
+          rm -rf android
+          npx cap add android
           npx cap copy android
-          npx cap sync android || (npx cap add android && npx cap sync android)
+          npx cap sync android
 
           # 5. Force Android Native Theme window background to pure black (#000000)
           cat << 'EOF' > android/app/src/main/res/values/styles.xml
