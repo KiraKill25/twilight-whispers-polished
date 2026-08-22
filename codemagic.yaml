@@ -7,14 +7,27 @@ workflows:
       node: 20
       java: 21
     scripts:
-      - name: Install Node Dependencies
+      - name: Install Dependencies
         script: |
           npm install
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/splash-screen
 
-      - name: Compile Web App
+      - name: Build Web App & Generate Android APK
         script: |
-          npx vite build
+          # 1. Clean previous build folders
+          rm -rf dist android
+
+          # 2. Compile Web App explicitly to dist
+          npx vite build --outDir dist
+
+          # 3. Fail fast if dist/index.html was not created by Vite
+          if [ ! -f "dist/index.html" ]; then
+            echo "ERROR: Vite build failed! dist/index.html was not generated."
+            ls -la
+            exit 1
+          fi
+
+          # 4. Fix relative asset paths
           node -e '
             const fs = require("fs"), path = require("path");
             function fixPaths(dir) {
@@ -32,9 +45,7 @@ workflows:
             fixPaths("dist");
           '
 
-      - name: Generate Native Android Shell & Build APK
-        script: |
-          # 1. Create capacitor configuration
+          # 5. Write Capacitor Configuration
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.mouradsville.game",
@@ -55,17 +66,11 @@ workflows:
           }
           EOF
 
-          # 2. Re-create android platform from scratch
-          rm -rf android
+          # 6. Generate Android native platform with dist ready
           npx cap add android
           npx cap sync android
 
-          # 3. Create missing capacitor.settings.gradle if Capacitor skipped it
-          if [ ! -f "android/capacitor.settings.gradle" ]; then
-            echo "// Auto-generated settings" > android/capacitor.settings.gradle
-          fi
-
-          # 4. Set native theme black background
+          # 7. Apply native styles
           cat << 'EOF' > android/app/src/main/res/values/styles.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -89,7 +94,7 @@ workflows:
           </resources>
           EOF
 
-          # 5. Fix Kotlin stdlib conflicts inside app build.gradle
+          # 8. Fix Kotlin stdlib conflicts
           cat << 'EOF' >> android/app/build.gradle
 
           configurations.all {
@@ -98,7 +103,7 @@ workflows:
           }
           EOF
 
-          # 6. Execute Gradle build
+          # 9. Execute Gradle build
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
