@@ -1,6 +1,6 @@
 import type { Dictionary } from "./fr";
 
-export const nl: Dictionary = {
+export const de: Dictionary = {
   ui: {
     seatingTitle: "Zitopstelling",
     seatingHint: "Sleep een speler op een andere om van plaats te wisselen. De volgorde in de cirkel bepaalt de buren.",
@@ -552,7 +552,7 @@ export const nl: Dictionary = {
       name: "Herbergier",
       description: "Zijn wijn vertroebelt de geest: wie drinkt is onkwetsbaar, maar wordt niet gehoord.",
       power:
-        "Biedt een speler een drankje aan: de volgende dag is deze immuun voor de dorpsstemming, maar kan zelf niet stemmen.",
+        "Biedt een speler een drankje aan: de volgende day is deze immuun voor de dorpsstemming, maar kan zelf niet stemmen.",
     },
     corbeau: {
       name: "Raaf",
