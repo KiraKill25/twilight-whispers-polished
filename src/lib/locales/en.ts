@@ -157,20 +157,20 @@ export const en: Dictionary = {
     captainRevoteOneVote: "Revote: the captain only has ONE vote.",
     captainOpening: "Opening speech",
     captainClosing: "Closing speech",
-    captainSplitTitle: "Captain \u2014 2 vote points",
+    captainSplitTitle: "Captain — 2 vote points",
     captainVoteBoth: "Both points on one player",
     captainVoteSplit: "Split: 1 point + 1 point",
     captainSplitPickA: "First point",
     captainSplitPickB: "Second point",
     captainSplitConfirm: "Confirm captain vote",
     splitBadge: "Split vote",
-    auditSplitLine: "{voter} \u2794 split: {target} + {target2}",
-    auditDoubleLine: "{voter} \u2794 {target} \u00d72",
+    auditSplitLine: "{voter} ➔ split: {target} + {target2}",
+    auditDoubleLine: "{voter} ➔ {target} ×2",
     revoteTiedExcluded: "Tied players cannot vote in this revote.",
     doubleElimAnnounce: "Second consecutive tie: both tied players are eliminated.",
     evalTitle: "Match evaluation",
-    evalMvp: "MVP \u2014 best player",
-    evalLvp: "LVP \u2014 weakest player",
+    evalMvp: "MVP — best player",
+    evalLvp: "LVP — weakest player",
     evalFactions: "Faction performance",
     evalScorecards: "Player scorecards",
     evalAccuracy: "Vote accuracy",
@@ -327,7 +327,6 @@ export const en: Dictionary = {
     statusDead: "Dead",
     statusContaminated: "Contaminated",
 
-    // Post-game recap card
     recapVictoryWolves: "Werewolves Victory",
     recapVictoryVillage: "Villagers Victory",
     recapVictoryLovers: "Lovers Victory",
@@ -447,6 +446,7 @@ export const en: Dictionary = {
     "trois-faces": "Choose one of your three faces: protect, a potion, or inspect.",
     voleur: "Steal a player's role: they become a plain Villager.",
     maniaque: "Pick the victim nothing can protect.",
+    marionnettiste: "The Puppeteer takes the attack in place of the puppet and stays silent.",
   },
   teams: {
     VILLAGEOIS: "Village",
@@ -639,6 +639,13 @@ export const en: Dictionary = {
         "A chaotic, independent soul serving neither village nor pack: he simply wants to be the last one standing.",
       power:
         "Every night he kills a target, independently of the wolves. His attack bypasses every protection (Guardian, life potion). If inspected, he reads as a plain Villager. He wins if he stands alone or reaches the final duel.",
+    },
+    marionnettiste: {
+      name: "Puppeteer",
+      description:
+        "A master manipulator who attaches invisible strings to another villager, taking control of their destiny from the shadows.",
+      power:
+        "Designates a puppet: if the puppet is targeted by an attack, the Puppeteer takes the blow instead and remains silent.",
     },
   },
 };
