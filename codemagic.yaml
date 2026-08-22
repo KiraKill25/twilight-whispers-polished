@@ -1,4 +1,4 @@
-Workflows:
+workflows:
   android-offline-apk:
     name: Build Offline Android APK
     max_build_duration: 60
