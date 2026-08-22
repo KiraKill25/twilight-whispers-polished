@@ -64,12 +64,12 @@ workflows:
           }
           EOF
 
-          # 4. Sync Android platform
+          # 4. Sync Android platform and ensure capacitor.settings.gradle is generated
           if [ ! -d "android" ]; then
             npx cap add android
           fi
           npx cap copy android
-          npx cap sync android
+          npx cap sync android || (npx cap add android && npx cap sync android)
 
           # 5. Force Android Native Theme window background to pure black (#000000)
           cat << 'EOF' > android/app/src/main/res/values/styles.xml
