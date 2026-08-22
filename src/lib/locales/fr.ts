@@ -484,6 +484,7 @@ export const fr = {
     "trois-faces": "Choisis l'un de tes trois visages : protéger, une potion, ou inspecter.",
     voleur: "Vole le rôle d'un joueur : il devient Simple Villageois.",
     maniaque: "Désigne la victime que rien ne peut protéger.",
+    marionnettiste: "Le Marionnettiste subit l'attaque à la place de sa marionnette et reste muet.",
   } as Record<string, string>,
   teams: {
     VILLAGEOIS: "Village",
