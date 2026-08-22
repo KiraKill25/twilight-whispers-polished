@@ -7,22 +7,17 @@ workflows:
       node: 20
       java: 21
     scripts:
-      - name: Clean build cache & dependencies
-        script: |
-          rm -rf node_modules package-lock.json .vite dist .output android
-          npm cache clean --force
-
-      - name: Install dependencies with Capacitor packages
+      - name: Install Dependencies
         script: |
           npm install
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/splash-screen
 
-      - name: Build Web Assets & Configure Capacitor
+      - name: Build Web Code & Add Android Native Platform
         script: |
-          # 1. Execute Vite build
+          # 1. Compile web bundle (Vite)
           npx vite build
 
-          # 2. Fix relative asset paths for Android WebView
+          # 2. Convert root paths to relative for Android WebView
           node -e '
             const fs = require("fs"), path = require("path");
             function fixPaths(dir) {
@@ -40,7 +35,7 @@ workflows:
             fixPaths("dist");
           '
 
-          # 3. Configure Capacitor with dark splash theme settings
+          # 3. Create Capacitor Configuration
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.mouradsville.game",
@@ -61,12 +56,11 @@ workflows:
           }
           EOF
 
-          # 4. Clean recreate android shell and sync native bridge
-          rm -rf android
+          # 4. GENERATE THE MISSING ANDROID FOLDER & LINK CAPACITOR
           npx cap add android
           npx cap sync android
 
-          # 5. Force Android Native Theme window background to pure black (#000000)
+          # 5. Apply dark native theme
           cat << 'EOF' > android/app/src/main/res/values/styles.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -90,7 +84,7 @@ workflows:
           </resources>
           EOF
 
-      - name: Generate Android App Icons Natively
+      - name: Generate App Icons
         script: |
           ICON_PATH=""
           if [ -f "assets/icon.png" ]; then
