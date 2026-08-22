@@ -409,7 +409,8 @@ export const pt: Dictionary = {
     "montreur-dours": "O urso fareja seus vizinhos…",
     "trois-faces": "Escolha uma de suas três faces: proteger, uma poção ou inspecionar.",
     "voleur": "Roube o papel de um jogador: ele se torna um simples Aldeão.",
-    "maniaque": "Escolha a vítima que nada pode proteger."
+    "maniaque": "Escolha a vítima que nada pode proteger.",
+    "marionnettiste": "O Titiritero recebe o ataque em vez do fantoche e permanece em silêncio."
   },
   "teams": {
     "VILLAGEOIS": "Aldeia",
@@ -558,6 +559,11 @@ export const pt: Dictionary = {
       "name": "O Maníaco",
       "description": "Uma alma caótica e independente que não serve nem à aldeia nem à alcateia: ele simplesmente quer ser o último sobrevivente.",
       "power": "Todas as noites ele mata um alvo, independentemente dos lobos. Seu ataque ignora qualquer proteção (Guardião, poção da vida). Se inspecionado, ele aparece como um Aldeão comum. Ele vence se ficar sozinho ou chegar ao duelo final."
+    },
+    "marionnettiste": {
+      "name": "Titiritero",
+      "description": "Um mestre da manipulação que amarra fios invisíveis a outro aldeão, assumindo o controle do seu destino a partir das sombras.",
+      "power": "Designa um fantoche: se o fantoche for alvo de um ataque, o Titiritero recebe o golpe em seu lugar e permanece em silêncio."
     }
   }
 };
