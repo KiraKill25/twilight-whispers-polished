@@ -77,15 +77,16 @@ export interface Player {
   roleModelId?: string;
   copiedRoleId?: string;
   deathCause?: DeathCause;
-  /** Interdit de débattre le matin suivant (pouvoir du Loup Noir). */
+  /** Interdit de débattre le matin suivant (pouvoir du Loup Noir ou Marionnettiste). */
   mutedForDay?: boolean;
   /** Salvateur : Bouclier Ultime consommé (protection définitivement perdue). */
   ultimateShieldUsed?: boolean;
+  /** Marionnettiste : Le pantin est actif et absorbe la première attaque de loup. */
+  hasPuppetShield?: boolean;
   /** 3 faces : pouvoirs déjà utilisés ("protect" | "potion" | "inspect"). */
   facesUsed?: string[];
   /** Étoiles attribuées par le meneur pendant les débats. */
   stars: number;
-
 }
 
 export interface Step {
@@ -124,7 +125,7 @@ export interface RoundState {
   drinkTargetId?: string;
   requiredWord?: string;
   bearGrowls?: boolean;
-  /** Joueur réduit au silence par le Loup Noir pour le débat du matin. */
+  /** Joueur réduit au silence par le Loup Noir ou Marionnettiste pour le débat du matin. */
   mutedId?: string;
   /** Cible muselée la nuit précédente (interdite deux nuits de suite). */
   previousMutedId?: string;
@@ -218,6 +219,7 @@ export function createGame(
     retainsOriginalPowers: true,
     hasUsedLifePotion: false,
     hasUsedDeathPotion: false,
+    hasPuppetShield: p.roleId === "marionnettiste",
     stars: 0,
   }));
 
@@ -410,7 +412,6 @@ export function buildNightSteps(s: GameState): Step[] {
     }
   }
 
-
   // Secret : la Sorcière est appelée chaque nuit tant qu'elle est vivante,
   // même si ses deux potions sont épuisées.
   push("sorciere", "Sorcière", "Utilise tes potions.", "witch", true);
@@ -530,6 +531,9 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     case "mime": {
       if (target) {
         actor.copiedRoleId = target.roleId;
+        if (target.roleId === "marionnettiste") {
+          actor.hasPuppetShield = true;
+        }
         s.reveal = nk("mimeCopy", { role: nrole(target.roleId) });
       }
       break;
@@ -579,9 +583,11 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         actor.copiedRoleId = undefined;
         actor.team = target.team;
         actor.lives = stolen === "ancien" ? 2 : actor.lives;
+        actor.hasPuppetShield = stolen === "marionnettiste";
         target.roleId = "simple-villageois";
         target.copiedRoleId = undefined;
         target.team = "VILLAGEOIS";
+        target.hasPuppetShield = false;
         s.reveal = nk("thiefSteal", { name: target.name, role: nrole(stolen) });
         s.log.push(nk("logThiefSteal", { name: target.name, role: nrole(stolen) }));
         rep(
@@ -1069,6 +1075,30 @@ function resolveNight(state: GameState): GameState {
       });
   }
 
+  // Interception de l'attaque des loups par le bouclier du Marionnettiste
+  if (s.round.attackedId) {
+    const victim = s.players.find((p) => p.id === s.round.attackedId);
+    if (victim && effectiveRoleId(victim) === "marionnettiste" && victim.hasPuppetShield) {
+      victim.hasPuppetShield = false;
+      victim.mutedForDay = true;
+      s.round.attackedId = undefined;
+
+      s.dawnSummary.push(
+        `${victim.name} a été attaqué(e), mais son pantin a absorbé le coup ! Il/Elle survit, mais est réduit(e) au silence pour le débat du jour.`
+      );
+
+      rep(s, `${victim.name} (Marionnettiste) a absorbé l'attaque grâce à son pantin et est réduit(e) au silence.`);
+
+      pushEvent(s, {
+        round: s.night,
+        phase: "NIGHT",
+        type: "RESCUE",
+        name: victim.name,
+        bySavior: "marionnettiste",
+      });
+    }
+  }
+
   const aliveBefore = new Set(s.players.filter((p) => p.alive).map((p) => p.id));
   // Le Maniaque ignore toutes les protections : sa cible meurt dans tous les cas.
   if (s.round.maniacKillId) killPlayer(s, s.round.maniacKillId, "MANIAC");
@@ -1086,9 +1116,13 @@ function resolveNight(state: GameState): GameState {
 
   // Le mot du Loup Bavard est imposé pendant la nuit (dès la nuit 2).
 
-  // Silence imposé par le Loup Noir
+  // Silence imposé par le Loup Noir ou Marionnettiste
   s.players.forEach((p) => {
-    p.mutedForDay = false;
+    if (!p.hasPuppetShield && effectiveRoleId(p) === "marionnettiste") {
+      // Retient le statut réduit au silence s'il a perdu son pantin cette nuit
+    } else {
+      p.mutedForDay = false;
+    }
   });
   if (s.round.mutedId) {
     const muted = s.players.find((p) => p.id === s.round.mutedId);
