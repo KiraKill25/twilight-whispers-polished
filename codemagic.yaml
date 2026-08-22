@@ -70,7 +70,12 @@ workflows:
           npx cap copy android
           npx cap sync android
 
-          # 5. Force Android Native Theme window background to pure black (#000000)
+          # 5. Safeguard: Ensure capacitor.settings.gradle exists
+          if [ ! -f "android/capacitor.settings.gradle" ]; then
+            echo "// Auto-generated dummy settings file for Capacitor" > android/capacitor.settings.gradle
+          fi
+
+          # 6. Force Android Native Theme window background to pure black (#000000)
           cat << 'EOF' > android/app/src/main/res/values/styles.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -124,6 +129,11 @@ workflows:
       - name: Build Android Debug APK
         script: |
           cd android
+
+          # Double check file existence right before gradlew build
+          if [ ! -f "capacitor.settings.gradle" ]; then
+            echo "// Auto-generated dummy settings file for Capacitor" > capacitor.settings.gradle
+          fi
 
           cat << 'EOF' >> app/build.gradle
 
