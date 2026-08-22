@@ -333,6 +333,17 @@ export const ROLES: RoleDef[] = [
     order: 46,
     hasNightAction: true,
   },
+  {
+    id: "marionnettiste",
+    name: "Le Marionnettiste",
+    team: "VILLAGEOIS",
+    description:
+      "Sa marionnette est son bouclier. Si les loups l'attaquent, la poupée prend le coup à sa place, mais le choc le laisse muet.",
+    power:
+      "La première attaque des loups-garous sur lui échoue et détruit sa marionnette. Il survit mais ne peut plus communiquer que par gestes pour le reste de la partie. Une seconde attaque le tue normalement.",
+    order: 0,
+    hasNightAction: false,
+  },
 ];
 
 // Association automatique fichier vidéo ↔ rôle (par identifiant)
