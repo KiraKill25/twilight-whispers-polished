@@ -178,6 +178,17 @@ export const ROLES: RoleDef[] = [
     hasNightAction: false,
   },
   {
+    id: "marionnettiste",
+    name: "Le Marionnettiste",
+    team: "VILLAGEOIS",
+    description:
+      "Maître des fils, il place sa marionnette sur un joueur pour le protéger. Si les loups l'attaquent, la poupée absorbe le coup et est détruite, laissant le Marionnettiste muet.",
+    power:
+      "Chaque nuit (tant que sa marionnette est intacte), il désigne un joueur à protéger. Si la cible est attaquée par les loups, la marionnette est détruite et le Marionnettiste devient définitivement muet.",
+    order: 29,
+    hasNightAction: true,
+  },
+  {
     id: "salvateur",
     name: "Salvateur",
     team: "VILLAGEOIS",
@@ -331,17 +342,6 @@ export const ROLES: RoleDef[] = [
       "Chaque nuit, il tue une cible indépendamment des loups. Son attaque ignore toute protection (Salvateur, potion de vie). Inspecté, il apparaît comme Simple Villageois. Il gagne s'il reste seul ou en duel final.",
     order: 46,
     hasNightAction: true,
-  },
-  {
-    id: "marionnettiste",
-    name: "Le Marionnettiste",
-    team: "VILLAGEOIS",
-    description:
-      "Sa marionnette est son bouclier. Si les loups l'attaquent, la poupée prend le coup à sa place, mais le choc le laisse muet.",
-    power:
-      "La première attaque des loups-garous sur lui échoue et détruit sa marionnette. Il survit mais ne peut plus communiquer que par gestes pour le reste de la partie. Une seconde attaque le tue normalement.",
-    order: 0,
-    hasNightAction: false,
   },
 ];
 
