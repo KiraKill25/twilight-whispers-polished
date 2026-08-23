@@ -23,7 +23,6 @@ export function roleVideo(id: string): string | undefined {
   return `/videos/roles/${id}.mp4`;
 }
 
-
 export const ROLES: RoleDef[] = [
   {
     id: "loup-garou",
@@ -351,8 +350,6 @@ for (const role of ROLES) {
   const url = roleVideo(role.id);
   if (url) role.videoUrl = url;
 }
-
-
 
 export const ROLE_BY_ID: Record<string, RoleDef> = Object.fromEntries(
   ROLES.map((r) => [r.id, r]),
