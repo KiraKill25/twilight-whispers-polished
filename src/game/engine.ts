@@ -312,7 +312,7 @@ export function buildNightSteps(s: GameState): Step[] {
   push(
     "loup-garou",
     "Les Loups-Garous",
-    "La meute désigne sa victime. En cas de désaccord, la Matriarche tranchera seule.",
+    "La meute désigne sa victime. En cas de désaccord, la Matriarche tranche seule.",
     "wolves",
   );
 
@@ -1075,19 +1075,22 @@ function resolveNight(state: GameState): GameState {
       });
   }
 
-  // Interception de l'attaque des loups par le bouclier du Marionnettiste
-  if (s.round.attackedId) {
-    const victim = s.players.find((p) => p.id === s.round.attackedId);
+  // Interception des attaques de loups par le bouclier du Marionnettiste
+  const processPuppetShield = (targetId?: string): boolean => {
+    if (!targetId) return false;
+    const victim = s.players.find((p) => p.id === targetId && p.alive);
     if (victim && effectiveRoleId(victim) === "marionnettiste" && victim.hasPuppetShield) {
       victim.hasPuppetShield = false;
       victim.mutedForDay = true;
-      s.round.attackedId = undefined;
 
       s.dawnSummary.push(
-        `${victim.name} a été attaqué(e), mais son pantin a absorbé le coup ! Il/Elle survit, mais est réduit(e) au silence pour le débat du jour.`
+        `${victim.name} a été attaqué(e), mais son pantin a absorbé le coup ! Il/Elle survit, mais ne peut plus communiquer que par gestes.`
       );
 
-      rep(s, `${victim.name} (Marionnettiste) a absorbé l'attaque grâce à son pantin et est réduit(e) au silence.`);
+      rep(
+        s,
+        `${victim.name} (Marionnettiste) a absorbé l'attaque grâce à son pantin et est désormais réduit(e) au silence.`
+      );
 
       pushEvent(s, {
         round: s.night,
@@ -1096,7 +1099,16 @@ function resolveNight(state: GameState): GameState {
         name: victim.name,
         bySavior: "marionnettiste",
       });
+      return true;
     }
+    return false;
+  };
+
+  if (s.round.attackedId && processPuppetShield(s.round.attackedId)) {
+    s.round.attackedId = undefined;
+  }
+  if (s.round.whiteWolfKillId && processPuppetShield(s.round.whiteWolfKillId)) {
+    s.round.whiteWolfKillId = undefined;
   }
 
   const aliveBefore = new Set(s.players.filter((p) => p.alive).map((p) => p.id));
@@ -1116,14 +1128,15 @@ function resolveNight(state: GameState): GameState {
 
   // Le mot du Loup Bavard est imposé pendant la nuit (dès la nuit 2).
 
-  // Silence imposé par le Loup Noir ou Marionnettiste
+  // Persistence du silence (Marionnettiste ayant perdu son bouclier ou Loup Noir)
   s.players.forEach((p) => {
     if (!p.hasPuppetShield && effectiveRoleId(p) === "marionnettiste") {
-      // Retient le statut réduit au silence s'il a perdu son pantin cette nuit
+      p.mutedForDay = true;
     } else {
       p.mutedForDay = false;
     }
   });
+
   if (s.round.mutedId) {
     const muted = s.players.find((p) => p.id === s.round.mutedId);
     if (muted && muted.alive) {
