@@ -77,8 +77,10 @@ export interface Player {
   roleModelId?: string;
   copiedRoleId?: string;
   deathCause?: DeathCause;
-  /** Interdit de débattre le matin suivant (pouvoir du Loup Noir ou Marionnettiste). */
+  /** Interdit de débattre le matin suivant (pouvoir du Loup Noir). */
   mutedForDay?: boolean;
+  /** Marionnettiste : garde son tour de parole mais restreint aux signes et gestes. */
+  signLanguageMute?: boolean;
   /** Salvateur : Bouclier Ultime consommé (protection définitivement perdue). */
   ultimateShieldUsed?: boolean;
   /** Marionnettiste : Le joueur désigné porte la marionnette cette nuit. */
@@ -125,7 +127,7 @@ export interface RoundState {
   drinkTargetId?: string;
   requiredWord?: string;
   bearGrowls?: boolean;
-  /** Joueur réduit au silence par le Loup Noir ou Marionnettiste pour le débat du matin. */
+  /** Joueur réduit au silence par le Loup Noir pour le débat du matin. */
   mutedId?: string;
   /** Cible muselée la nuit précédente (interdite deux nuits de suite). */
   previousMutedId?: string;
@@ -1084,10 +1086,10 @@ function resolveNight(state: GameState): GameState {
         } else {
           // Cas 2 : L'attaque est redirigée vers le porteur de la marionnette (qui meurt à la place)
           s.round.attackedId = puppetPlayer.id; // Redirection de la mort vers le porteur
-          attackedPlayer.mutedForDay = true;     // Le Marionnettiste devient muet
+          attackedPlayer.signLanguageMute = true; // Le Marionnettiste garde son temps de parole mais s'exprime uniquement par signes
 
           s.dawnSummary.push(
-            `Les loups ont attaqué le Marionnettiste ! La marionnette portée par ${puppetPlayer.name} a absorbé le coup et a péri à sa place. Le Marionnettiste est désormais muet.`,
+            `Les loups ont attaqué le Marionnettiste ! La marionnette portée par ${puppetPlayer.name} a absorbé le coup et a péri à sa place. Le Marionnettiste ne peut plus s'exprimer qu'par gestes et signes.`,
           );
           rep(
             s,
@@ -1103,7 +1105,6 @@ function resolveNight(state: GameState): GameState {
         }
       } else {
         // Cas 3 : Plus de marionnette active (déjà détruite ou absente), le Marionnettiste prend l'attaque et meurt normalement.
-        // s.round.attackedId reste le Marionnettiste, killPlayer s'en chargera.
       }
     }
   }
@@ -1121,10 +1122,10 @@ function resolveNight(state: GameState): GameState {
     s.dawnSummary.push(nk("bearNear"));
   }
 
-  // Silence permanent pour le Marionnettiste dont la marionnette a été détruite
+  // Silence par signes permanent pour le Marionnettiste dont la marionnette a été détruite
   s.players.forEach((p) => {
     if (p.alive && effectiveRoleId(p) === "marionnettiste" && p.abilityUsed) {
-      p.mutedForDay = true;
+      p.signLanguageMute = true;
     }
   });
 
@@ -1171,6 +1172,9 @@ function resolveNight(state: GameState): GameState {
   s.players
     .filter((p) => p.alive && p.mutedForDay)
     .forEach((p) => rep(s, nk("repMuted", { name: p.name })));
+  s.players
+    .filter((p) => p.alive && p.signLanguageMute)
+    .forEach((p) => rep(s, `${p.name} conserve son temps de parole mais ne peut s'exprimer que par signes.`));
   if (deaths.length === 0) rep(s, nk("repNoDeaths"));
 
   if (s.dawnSummary.length === 0) s.dawnSummary.push(nk("nobodyDied"));
