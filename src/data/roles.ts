@@ -182,9 +182,9 @@ export const ROLES: RoleDef[] = [
     name: "Le Marionnettiste",
     team: "VILLAGEOIS",
     description:
-      "Maître des fils, il place sa marionnette sur un joueur pour le protéger. Si les loups l'attaquent, la poupée absorbe le coup et est détruite, laissant le Marionnettiste muet.",
+      "Artisan des ombres, il fabrique une marionnette bouclier lors de la 2ème nuit pour encaisser une attaque mortelle de loups-garous à sa place.",
     power:
-      "Chaque nuit (tant que sa marionnette est intacte), il désigne un joueur à protéger. Si la cible est attaquée par les loups, la marionnette est détruite et le Marionnettiste devient définitivement muet.",
+      "Il s'éveille uniquement à la Nuit 2 pour équiper sa marionnette. S'il est attaqué par les loups, sa poupée absorbe le coup : il survit, mais le choc le rend définitivement muet.",
     order: 29,
     hasNightAction: true,
   },
