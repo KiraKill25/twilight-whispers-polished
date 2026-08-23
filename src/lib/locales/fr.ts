@@ -284,7 +284,7 @@ export const fr = {
     badgeOscar: "Oscar du Meilleur Acteur",
     badgeOscarDesc: "Loup ayant fait éliminer le plus de villageois.",
     badgeGuardian: "Ange Gardien",
-    badgeGuardianDesc: "Le plus de vies sauvées.",
+    badgeGuardianDesc: "Le plus de lives sauvées.",
     badgeBandwagoner: "Le Mouton",
     badgeBandwagonerDesc: "Toujours dans la majorité, jamais à l'initiative.",
     badgeBlindSniper: "Tireur Aveugle",
@@ -376,6 +376,7 @@ export const fr = {
     causeGeneralFailed: "Le Général a échoué",
     causeManiac: "Assassiné par le Maniaque",
     causeThreeFacesPoison: "Empoisonné par 3 faces",
+    causePuppetProtection: "Interception mortelle — s'est sacrifié pour sa marionnette",
 
     // Rapport nocturne du Maître du Jeu
     nightReportTitle: "Rapport de la nuit {n}",
@@ -397,9 +398,11 @@ export const fr = {
     facesNoPowerLeft: "Les trois visages ont déjà été utilisés.",
     facesRemaining: "Pouvoirs restants : {n}",
 
-    // Voleur & Maniaque
+    // Voleur, Maniaque & Marionnettiste
     thiefPickTarget: "Choisis le joueur dont tu voles le rôle",
     maniacPickTarget: "Choisis ta victime (aucune protection ne l'arrête)",
+    marionnettistePickTarget: "Choisis le joueur qui sera ta marionnette",
+    marionnetteTag: " (Marionnette)",
 
     ultimateShield: "Bouclier Ultime",
     ultimateShieldDesc: "Protège tout le village des loups et des contaminations pour cette nuit. Utilisable une seule fois.",
@@ -454,7 +457,6 @@ export const fr = {
     guideStep6Body:
       "À la victoire, la carte d'évaluation classe les joueurs : précision des votes, efficacité du rôle, étoiles gagnées, blasons et titres d'honneur du village.",
 
-
     // Orientation
     rotateTitle: "Tourne ton téléphone",
     rotateText:
@@ -484,7 +486,7 @@ export const fr = {
     "trois-faces": "Choisis l'un de tes trois visages : protéger, une potion, ou inspecter.",
     voleur: "Vole le rôle d'un joueur : il devient Simple Villageois.",
     maniaque: "Désigne la victime que rien ne peut protéger.",
-    marionnettiste: "Le Marionnettiste subit l'attaque à la place de sa marionnette et reste muet.",
+    marionnettiste: "Désigne ta marionnette. Si elle est attaquée, tu subiras les dégâts à sa place et deviendras muet pendant le débat.",
   } as Record<string, string>,
   teams: {
     VILLAGEOIS: "Village",
@@ -493,8 +495,13 @@ export const fr = {
     LOVERS: "Amoureux",
     DYNAMIC: "Dynamique",
   } as Record<string, string>,
-  /** Les rôles français viennent directement de src/data/roles.ts. */
-  roles: {} as Record<string, { name: string; description: string; power: string }>,
+  roles: {
+    marionnettiste: {
+      name: "Marionnettiste",
+      description: "Vous liez votre destinée à une marionnette. Si elle subit une attaque nocturne, vous vous interposez pour recevoir les dégâts à sa place et vous perdez l'usage de la parole pendant le débat du matin.",
+      power: "Choisis une marionnette. Intercepte toute attaque ciblant la marionnette en devenant muet et en encaissant les blessures."
+    }
+  } as Record<string, { name: string; description: string; power: string }>,
 };
 
 export type UiKey = keyof typeof fr.ui;
