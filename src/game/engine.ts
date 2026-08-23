@@ -81,7 +81,7 @@ export interface Player {
   mutedForDay?: boolean;
   /** Salvateur : Bouclier Ultime consommé (protection définitivement perdue). */
   ultimateShieldUsed?: boolean;
-  /** Marionnettiste : Le pantin est actif et absorbe la première attaque de loup. */
+  /** Marionnettiste : Le joueur désigné porte la marionnette cette nuit. */
   hasPuppetShield?: boolean;
   /** 3 faces : pouvoirs déjà utilisés ("protect" | "potion" | "inspect"). */
   facesUsed?: string[];
@@ -219,7 +219,7 @@ export function createGame(
     retainsOriginalPowers: true,
     hasUsedLifePotion: false,
     hasUsedDeathPotion: false,
-    hasPuppetShield: p.roleId === "marionnettiste",
+    hasPuppetShield: false,
     stars: 0,
   }));
 
@@ -295,6 +295,15 @@ export function buildNightSteps(s: GameState): Step[] {
   if (!first) push("geolier", "Geôlier", "Qui séquestres-tu cette nuit ?", "one");
   // Voyante : n'agit qu'à partir de la nuit 2.
   if (!first) push("voyante", "Voyante", "Quel joueur veux-tu sonder ?", "one");
+
+  // Marionnettiste : s'éveille chaque nuit tant que sa marionnette n'est pas détruite.
+  {
+    const puppeteer = hasRole(s, "marionnettiste");
+    if (puppeteer && !puppeteer.abilityUsed && !puppeteer.powersDisabled) {
+      push("marionnettiste", "Le Marionnettiste", "Sur qui places-tu ta marionnette cette nuit ?", "one");
+    }
+  }
+
   {
     const savior = hasRole(s, "salvateur");
     // Le Bouclier Ultime consomme définitivement les pouvoirs du Salvateur.
@@ -317,7 +326,6 @@ export function buildNightSteps(s: GameState): Step[] {
   );
 
   // Hiérarchie de la mise à mort : un seul loup exécute le kill de la nuit.
-  // Loup-Garou > Loup Noir > Loup Blanc > Loup Bavard > Loup Matriarche.
   const packStepExists = steps.some((st) => st.mode === "wolves");
   const KILL_PRIORITY = ["loup-noir", "loup-blanc", "loup-bavard", "loup-matriarche"];
   const killerRoleId = packStepExists
@@ -355,8 +363,7 @@ export function buildNightSteps(s: GameState): Step[] {
       });
     }
   }
-  // Loup Blanc : s'il est désigné pour tuer, chaque nuit, avec une liste de
-  // cibles contenant TOUS les survivants (loups compris). Sinon nuits paires.
+  // Loup Blanc
   if (killerRoleId === "loup-blanc") {
     const white = hasRole(s, "loup-blanc");
     if (white && !white.powersDisabled) {
@@ -394,8 +401,7 @@ export function buildNightSteps(s: GameState): Step[] {
       });
     }
   }
-  // Loup Matriarche : si elle est la dernière louve, elle tue elle-même
-  // (pouvoirs conservés). Sinon elle garde son autorité d'arbitrage.
+  // Loup Matriarche
   if (killerRoleId === "loup-matriarche") {
     const matri = hasRole(s, "loup-matriarche");
     if (matri && !matri.powersDisabled) {
@@ -412,8 +418,6 @@ export function buildNightSteps(s: GameState): Step[] {
     }
   }
 
-  // Secret : la Sorcière est appelée chaque nuit tant qu'elle est vivante,
-  // même si ses deux potions sont épuisées.
   push("sorciere", "Sorcière", "Utilise tes potions.", "witch", true);
   // 3 faces : 3 pouvoirs, chacun une seule fois sur toute la partie.
   {
@@ -514,6 +518,16 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
   s.reveal = undefined;
 
   switch (step.roleId) {
+    case "marionnettiste": {
+      if (target) {
+        s.players.forEach((p) => (p.hasPuppetShield = false));
+        target.hasPuppetShield = true;
+        s.reveal = `La marionnette veille sur ${target.name} cette nuit.`;
+        s.log.push(`Le Marionnettiste place sa marionnette sur ${target.name}.`);
+        rep(s, `Le Marionnettiste a placé sa marionnette sur ${target.name}.`);
+      }
+      break;
+    }
     case "cupidon": {
       const [a, b] = (payload.targetIds ?? []).map((id) => s.players.find((p) => p.id === id));
       if (a && b) {
@@ -531,9 +545,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     case "mime": {
       if (target) {
         actor.copiedRoleId = target.roleId;
-        if (target.roleId === "marionnettiste") {
-          actor.hasPuppetShield = true;
-        }
         s.reveal = nk("mimeCopy", { role: nrole(target.roleId) });
       }
       break;
@@ -561,8 +572,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     }
     case "voyante": {
       if (target) {
-        // La Voyante ne voit que le rôle d'origine (jamais la conversion).
-        // Le Maniaque apparaît toujours comme un Simple Villageois.
         const seenId = seenRoleId(target);
         s.reveal = nk("seerSees", { name: target.name, role: nrole(seenId) });
         rep(
@@ -583,7 +592,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         actor.copiedRoleId = undefined;
         actor.team = target.team;
         actor.lives = stolen === "ancien" ? 2 : actor.lives;
-        actor.hasPuppetShield = stolen === "marionnettiste";
         target.roleId = "simple-villageois";
         target.copiedRoleId = undefined;
         target.team = "VILLAGEOIS";
@@ -703,7 +711,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           !p.powersDisabled,
       );
       if (payload.disagreement && matriarch) {
-        // La meute se rendort : la Matriarche tranche seule.
         s.round.wolvesDisagreed = true;
         s.round.attackedId = undefined;
         s.steps = [
@@ -746,7 +753,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     }
 
     case "loup-noir": {
-      // Solo kill: Loup Noir désigne lui-même sa victime dans son étape combinée.
       if (payload.targetId && !s.round.attackedId) {
         s.round.attackedId = payload.targetId;
         const soloVictim = s.players.find((p) => p.id === payload.targetId);
@@ -760,7 +766,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         !!s.round.attackedId &&
         (s.round.villageShield || s.round.attackedId === s.round.protectedId);
       if (infectionBlocked) {
-        // Le Salvateur bloque la contamination sans consommer le pouvoir du Loup Noir.
         notes.push(nk("infectBlocked"));
         s.log.push(nk("logInfectBlocked"));
       }
@@ -784,7 +789,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           roleId: victim.originalRoleId,
         });
       }
-      // Silence : à partir de la nuit 2, jamais la même cible deux nuits de suite.
       if (payload.muteId && s.night >= 2 && payload.muteId !== s.round.previousMutedId) {
         const muted = s.players.find((p) => p.id === payload.muteId);
         if (muted) {
@@ -966,7 +970,7 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
     cause,
   });
 
-  // Capitaine : il désigne lui-même son successeur (pas de nouveau vote).
+  // Capitaine
   if (p.isCaptain) {
     p.isCaptain = false;
     s.villageCaptainId = undefined;
@@ -995,8 +999,6 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
       x.team = "WEREWOLVES";
       s.dawnSummary.push(nk("wildAwaken", { name: x.name }));
     });
-
-  // Général : son poids de vote reste de 1, aucune succession de poids.
 
   // Amoureux
   if (p.isLover) {
@@ -1075,21 +1077,30 @@ function resolveNight(state: GameState): GameState {
       });
   }
 
-  // Interception des attaques de loups par le bouclier du Marionnettiste
+  // Interception des attaques de loups par la marionnette du Marionnettiste
   const processPuppetShield = (targetId?: string): boolean => {
     if (!targetId) return false;
     const victim = s.players.find((p) => p.id === targetId && p.alive);
-    if (victim && effectiveRoleId(victim) === "marionnettiste" && victim.hasPuppetShield) {
+    if (victim && victim.hasPuppetShield) {
       victim.hasPuppetShield = false;
-      victim.mutedForDay = true;
+
+      const puppeteer = s.players.find(
+        (p) => p.alive && effectiveRoleId(p) === "marionnettiste",
+      );
+      if (puppeteer) {
+        puppeteer.abilityUsed = true;
+        puppeteer.mutedForDay = true;
+      } else {
+        victim.mutedForDay = true;
+      }
 
       s.dawnSummary.push(
-        `${victim.name} a été attaqué(e), mais son pantin a absorbé le coup ! Il/Elle survit, mais ne peut plus communiquer que par gestes.`
+        `${victim.name} a été attaqué(e), mais la marionnette a absorbé le coup ! Il/Elle survit, mais le Marionnettiste ne peut plus parler.`,
       );
 
       rep(
         s,
-        `${victim.name} (Marionnettiste) a absorbé l'attaque grâce à son pantin et est désormais réduit(e) au silence.`
+        `La marionnette protégeant ${victim.name} a été détruite en absorbant l'attaque.`,
       );
 
       pushEvent(s, {
@@ -1112,7 +1123,6 @@ function resolveNight(state: GameState): GameState {
   }
 
   const aliveBefore = new Set(s.players.filter((p) => p.alive).map((p) => p.id));
-  // Le Maniaque ignore toutes les protections : sa cible meurt dans tous les cas.
   if (s.round.maniacKillId) killPlayer(s, s.round.maniacKillId, "MANIAC");
   if (s.round.attackedId) killPlayer(s, s.round.attackedId, "WOLVES");
   if (s.round.whiteWolfKillId) killPlayer(s, s.round.whiteWolfKillId, "WHITE_WOLF_KILL");
@@ -1121,16 +1131,14 @@ function resolveNight(state: GameState): GameState {
   s.pendingDeaths.forEach((d) => killPlayer(s, d.id, d.cause));
   s.pendingDeaths = [];
 
-  // Ours (nuit 1 uniquement, détection faite lors de son tour)
+  // Ours
   if (s.round.bearGrowls) {
     s.dawnSummary.push(nk("bearNear"));
   }
 
-  // Le mot du Loup Bavard est imposé pendant la nuit (dès la nuit 2).
-
-  // Persistence du silence (Marionnettiste ayant perdu son bouclier ou Loup Noir)
+  // Persistence du silence (Marionnettiste dont la marionnette a été détruite)
   s.players.forEach((p) => {
-    if (!p.hasPuppetShield && effectiveRoleId(p) === "marionnettiste") {
+    if (p.alive && effectiveRoleId(p) === "marionnettiste" && p.abilityUsed) {
       p.mutedForDay = true;
     } else {
       p.mutedForDay = false;
@@ -1162,7 +1170,7 @@ function resolveNight(state: GameState): GameState {
     if (r) r.baseVotes = 2;
   }
 
-  // ─── Bilan pour le rapport du Maître du Jeu ────────────────────────────────
+  // Rapport du Maître du Jeu
   const deaths = s.players.filter((p) => !p.alive && aliveBefore.has(p.id));
   deaths.forEach((p) =>
     rep(
@@ -1206,10 +1214,6 @@ export function goToVote(state: GameState): GameState {
   return s;
 }
 
-/**
- * Sanction du Maître du Jeu : un joueur a enfreint les règles ou révélé son
- * rôle. Il est éliminé immédiatement, puis la nuit tombe sans vote.
- */
 export function suicideReveal(state: GameState, targetId: string): GameState {
   let s = clone(state);
   const target = s.players.find((p) => p.id === targetId);
@@ -1225,7 +1229,6 @@ export function suicideReveal(state: GameState, targetId: string): GameState {
   return startNight(s);
 }
 
-/** Le capitaine mourant désigne son successeur. */
 export function assignCaptain(state: GameState, targetId: string): GameState {
   const s = clone(state);
   s.players.forEach((p) => {
@@ -1243,7 +1246,6 @@ export function assignCaptain(state: GameState, targetId: string): GameState {
   return s;
 }
 
-/** Passe la nuit sans vote (uniquement possible le premier jour) */
 export function skipVote(state: GameState): GameState {
   const s = clone(state);
   s.voteSkippedOffer = true;
@@ -1283,7 +1285,6 @@ export function submitVote(state: GameState, targetId: string, talkativeSpoke = 
     s.dawnSummary = [nk("untouchableToday", { name: target.name })];
   }
 
-  // Ange raté
   if (s.day === 1) {
     s.players
       .filter((p) => effectiveRoleId(p) === "ange" && p.alive)
@@ -1294,7 +1295,6 @@ export function submitVote(state: GameState, targetId: string, talkativeSpoke = 
       });
   }
 
-  // Loup bavard
   if (!talkativeSpoke) {
     const talk = s.players.find((p) => p.alive && effectiveRoleId(p) === "loup-bavard");
     if (talk) killPlayer(s, talk.id, "TALKATIVE_WOLF");
@@ -1309,7 +1309,6 @@ export function submitVote(state: GameState, targetId: string, talkativeSpoke = 
   return startNight(s);
 }
 
-/** Double égalité : tous les ex æquo sont éliminés. */
 export function eliminateTied(state: GameState, ids: string[], talkativeSpoke = true): GameState {
   let s = clone(state);
   s.dawnSummary = [];
@@ -1339,10 +1338,6 @@ export function eliminateTied(state: GameState, ids: string[], talkativeSpoke = 
   return startNight(s);
 }
 
-/**
- * Exécute immédiatement le Loup Bavard (mot non prononcé) et démarre la
- * prochaine nuit — utilisé par le modal pré-vote de DawnPanel.
- */
 export function executeTalkativeWolfAndSkip(state: GameState): GameState {
   let s = clone(state);
   const talk = s.players.find((p) => p.alive && effectiveRoleId(p) === "loup-bavard");
@@ -1416,7 +1411,6 @@ export function checkVictory(state: GameState): GameState {
     }
   }
 
-  // Maniaque : dernier debout, ou duel final face à un unique survivant.
   const maniac = living.find((p) => effectiveRoleId(p) === "maniaque");
   if (maniac && living.length <= 2) {
     s.phase = "FIN";
