@@ -1050,49 +1050,62 @@ function resolveNight(state: GameState): GameState {
       });
   }
 
-  // Interception des attaques de loups par la marionnette du Marionnettiste
-  const processPuppetShield = (targetId?: string): boolean => {
-    if (!targetId) return false;
-    const victim = s.players.find((p) => p.id === targetId && p.alive);
-    if (victim && victim.hasPuppetShield) {
-      victim.hasPuppetShield = false;
+  // ---------------------------------------------------------------------------
+  // Redirection des attaques de loups sur le Marionnettiste vers sa marionnette
+  // ---------------------------------------------------------------------------
+  if (s.round.attackedId) {
+    const attackedPlayer = s.players.find((p) => p.id === s.round.attackedId);
 
-      const puppeteer = s.players.find(
-        (p) => p.alive && effectiveRoleId(p) === "marionnettiste",
-      );
-      if (puppeteer) {
-        puppeteer.abilityUsed = true;
-        puppeteer.mutedForDay = true;
+    if (attackedPlayer && effectiveRoleId(attackedPlayer) === "marionnettiste") {
+      // Trouver le joueur qui porte la marionnette
+      const puppetPlayer = s.players.find((p) => p.alive && p.hasPuppetShield);
+
+      if (puppetPlayer) {
+        // La marionnette est consommée / détruite
+        puppetPlayer.hasPuppetShield = false;
+        attackedPlayer.abilityUsed = true;
+
+        // Cas 4 : La marionnette est protégée par le Salvateur ou bouclier du village
+        const isPuppetProtected =
+          s.round.protectedId === puppetPlayer.id || s.round.villageShield;
+
+        if (isPuppetProtected) {
+          s.round.attackedId = undefined; // L'attaque est complètement perdue
+          s.dawnSummary.push(
+            `Les loups ont attaqué le Marionnettiste, mais l'attaque redirigée vers la marionnette de ${puppetPlayer.name} a été bloquée par le Salvateur !`,
+          );
+          pushEvent(s, {
+            round: s.night,
+            phase: "NIGHT",
+            type: "RESCUE",
+            name: puppetPlayer.name,
+            bySavior: "salvateur",
+          });
+        } else {
+          // Cas 2 : L'attaque est redirigée vers le porteur de la marionnette (qui meurt à la place)
+          s.round.attackedId = puppetPlayer.id; // Redirection de la mort vers le porteur
+          attackedPlayer.mutedForDay = true;     // Le Marionnettiste devient muet
+
+          s.dawnSummary.push(
+            `Les loups ont attaqué le Marionnettiste ! La marionnette portée par ${puppetPlayer.name} a absorbé le coup et a péri à sa place. Le Marionnettiste est désormais muet.`,
+          );
+          rep(
+            s,
+            `La marionnette portée par ${puppetPlayer.name} a été détruite en absorbant l'attaque des loups.`,
+          );
+          pushEvent(s, {
+            round: s.night,
+            phase: "NIGHT",
+            type: "RESCUE",
+            name: attackedPlayer.name,
+            bySavior: "marionnettiste",
+          });
+        }
       } else {
-        victim.mutedForDay = true;
+        // Cas 3 : Plus de marionnette active (déjà détruite ou absente), le Marionnettiste prend l'attaque et meurt normalement.
+        // s.round.attackedId reste le Marionnettiste, killPlayer s'en chargera.
       }
-
-      s.dawnSummary.push(
-        `${victim.name} a été attaqué(e), mais la marionnette a absorbé le coup ! Il/Elle survit, mais le Marionnettiste ne peut plus parler.`,
-      );
-
-      rep(
-        s,
-        `La marionnette protégeant ${victim.name} a été détruite en absorbant l'attaque.`,
-      );
-
-      pushEvent(s, {
-        round: s.night,
-        phase: "NIGHT",
-        type: "RESCUE",
-        name: victim.name,
-        bySavior: "marionnettiste",
-      });
-      return true;
     }
-    return false;
-  };
-
-  if (s.round.attackedId && processPuppetShield(s.round.attackedId)) {
-    s.round.attackedId = undefined;
-  }
-  if (s.round.whiteWolfKillId && processPuppetShield(s.round.whiteWolfKillId)) {
-    s.round.whiteWolfKillId = undefined;
   }
 
   const aliveBefore = new Set(s.players.filter((p) => p.alive).map((p) => p.id));
