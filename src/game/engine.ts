@@ -223,11 +223,9 @@ export function createGame(
     stars: 0,
   }));
 
-  // Le capitaine est désigné par index (élection faite avant la partie).
   const captain = players.find((p) => p.name === villageCaptainId);
   if (captain) {
     captain.isCaptain = true;
-    // Poids de vote : Général = 1, Capitaine = 2.
     captain.voteWeight = 2;
   }
 
@@ -291,22 +289,19 @@ export function buildNightSteps(s: GameState): Step[] {
     push("enfant-sauvage", "Enfant Sauvage", "Choisis ton modèle.", "one");
   }
 
-  // Geôlier : dormant la nuit 1, actif à partir de la nuit 2.
   if (!first) push("geolier", "Geôlier", "Qui séquestres-tu cette nuit ?", "one");
-  // Voyante : n'agit qu'à partir de la nuit 2.
   if (!first) push("voyante", "Voyante", "Quel joueur veux-tu sonder ?", "one");
 
-  // Marionnettiste : s'éveille chaque nuit tant que sa marionnette n'est pas détruite.
+  // Marionnettiste : s'éveille uniquement à la Nuit 2 pour équiper sa marionnette
   {
     const puppeteer = hasRole(s, "marionnettiste");
-    if (puppeteer && !puppeteer.abilityUsed && !puppeteer.powersDisabled) {
+    if (puppeteer && s.night === 2 && !puppeteer.abilityUsed && !puppeteer.powersDisabled) {
       push("marionnettiste", "Le Marionnettiste", "Sur qui places-tu ta marionnette cette nuit ?", "one");
     }
   }
 
   {
     const savior = hasRole(s, "salvateur");
-    // Le Bouclier Ultime consomme définitivement les pouvoirs du Salvateur.
     if (savior && !savior.ultimateShieldUsed) {
       push("salvateur", "Salvateur", "Qui protèges-tu cette nuit ? (jamais deux fois de suite)", "one");
     }
@@ -325,7 +320,6 @@ export function buildNightSteps(s: GameState): Step[] {
     "wolves",
   );
 
-  // Hiérarchie de la mise à mort : un seul loup exécute le kill de la nuit.
   const packStepExists = steps.some((st) => st.mode === "wolves");
   const KILL_PRIORITY = ["loup-noir", "loup-blanc", "loup-bavard", "loup-matriarche"];
   const killerRoleId = packStepExists
@@ -338,7 +332,6 @@ export function buildNightSteps(s: GameState): Step[] {
     s.log.push(nk("killerFallback", { n: s.night, role: nrole(killerRoleId) }));
   }
 
-  // Loup Noir : étape unique combinant kill (si désigné) + contamination + silence.
   {
     const blackWolf = s.players.find(
       (p) =>
@@ -363,7 +356,7 @@ export function buildNightSteps(s: GameState): Step[] {
       });
     }
   }
-  // Loup Blanc
+
   if (killerRoleId === "loup-blanc") {
     const white = hasRole(s, "loup-blanc");
     if (white && !white.powersDisabled) {
@@ -381,13 +374,12 @@ export function buildNightSteps(s: GameState): Step[] {
   } else if (s.night % 2 === 0) {
     push("loup-blanc", "Loup Blanc", "Veux-tu dévorer un loup cette nuit ?", "one", true);
   }
-  // Loup Bavard : inactif la nuit 1, se réveille en dernier parmi les loups.
+
   if (!first) {
     const talkative = hasRole(s, "loup-bavard");
     if (talkative && !talkative.powersDisabled) {
       const soloKill = killerRoleId === "loup-bavard";
-      s.round.requiredWord =
-        s.round.requiredWord ?? randomWord();
+      s.round.requiredWord = s.round.requiredWord ?? randomWord();
       steps.push({
         key: `${s.night}-loup-bavard`,
         roleId: "loup-bavard",
@@ -401,7 +393,7 @@ export function buildNightSteps(s: GameState): Step[] {
       });
     }
   }
-  // Loup Matriarche
+
   if (killerRoleId === "loup-matriarche") {
     const matri = hasRole(s, "loup-matriarche");
     if (matri && !matri.powersDisabled) {
@@ -419,7 +411,7 @@ export function buildNightSteps(s: GameState): Step[] {
   }
 
   push("sorciere", "Sorcière", "Utilise tes potions.", "witch", true);
-  // 3 faces : 3 pouvoirs, chacun une seule fois sur toute la partie.
+
   {
     const faces = hasRole(s, "trois-faces");
     if (faces && !faces.powersDisabled && (faces.facesUsed?.length ?? 0) < 3) {
@@ -434,14 +426,12 @@ export function buildNightSteps(s: GameState): Step[] {
       });
     }
   }
-  // Maniaque : tue chaque nuit, indépendamment de la meute.
+
   push("maniaque", "Le Maniaque", "Désigne la victime que rien ne peut protéger.", "one", true);
   push("joueur-de-flute", "Joueur de Flûte", "Enchante deux joueurs.", "two", true);
-  // Corbeau : dormant la nuit 1, actif à partir de la nuit 2.
   if (!first) push("corbeau", "Corbeau", "Sur qui déposes-tu la plume noire ?", "one", true);
   push("tavernier", "Tavernier", "À qui offres-tu un verre ?", "one", true);
 
-  // Général : une seule fois, uniquement nuit 2 ou nuit 3.
   if (s.night === 2 || s.night === 3) {
     const gen = hasRole(s, "general");
     if (gen && !gen.abilityUsed && !gen.powersDisabled) {
@@ -457,7 +447,6 @@ export function buildNightSteps(s: GameState): Step[] {
     }
   }
 
-  // Montreur d'Ours : nuit 1 uniquement, toujours en tout dernier.
   if (first) {
     push("montreur-dours", "Montreur d'Ours", "L'ours flaire ses voisins…", "bear");
   }
@@ -469,7 +458,6 @@ export function currentStep(s: GameState): Step | undefined {
   return s.steps[s.stepIndex];
 }
 
-/** Voisins vivants immédiats (gauche / droite) du Montreur d'Ours. */
 export function bearNeighbors(s: GameState, bearId: string) {
   const living = s.players.filter((p) => p.alive);
   const i = living.findIndex((p) => p.id === bearId);
@@ -480,7 +468,6 @@ export function bearNeighbors(s: GameState, bearId: string) {
   };
 }
 
-/** L'ours gronde si un voisin vivant est un loup, ou si l'ours est infecté. */
 export function bearShouldGrowl(s: GameState, bearId: string): boolean {
   const bear = s.players.find((p) => p.id === bearId);
   const { left, right } = bearNeighbors(s, bearId);
@@ -499,13 +486,9 @@ export interface StepPayload {
   yes?: boolean;
   healUsed?: boolean;
   poisonId?: string;
-  /** Loup Noir : joueur réduit au silence pour le débat du matin. */
   muteId?: string;
-  /** Les Loups-Garous : la meute n'est pas parvenue à un accord. */
   disagreement?: boolean;
-  /** Salvateur : active le Bouclier Ultime (village entier, une seule fois). */
   ultimateShield?: boolean;
-  /** 3 faces : visage activé cette nuit. */
   facePower?: "protect" | "life" | "poison" | "inspect";
 }
 
@@ -751,7 +734,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       s.reveal = nk("talkativeWord", { word: s.round.requiredWord ?? "" });
       break;
     }
-
     case "loup-noir": {
       if (payload.targetId && !s.round.attackedId) {
         s.round.attackedId = payload.targetId;
@@ -818,7 +800,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       }
       break;
     }
-
     case "sorciere": {
       if (payload.healUsed && s.round.attackedId) {
         const saved = s.players.find((p) => p.id === s.round.attackedId);
@@ -908,7 +889,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
   return s;
 }
 
-/** Rôle perçu par une inspection : le Maniaque se déguise en Simple Villageois. */
 function seenRoleId(target: Player): string {
   const id = target.originalRoleId ?? effectiveRoleId(target);
   return id === "maniaque" ? "simple-villageois" : id;
@@ -925,7 +905,6 @@ function rebuildRemaining(s: GameState): Step[] {
   ];
 }
 
-/** Ajoute un évènement à la frise chronologique du bilan. */
 function pushEvent(s: GameState, e: GameEvent) {
   if (!s.events) s.events = [];
   s.events.push(e);
@@ -970,7 +949,6 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
     cause,
   });
 
-  // Capitaine
   if (p.isCaptain) {
     p.isCaptain = false;
     s.villageCaptainId = undefined;
@@ -979,7 +957,6 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
     }
   }
 
-  // Ancien tué par le village
   if (
     effectiveRoleId(p) === "ancien" &&
     (cause === "VILLAGE_VOTE" || cause === "HUNTER_SHOT" || cause === "WITCH_POISON")
@@ -992,7 +969,6 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
     s.dawnSummary.push(nk("elderFall"));
   }
 
-  // Enfant sauvage
   s.players
     .filter((x) => x.alive && x.roleModelId === p.id)
     .forEach((x) => {
@@ -1000,13 +976,11 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
       s.dawnSummary.push(nk("wildAwaken", { name: x.name }));
     });
 
-  // Amoureux
   if (p.isLover) {
     const other = s.players.find((x) => x.isLover && x.id !== p.id && x.alive);
     if (other) killPlayer(s, other.id, "HEARTBREAK");
   }
 
-  // Chasseur
   if (effectiveRoleId(p) === "chasseur" && !p.powersDisabled) {
     s.hunterPending = p.id;
   }
@@ -1016,7 +990,6 @@ function resolveNight(state: GameState): GameState {
   const s = clone(state);
   s.dawnSummary = [];
 
-  // Chaperon Rouge
   if (s.round.attackedId) {
     const victim = s.players.find((p) => p.id === s.round.attackedId)!;
     const hunterAlive = s.players.some((p) => p.alive && effectiveRoleId(p) === "chasseur");
@@ -1131,17 +1104,14 @@ function resolveNight(state: GameState): GameState {
   s.pendingDeaths.forEach((d) => killPlayer(s, d.id, d.cause));
   s.pendingDeaths = [];
 
-  // Ours
   if (s.round.bearGrowls) {
     s.dawnSummary.push(nk("bearNear"));
   }
 
-  // Persistence du silence (Marionnettiste dont la marionnette a été détruite)
+  // Silence permanent pour le Marionnettiste dont la marionnette a été détruite
   s.players.forEach((p) => {
     if (p.alive && effectiveRoleId(p) === "marionnettiste" && p.abilityUsed) {
       p.mutedForDay = true;
-    } else {
-      p.mutedForDay = false;
     }
   });
 
@@ -1153,7 +1123,6 @@ function resolveNight(state: GameState): GameState {
     }
   }
 
-  // Tavernier effets du jour
   s.players.forEach((p) => {
     p.immuneToDayVote = false;
     p.baseVotes = 0;
@@ -1170,7 +1139,6 @@ function resolveNight(state: GameState): GameState {
     if (r) r.baseVotes = 2;
   }
 
-  // Rapport du Maître du Jeu
   const deaths = s.players.filter((p) => !p.alive && aliveBefore.has(p.id));
   deaths.forEach((p) =>
     rep(
@@ -1192,8 +1160,7 @@ function resolveNight(state: GameState): GameState {
     .forEach((p) => rep(s, nk("repMuted", { name: p.name })));
   if (deaths.length === 0) rep(s, nk("repNoDeaths"));
 
-  if (s.dawnSummary.length === 0)
-    s.dawnSummary.push(nk("nobodyDied"));
+  if (s.dawnSummary.length === 0) s.dawnSummary.push(nk("nobodyDied"));
 
   s.phase = s.hunterPending ? "EVENEMENT_MORT" : "AUBE";
   s.day = s.night;
