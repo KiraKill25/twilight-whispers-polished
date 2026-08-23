@@ -70,9 +70,12 @@ workflows:
           npx cap add android
           npx cap sync android
 
-          # 7. Generate and inject app icon directly from public/icon.png
+          # 7. Generate and inject app icon and splash using @capacitor/assets
           npm install @capacitor/assets --save-dev
-          npx capacitor-assets generate --icon public/icon.png --android
+          mkdir -p assets
+          cp public/icon.png assets/icon.png
+          cp public/splash.png assets/splash.png
+          npx @capacitor/assets generate --android
 
           # 8. Apply native styles
           cat << 'EOF' > android/app/src/main/res/values/styles.xml
