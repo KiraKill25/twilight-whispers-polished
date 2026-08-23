@@ -89,6 +89,8 @@ export interface Player {
   facesUsed?: string[];
   /** Étoiles attribuées par le meneur pendant les débats. */
   stars: number;
+  /** Points de pénalité de débat infligés par le Maître du Jeu (commence à 1+ au vote). */
+  penaltyVotes?: number;
 }
 
 export interface Step {
@@ -223,6 +225,7 @@ export function createGame(
     hasUsedDeathPotion: false,
     hasPuppetShield: false,
     stars: 0,
+    penaltyVotes: 0,
   }));
 
   const captain = players.find((p) => p.name === villageCaptainId);
@@ -257,7 +260,26 @@ export function alivePlayers(s: GameState) {
 }
 
 function hasRole(s: GameState, roleId: string) {
-  return s.players.find((p) => p.alive && effectiveRoleId(p) === roleId && !p.disabledNightAbility);
+  return s.players.find((p) => {
+    if (!p.alive || p.disabledNightAbility || p.powersDisabled) return false;
+    const eff = effectiveRoleId(p);
+    if (eff === roleId) return true;
+    if (roleId === "loup-garou" && p.team === "WEREWOLVES" && eff !== "loup-blanc") {
+      return true;
+    }
+    return false;
+  });
+}
+
+/** Permet au Maître du Jeu d'infliger un point de pénalité de débat à un joueur. */
+export function addDebatePenalty(state: GameState, playerId: string): GameState {
+  const s = clone(state);
+  const p = s.players.find((x) => x.id === playerId);
+  if (p && p.alive) {
+    p.penaltyVotes = (p.penaltyVotes ?? 0) + 1;
+    s.log.push(`Le Maître du Jeu a infligé un point de pénalité de débat à ${p.name}.`);
+  }
+  return s;
 }
 
 export function buildNightSteps(s: GameState): Step[] {
@@ -294,7 +316,6 @@ export function buildNightSteps(s: GameState): Step[] {
   if (!first) push("geolier", "Geôlier", "Qui séquestres-tu cette nuit ?", "one");
   if (!first) push("voyante", "Voyante", "Quel joueur veux-tu sonder ?", "one");
 
-  // Marionnettiste : s'éveille uniquement à la Nuit 2 pour équiper sa marionnette
   {
     const puppeteer = hasRole(s, "marionnettiste");
     if (puppeteer && s.night === 2 && !puppeteer.abilityUsed && !puppeteer.powersDisabled) {
@@ -1052,27 +1073,21 @@ function resolveNight(state: GameState): GameState {
       });
   }
 
-  // ---------------------------------------------------------------------------
-  // Redirection des attaques de loups sur le Marionnettiste vers sa marionnette
-  // ---------------------------------------------------------------------------
   if (s.round.attackedId) {
     const attackedPlayer = s.players.find((p) => p.id === s.round.attackedId);
 
     if (attackedPlayer && effectiveRoleId(attackedPlayer) === "marionnettiste") {
-      // Trouver le joueur qui porte la marionnette
       const puppetPlayer = s.players.find((p) => p.alive && p.hasPuppetShield);
 
       if (puppetPlayer) {
-        // La marionnette est consommée / détruite
         puppetPlayer.hasPuppetShield = false;
         attackedPlayer.abilityUsed = true;
 
-        // Cas 4 : La marionnette est protégée par le Salvateur ou bouclier du village
         const isPuppetProtected =
           s.round.protectedId === puppetPlayer.id || s.round.villageShield;
 
         if (isPuppetProtected) {
-          s.round.attackedId = undefined; // L'attaque est complètement perdue
+          s.round.attackedId = undefined;
           s.dawnSummary.push(
             `Les loups ont attaqué le Marionnettiste, mais l'attaque redirigée vers la marionnette de ${puppetPlayer.name} a été bloquée par le Salvateur !`,
           );
@@ -1084,9 +1099,8 @@ function resolveNight(state: GameState): GameState {
             bySavior: "salvateur",
           });
         } else {
-          // Cas 2 : L'attaque est redirigée vers le porteur de la marionnette (qui meurt à la place)
-          s.round.attackedId = puppetPlayer.id; // Redirection de la mort vers le porteur
-          attackedPlayer.signLanguageMute = true; // Le Marionnettiste garde son temps de parole mais s'exprime uniquement par signes
+          s.round.attackedId = puppetPlayer.id;
+          attackedPlayer.signLanguageMute = true;
 
           s.dawnSummary.push(
             `Les loups ont attaqué le Marionnettiste ! La marionnette portée par ${puppetPlayer.name} a absorbé le coup et a péri à sa place. Le Marionnettiste ne peut plus s'exprimer qu'par gestes et signes.`,
@@ -1104,7 +1118,7 @@ function resolveNight(state: GameState): GameState {
           });
         }
       } else {
-        // Cas 3 : Plus de marionnette active (déjà détruite ou absente), le Marionnettiste prend l'attaque et meurt normalement.
+        // Pas de marionnette active
       }
     }
   }
@@ -1122,7 +1136,6 @@ function resolveNight(state: GameState): GameState {
     s.dawnSummary.push(nk("bearNear"));
   }
 
-  // Silence par signes permanent pour le Marionnettiste dont la marionnette a été détruite
   s.players.forEach((p) => {
     if (p.alive && effectiveRoleId(p) === "marionnettiste" && p.abilityUsed) {
       p.signLanguageMute = true;
@@ -1234,6 +1247,8 @@ export function skipVote(state: GameState): GameState {
   const s = clone(state);
   s.voteSkippedOffer = true;
   s.log.push(nk("day1NoVote"));
+  // Réinitialiser les pénalités à la fin du vote
+  s.players.forEach((p) => { p.penaltyVotes = 0; });
   return startNight(s);
 }
 
@@ -1284,6 +1299,9 @@ export function submitVote(state: GameState, targetId: string, talkativeSpoke = 
     if (talk) killPlayer(s, talk.id, "TALKATIVE_WOLF");
   }
 
+  // Réinitialiser les pénalités après le vote
+  s.players.forEach((p) => { p.penaltyVotes = 0; });
+
   s = checkVictory(s);
   if (s.phase === "FIN") return s;
   if (s.hunterPending) {
@@ -1313,6 +1331,9 @@ export function eliminateTied(state: GameState, ids: string[], talkativeSpoke = 
     if (talk) killPlayer(s, talk.id, "TALKATIVE_WOLF");
   }
 
+  // Réinitialiser les pénalités après le vote
+  s.players.forEach((p) => { p.penaltyVotes = 0; });
+
   s = checkVictory(s);
   if (s.phase === "FIN") return s;
   if (s.hunterPending) {
@@ -1329,6 +1350,7 @@ export function executeTalkativeWolfAndSkip(state: GameState): GameState {
     killPlayer(s, talk.id, "TALKATIVE_WOLF");
     s.log.push(nk("logTalkativeExecuted", { d: s.day }));
   }
+  s.players.forEach((p) => { p.penaltyVotes = 0; });
   s = checkVictory(s);
   if (s.phase === "FIN") return s;
   if (s.hunterPending) {
@@ -1352,6 +1374,7 @@ export function startNight(state: GameState): GameState {
   s.nightReport = [];
   s.players.forEach((p) => {
     p.disabledNightAbility = false;
+    p.penaltyVotes = 0;
   });
   s.steps = buildNightSteps(s);
   s.log.push(nk("nightHeader", { n: s.night }));
