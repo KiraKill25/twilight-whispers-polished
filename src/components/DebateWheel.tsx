@@ -175,7 +175,6 @@ export function VoteSetupModal({
   );
 }
 
-
 /** Roue de débat : anneau des joueurs + timer central + barre de contrôle MJ. */
 export function DebateWheel({
   seating,
@@ -185,6 +184,7 @@ export function DebateWheel({
   armed,
   onFinish,
   onStar,
+  onPenalty,
 }: {
   seating: Player[];
   seconds: number;
@@ -195,11 +195,10 @@ export function DebateWheel({
   onFinish: () => void;
   /** Attribution d'étoiles à l'orateur actif (tap = +1, appui long = -1). */
   onStar?: (playerId: string, delta: number) => void;
+  /** Attribution de points de pénalité (tap sur le nom du joueur dans le cercle). */
+  onPenalty?: (playerId: string) => void;
 }) {
   const { t } = useI18n();
-  // Loup Noir : un joueur réduit au silence ne prend aucun tour de parole.
-  // Pour le capitaine, cela retire aussi ses discours d'ouverture et de clôture,
-  // mais il conserve tous ses choix tactiques (sens du débat, sens et ordre du vote).
   const queue = buildDebateQueue(seating, captainId, direction).filter(
     (s) => !s.player.mutedForDay,
   );
@@ -208,7 +207,6 @@ export function DebateWheel({
   const [running, setRunning] = useState(false);
   const alerted = useRef(false);
 
-  // Armement : dès que le capitaine a validé, le chronomètre peut tourner.
   useEffect(() => {
     if (armed) setRunning(true);
     else setRunning(false);
@@ -232,7 +230,6 @@ export function DebateWheel({
     }
   }, [left]);
 
-  // Gestes étoiles sur le nom de l'orateur (tap = +1, appui long = -1).
   const [pops, setPops] = useState<{ id: number; delta: number }[]>([]);
   const [namePulse, setNamePulse] = useState(false);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -278,7 +275,6 @@ export function DebateWheel({
   const R = 42;
   const C = 2 * Math.PI * R;
 
-
   return (
     <div className="space-y-4">
       <p className="text-center text-[11px] tracking-[0.3em] text-muted-foreground uppercase">
@@ -297,6 +293,14 @@ export function DebateWheel({
         activeId={current.player.id}
         direction={direction}
         captainId={captainId}
+        onNodeClick={(id) => onPenalty?.(id)}
+        badge={(p) =>
+          (p.penaltyVotes ?? 0) > 0 ? (
+            <span className="mt-0.5 inline-block rounded-full bg-destructive px-1.5 text-[9px] font-black text-destructive-foreground tabular-nums shadow-md">
+              +{p.penaltyVotes} ⚠️
+            </span>
+          ) : null
+        }
         center={
           <div className="relative flex size-full items-center justify-center">
             <svg viewBox="0 0 100 100" className="absolute size-full -rotate-90 z-0 pointer-events-none">
