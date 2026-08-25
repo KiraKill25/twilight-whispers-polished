@@ -14,7 +14,7 @@ import {
 import { OverlayCard } from "@/components/OverlayCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { MuteButton } from "@/components/MuteButton";
-import { ROLE_BY_ID, TEAM_LABEL, roleImage } from "@/data/roles";
+import { ROLE_BY_ID, roleImage } from "@/data/roles";
 import { NarratorCard } from "@/components/NarratorCard";
 import { PhaseTransition } from "@/components/PhaseTransition";
 import { SpeakButton } from "@/components/SpeakButton";
@@ -48,6 +48,7 @@ import {
   type GameSettings,
 } from "@/lib/session";
 import {
+  addDebatePenalty,
   createGame,
   currentStep,
   effectiveRoleId,
@@ -353,9 +354,11 @@ function GamePage() {
             onUndo={undo}
             canUndo={canUndo}
             onPenalty={(id) => {
-              const name = state.players.find((p) => p.id === id)?.name ?? "";
-              updateState(suicideReveal(state, id));
-              toast.error(t("suicideDone", { name }));
+              const p = state.players.find((x) => x.id === id);
+              if (p) {
+                updateState(addDebatePenalty(state, id));
+                toast.error(`Pénalité de débat infligée à ${p.name}`);
+              }
             }}
           />
         ) : null
@@ -473,6 +476,11 @@ function RoleList({
                 {t("wolfTag")}
               </span>
             )}
+            {(p.penaltyVotes ?? 0) > 0 && (
+              <span className="rounded bg-amber-500/20 px-1 text-[9px] font-bold text-amber-500">
+                +{p.penaltyVotes}
+              </span>
+            )}
           </span>
           {(revealAll || !p.alive) && (
             <span className="block text-[11px] text-muted-foreground">
@@ -486,7 +494,7 @@ function RoleList({
   );
 }
 
-/** Anneaux lumineux thématiques par rôle (bleu arcane, vert poison, cramoisi). */
+/** Anneaux lumineux thématiques par rôle. */
 const PICKER_ACCENT = {
   arcane: "border-primary bg-primary/15 text-primary shadow-[0_0_18px_rgba(99,102,241,0.45)]",
   poison: "border-emerald-400 bg-emerald-400/15 text-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.45)]",
@@ -495,14 +503,6 @@ const PICKER_ACCENT = {
 } as const;
 
 type PickerAccent = keyof typeof PICKER_ACCENT;
-
-/** Anneau thématique déduit du rôle qui agit pendant l'étape en cours. */
-function accentForRole(roleId?: string): PickerAccent {
-  if (!roleId) return "arcane";
-  if (roleId.startsWith("loup") || roleId === "maniaque") return "crimson";
-  if (roleId === "sorciere" || roleId === "trois-faces") return "poison";
-  return "arcane";
-}
 
 function PlayerPicker({
   players,
@@ -517,7 +517,6 @@ function PlayerPicker({
   onToggle: (id: string) => void;
   accent?: PickerAccent;
   marks?: Record<string, React.ReactNode>;
-  /** Cibles interdites : grisées et non cliquables (ex. alliés loups). */
   disabledIds?: string[];
 }) {
   const { t } = useI18n();
@@ -526,29 +525,29 @@ function PlayerPicker({
       {players.map((p) => {
         const off = disabledIds?.includes(p.id) ?? false;
         return (
-        <button
-          key={p.id}
-          disabled={off}
-          onClick={() => onToggle(p.id)}
-          className={`relative rounded-xl border px-3 py-3 text-sm transition duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 ${
-            selected.includes(p.id) && !off
-              ? PICKER_ACCENT[accent]
-              : "border-border"
-          }`}
-        >
-          {p.isCaptain && (
-            <span
-              aria-label={t("captain")}
-              className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-accent text-accent-foreground shadow-lg"
-            >
-              <Crown className="size-3.5" />
+          <button
+            key={p.id}
+            disabled={off}
+            onClick={() => onToggle(p.id)}
+            className={`relative rounded-xl border px-3 py-3 text-sm transition duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 ${
+              selected.includes(p.id) && !off
+                ? PICKER_ACCENT[accent]
+                : "border-border"
+            }`}
+          >
+            {p.isCaptain && (
+              <span
+                aria-label={t("captain")}
+                className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-accent text-accent-foreground shadow-lg"
+              >
+                <Crown className="size-3.5" />
+              </span>
+            )}
+            <span className="flex items-center justify-center gap-1.5">
+              {p.name}
+              {marks?.[p.id]}
             </span>
-          )}
-          <span className="flex items-center justify-center gap-1.5">
-            {p.name}
-            {marks?.[p.id]}
-          </span>
-        </button>
+          </button>
         );
       })}
     </div>
@@ -560,8 +559,6 @@ function PlayerPicker({
 function NightPanel({
   state,
   onChange,
-  onUndo,
-  canUndo,
 }: {
   state: GameState;
   onChange: (s: GameState) => void;
@@ -596,12 +593,10 @@ function NightPanel({
     setFacePower(null);
   }, [step?.key]);
 
-  // Wolf-pack SFX
   useEffect(() => {
     if (!step) return;
     const WOLF_ROLES = ["loup-garou", "loup-noir", "loup-blanc", "loup-matriarche", "loup-bavard"];
     if (WOLF_ROLES.includes(step.roleId)) playWolfHowl();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step?.key]);
 
   if (!step) {
@@ -642,8 +637,6 @@ function NightPanel({
           : [id],
     );
 
-  /* ── Règle des loups : un loup standard ne peut pas tuer un allié loup.
-        Seul le Loup Blanc peut dévorer d'autres loups. ── */
   const STANDARD_WOLF_KILLERS = [
     "loup-garou",
     "loup-noir",
@@ -671,8 +664,6 @@ function NightPanel({
       !p.powersDisabled,
   );
 
-  // Salvateur + Sorcière interaction: if salvateur already protects the attacked player,
-  // the witch's heal potion is unnecessary.
   const isAttackedPlayerSaved =
     step.mode === "witch" &&
     state.round.attackedId != null &&
@@ -818,7 +809,6 @@ function NightPanel({
           </div>
         ) : step.mode === "blackwolf" ? (
           (() => {
-            /* ── Hub d'actions unifié du Loup Noir ── */
             const victimId = step.soloKill ? sel[0] : state.round.attackedId;
             const victim = state.players.find((p) => p.id === victimId);
             const infectLocked = !!actor.abilityUsed;
@@ -1119,7 +1109,6 @@ function NightPanel({
         ) : step.mode === "witch" ? (
           <div className="space-y-3">
             {isAttackedPlayerSaved ? (
-              /* Salvateur already saved the victim — hide heal potion */
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
                 🛡️ {t("witchTargetProtected")}
               </div>
@@ -1239,8 +1228,6 @@ function DawnPanel({
   debateDone,
   onDebateDone,
   onChange,
-  onUndo,
-  canUndo,
 }: {
   state: GameState;
   settings: GameSettings | null;
@@ -1258,7 +1245,6 @@ function DawnPanel({
   const firstDay = state.day === 1 && !state.voteSkippedOffer;
   const alive = state.players.filter((p) => p.alive);
 
-  // Loup Bavard alive and Day 2+ → pre-vote modal
   const talkative = state.players.find(
     (p) => p.alive && effectiveRoleId(p) === "loup-bavard",
   );
@@ -1305,6 +1291,7 @@ function DawnPanel({
               ),
             })
           }
+          onPenalty={(id) => onChange(addDebatePenalty(state, id))}
         />
 
       </NarratorCard>
@@ -1312,7 +1299,6 @@ function DawnPanel({
 
   return (
     <>
-      {/* Bavard pre-vote modal */}
       {bavardModal && (
         <div className="fixed inset-0 z-50 flex w-screen max-w-full items-center justify-center overflow-x-hidden overflow-y-auto bg-black/85 p-4 backdrop-blur-md">
           <div className="surface-card animate-rise-in neon-ring mx-auto box-border max-h-[85vh] w-full max-w-sm shrink-0 space-y-5 overflow-y-auto overscroll-contain rounded-3xl p-6 text-center shadow-2xl sm:max-w-md">
@@ -1395,10 +1381,6 @@ function DawnPanel({
     </>
   );
 }
-
-// ─── Vote panel ───────────────────────────────────────────────────────────────
-
-// ─── Game over / Bilan de Partie ──────────────────────────────────────────────
 
 // ─── Captain succession ───────────────────────────────────────────────────────
 
