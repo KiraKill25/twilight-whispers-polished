@@ -91,11 +91,13 @@ export function VoteWheel({
     (p) => !p.immuneToDayVote && (!inTieBreak || tieSubset.includes(p.id)),
   );
 
-  /** Décompte vivant : voix de base (plume du Corbeau) + points des bulletins. */
+  /** Décompte vivant : voix de base + points de pénalité de débat + points des bulletins. */
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const p of alive)
-      c[p.id] = inTieBreak && !tieSubset.includes(p.id) ? 0 : p.baseVotes;
+      c[p.id] =
+        (inTieBreak && !tieSubset.includes(p.id) ? 0 : p.baseVotes) +
+        (p.penaltyVotes ?? 0);
     for (const targets of Object.values(votes)) {
       for (const targetId of targets) {
         if (targetId === ABSTAIN) continue;
@@ -224,7 +226,6 @@ export function VoteWheel({
     onChange(withTallyLog(next, ids));
   };
 
-  /** Dépouillement : double égalité consécutive → double élimination auto. */
   const tally = () => {
     if (sameAsPreviousTie) {
       setDoubleElim(true);
@@ -305,7 +306,6 @@ export function VoteWheel({
         }
       />
 
-      {/* Capitaine : 2 points (1 seul en revote) */}
       {!allVoted && isCaptainTurn && (
         <div className="space-y-2 rounded-2xl border border-accent/40 p-3">
           <p className="flex items-center gap-1.5 text-xs font-bold text-accent">
@@ -360,8 +360,6 @@ export function VoteWheel({
         </button>
       )}
 
-
-      {/* Audit dépliable */}
       <div className="rounded-xl border border-border">
         <button
           onClick={() => setAuditOpen((o) => !o)}
@@ -424,7 +422,6 @@ export function VoteWheel({
         )}
       </div>
 
-      {/* Résolution */}
       {!tallied ? (
         <button
           onClick={tally}
