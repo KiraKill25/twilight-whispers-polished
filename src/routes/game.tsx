@@ -352,6 +352,11 @@ function GamePage() {
             }}
             onUndo={undo}
             canUndo={canUndo}
+            onPenalty={(id) => {
+              const name = state.players.find((p) => p.id === id)?.name ?? "";
+              updateState(suicideReveal(state, id));
+              toast.error(t("suicideDone", { name }));
+            }}
           />
         ) : null
       ) : (
