@@ -19,7 +19,6 @@ export type DeathCause =
   | "THREE_FACES_POISON"
   | "SUICIDE_REVEAL";
 
-/** Libellé traduisible d'une cause de mort (jeton de narration). */
 export const DEATH_LABEL: Record<DeathCause, string> = {
   WOLVES: nk("cause_WOLVES"),
   WITCH_POISON: nk("cause_WITCH_POISON"),
@@ -37,16 +36,13 @@ export const DEATH_LABEL: Record<DeathCause, string> = {
   SUICIDE_REVEAL: nk("cause_SUICIDE_REVEAL"),
 };
 
-/** Évènement horodaté de la partie, utilisé par la frise du bilan. */
 export interface GameEvent {
   round: number;
   phase: "NIGHT" | "DAY";
   type: "KILL" | "CONTAMINATION" | "RESCUE";
-  /** Joueur concerné. */
   name: string;
   roleId?: string;
   cause?: DeathCause;
-  /** Rôle sauveur pour un évènement RESCUE. */
   bySavior?: string;
 }
 
@@ -77,19 +73,13 @@ export interface Player {
   roleModelId?: string;
   copiedRoleId?: string;
   deathCause?: DeathCause;
-  /** Interdit de débattre le matin suivant (pouvoir du Loup Noir). */
   mutedForDay?: boolean;
-  /** Marionnettiste : garde son tour de parole mais restreint aux signes et gestes. */
   signLanguageMute?: boolean;
-  /** Salvateur : Bouclier Ultime consommé (protection définitivement perdue). */
   ultimateShieldUsed?: boolean;
-  /** Marionnettiste : Le joueur désigné porte la marionnette cette nuit. */
   hasPuppetShield?: boolean;
-  /** 3 faces : pouvoirs déjà utilisés ("protect" | "potion" | "inspect"). */
   facesUsed?: string[];
-  /** Étoiles attribuées par le meneur pendant les débats. */
   stars: number;
-  /** Points de pénalité de débat infligés par le Maître du Jeu (commence à 1+ au vote). */
+  /** Points de pénalité de débat infligés par le Maître du Jeu (ajoutés au décompte initial du vote). */
   penaltyVotes?: number;
 }
 
@@ -111,7 +101,6 @@ export interface Step {
     | "threefaces";
   optional?: boolean;
   actorId?: string;
-  /** Loup Noir est le seul loup actif — la sélection de victime est intégrée à cette étape. */
   soloKill?: boolean;
 }
 
@@ -129,17 +118,11 @@ export interface RoundState {
   drinkTargetId?: string;
   requiredWord?: string;
   bearGrowls?: boolean;
-  /** Joueur réduit au silence par le Loup Noir pour le débat du matin. */
   mutedId?: string;
-  /** Cible muselée la nuit précédente (interdite deux nuits de suite). */
   previousMutedId?: string;
-  /** La meute n'a pas trouvé d'accord : la Matriarche tranche. */
   wolvesDisagreed?: boolean;
-  /** Salvateur : le village entier est protégé cette nuit (Bouclier Ultime). */
   villageShield?: boolean;
-  /** Maniaque : victime de la nuit (ignore toutes les protections). */
   maniacKillId?: string;
-  /** 3 faces : cible empoisonnée par le visage « potion de mort ». */
   facesPoisonedId?: string;
 }
 
@@ -161,9 +144,7 @@ export interface GameState {
   revoteDone?: boolean;
   captainSuccessionPending?: string;
   lastEliminated?: { id: string; roleId: string; name: string }[];
-  /** Frise chronologique des évènements marquants (morts, contaminations, sauvetages). */
   events: GameEvent[];
-  /** Rapport nocturne du Maître du Jeu (jetons de narration) — remis à zéro chaque nuit. */
   nightReport: string[];
   winnerTeam?: "VILLAGE" | "WOLVES" | "OTHER";
   winner?: string;
@@ -175,14 +156,11 @@ const WORDS_BY_LANG: Record<string, string[]> = {
   ar: ["قمر", "دم", "صمت", "غابة", "ضباب", "جرس", "غراب", "فانوس"],
 };
 
-/** Mot secret tiré dans la langue active de l'interface. */
 function randomWord() {
   let lang = "fr";
   try {
     lang = localStorage.getItem("mvno-lang") ?? "fr";
-  } catch {
-    /* SSR / stockage indisponible */
-  }
+  } catch {}
   const list = WORDS_BY_LANG[lang] ?? WORDS_BY_LANG.fr;
   return list[Math.floor(Math.random() * list.length)];
 }
@@ -193,10 +171,24 @@ export function effectiveRoleId(p: Player) {
   return p.copiedRoleId ?? p.roleId;
 }
 
-/** Ajoute une ligne au rapport nocturne du Maître du Jeu. */
 function rep(s: GameState, line: string) {
   if (!s.nightReport) s.nightReport = [];
   s.nightReport.push(line);
+}
+
+function clone(s: GameState): GameState {
+  return JSON.parse(JSON.stringify(s)) as GameState;
+}
+
+/** Inflige un point de pénalité de débat à un joueur. */
+export function addDebatePenalty(state: GameState, playerId: string, delta = 1): GameState {
+  const s = clone(state);
+  const p = s.players.find((x) => x.id === playerId);
+  if (p && p.alive) {
+    p.penaltyVotes = Math.max(0, (p.penaltyVotes ?? 0) + delta);
+    s.log.push(`Pénalité de débat ajustée pour ${p.name} (${p.penaltyVotes} vote(s) de pénalité).`);
+  }
+  return s;
 }
 
 export function createGame(
@@ -271,17 +263,6 @@ function hasRole(s: GameState, roleId: string) {
   });
 }
 
-/** Permet au Maître du Jeu d'infliger un point de pénalité de débat à un joueur. */
-export function addDebatePenalty(state: GameState, playerId: string): GameState {
-  const s = clone(state);
-  const p = s.players.find((x) => x.id === playerId);
-  if (p && p.alive) {
-    p.penaltyVotes = (p.penaltyVotes ?? 0) + 1;
-    s.log.push(`Le Maître du Jeu a infligé un point de pénalité de débat à ${p.name}.`);
-  }
-  return s;
-}
-
 export function buildNightSteps(s: GameState): Step[] {
   const first = s.night === 1;
   const steps: Step[] = [];
@@ -329,19 +310,8 @@ export function buildNightSteps(s: GameState): Step[] {
       push("salvateur", "Salvateur", "Qui protèges-tu cette nuit ? (jamais deux fois de suite)", "one");
     }
   }
-  push(
-    "petite-fille",
-    "Petite Fille",
-    "Tu entrouvres les yeux… veux-tu espionner la meute ?",
-    "yesno",
-    true,
-  );
-  push(
-    "loup-garou",
-    "Les Loups-Garous",
-    "La meute désigne sa victime. En cas de désaccord, la Matriarche tranche seule.",
-    "wolves",
-  );
+  push("petite-fille", "Petite Fille", "Tu entrouvres les yeux… veux-tu espionner la meute ?", "yesno", true);
+  push("loup-garou", "Les Loups-Garous", "La meute désigne sa victime. En cas de désaccord, la Matriarche tranche seule.", "wolves");
 
   const packStepExists = steps.some((st) => st.mode === "wolves");
   const KILL_PRIORITY = ["loup-noir", "loup-blanc", "loup-bavard", "loup-matriarche"];
@@ -470,9 +440,7 @@ export function buildNightSteps(s: GameState): Step[] {
     }
   }
 
-  if (first) {
-    push("montreur-dours", "Montreur d'Ours", "L'ours flaire ses voisins…", "bear");
-  }
+  if (first) push("montreur-dours", "Montreur d'Ours", "L'ours flaire ses voisins…", "bear");
 
   return steps;
 }
@@ -497,10 +465,6 @@ export function bearShouldGrowl(s: GameState, bearId: string): boolean {
   return [left, right, bear].some(
     (n) => !!n && (n.team === "WEREWOLVES" || n.isConvertedToWolf === true),
   );
-}
-
-function clone(s: GameState): GameState {
-  return JSON.parse(JSON.stringify(s)) as GameState;
 }
 
 export interface StepPayload {
@@ -580,14 +544,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       if (target) {
         const seenId = seenRoleId(target);
         s.reveal = nk("seerSees", { name: target.name, role: nrole(seenId) });
-        rep(
-          s,
-          nk("repSeerCheck", {
-            role: nrole("voyante"),
-            name: target.name,
-            result: nrole(seenId),
-          }),
-        );
+        rep(s, nk("repSeerCheck", { role: nrole("voyante"), name: target.name, result: nrole(seenId) }));
       }
       break;
     }
@@ -604,14 +561,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         target.hasPuppetShield = false;
         s.reveal = nk("thiefSteal", { name: target.name, role: nrole(stolen) });
         s.log.push(nk("logThiefSteal", { name: target.name, role: nrole(stolen) }));
-        rep(
-          s,
-          nk("repThief", {
-            thief: actor.name,
-            name: target.name,
-            role: nrole(stolen),
-          }),
-        );
+        rep(s, nk("repThief", { thief: actor.name, name: target.name, role: nrole(stolen) }));
         s.steps = rebuildRemaining(s);
       }
       break;
@@ -639,14 +589,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           const seenId = seenRoleId(target);
           actor.facesUsed.push("inspect");
           s.reveal = nk("facesInspectMsg", { name: target.name, role: nrole(seenId) });
-          rep(
-            s,
-            nk("repSeerCheck", {
-              role: nrole("trois-faces"),
-              name: target.name,
-              result: nrole(seenId),
-            }),
-          );
+          rep(s, nk("repSeerCheck", { role: nrole("trois-faces"), name: target.name, result: nrole(seenId) }));
         } else if (power === "life" && s.round.attackedId) {
           const saved = s.players.find((p) => p.id === s.round.attackedId);
           s.round.attackedId = undefined;
@@ -654,14 +597,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           actor.facesUsed.push("potion");
           s.reveal = nk("facesLifeMsg");
           rep(s, nk("repWitchLife", { name: saved?.name ?? "" }));
-          if (saved)
-            pushEvent(s, {
-              round: s.night,
-              phase: "NIGHT",
-              type: "RESCUE",
-              name: saved.name,
-              bySavior: "trois-faces",
-            });
+          if (saved) pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: saved.name, bySavior: "trois-faces" });
         } else if (power === "poison" && target) {
           s.round.facesPoisonedId = target.id;
           actor.facesUsed.push("potion");
@@ -699,9 +635,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         } else {
           const wolves = s.players.filter((p) => p.alive && p.team === "WEREWOLVES");
           const hint = wolves[Math.floor(Math.random() * wolves.length)];
-          s.reveal = hint
-            ? nk("spyHint", { letter: hint.name.charAt(0).toUpperCase() })
-            : nk("spyNothing");
+          s.reveal = hint ? nk("spyHint", { letter: hint.name.charAt(0).toUpperCase() }) : nk("spyNothing");
         }
       } else {
         s.reveal = nk("eyesClosed");
@@ -710,11 +644,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     }
     case "loup-garou": {
       const matriarch = s.players.find(
-        (p) =>
-          p.alive &&
-          effectiveRoleId(p) === "loup-matriarche" &&
-          !p.disabledNightAbility &&
-          !p.powersDisabled,
+        (p) => p.alive && effectiveRoleId(p) === "loup-matriarche" && !p.disabledNightAbility && !p.powersDisabled,
       );
       if (payload.disagreement && matriarch) {
         s.round.wolvesDisagreed = true;
@@ -767,9 +697,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       }
       const notes: string[] = [];
       const infectionBlocked =
-        !!payload.yes &&
-        !!s.round.attackedId &&
-        (s.round.villageShield || s.round.attackedId === s.round.protectedId);
+        !!payload.yes && !!s.round.attackedId && (s.round.villageShield || s.round.attackedId === s.round.protectedId);
       if (infectionBlocked) {
         notes.push(nk("infectBlocked"));
         s.log.push(nk("logInfectBlocked"));
@@ -786,13 +714,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         notes.push(nk("infectJoin", { name: victim.name }));
         s.log.push(nk("logInfect", { name: victim.name }));
         rep(s, nk("repInfect", { name: victim.name }));
-        pushEvent(s, {
-          round: s.night,
-          phase: "NIGHT",
-          type: "CONTAMINATION",
-          name: victim.name,
-          roleId: victim.originalRoleId,
-        });
+        pushEvent(s, { round: s.night, phase: "NIGHT", type: "CONTAMINATION", name: victim.name, roleId: victim.originalRoleId });
       }
       if (payload.muteId && s.night >= 2 && payload.muteId !== s.round.previousMutedId) {
         const muted = s.players.find((p) => p.id === payload.muteId);
@@ -800,12 +722,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           s.round.mutedId = muted.id;
           notes.push(nk("silenceNote", { name: muted.name }));
           s.log.push(nk("logSilence", { name: muted.name }));
-          rep(
-            s,
-            muted.id === actor.id
-              ? nk("repSilenceSelf", { name: muted.name })
-              : nk("repSilence", { name: muted.name }),
-          );
+          rep(s, muted.id === actor.id ? nk("repSilenceSelf", { name: muted.name }) : nk("repSilence", { name: muted.name }));
         }
       }
       s.reveal = notes.length ? notes.join(" ") : nk("packAsPlanned");
@@ -832,14 +749,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         actor.hasUsedLifePotion = true;
         s.reveal = nk("witchSaved");
         rep(s, nk("repWitchLife", { name: saved?.name ?? "" }));
-        if (saved)
-          pushEvent(s, {
-            round: s.night,
-            phase: "NIGHT",
-            type: "RESCUE",
-            name: saved.name,
-            bySavior: "sorciere",
-          });
+        if (saved) pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: saved.name, bySavior: "sorciere" });
       }
       if (payload.poisonId) {
         s.round.poisonedId = payload.poisonId;
@@ -884,10 +794,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         const isWolf = target.team === "WEREWOLVES" || target.isConvertedToWolf === true;
         if (isWolf) {
           s.pendingDeaths.push({ id: target.id, cause: "GENERAL_STRIKE" });
-          s.players.forEach((p) => {
-            p.isCaptain = false;
-            p.voteWeight = 1;
-          });
+          s.players.forEach((p) => { p.isCaptain = false; p.voteWeight = 1; });
           actor.isCaptain = true;
           actor.voteWeight = 2;
           s.villageCaptainId = actor.id;
@@ -906,9 +813,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
   }
 
   s.stepIndex += 1;
-  if (s.stepIndex >= s.steps.length) {
-    return resolveNight(s);
-  }
+  if (s.stepIndex >= s.steps.length) return resolveNight(s);
   return s;
 }
 
@@ -920,12 +825,7 @@ function seenRoleId(target: Player): string {
 function rebuildRemaining(s: GameState): Step[] {
   const done = s.steps.slice(0, s.stepIndex + 1);
   const jailed = s.round.jailedId;
-  return [
-    ...done,
-    ...s.steps
-      .slice(s.stepIndex + 1)
-      .filter((st) => st.actorId !== jailed || st.roleId === "loup-garou"),
-  ];
+  return [...done, ...s.steps.slice(s.stepIndex + 1).filter((st) => st.actorId !== jailed || st.roleId === "loup-garou")];
 }
 
 function pushEvent(s: GameState, e: GameEvent) {
@@ -940,32 +840,17 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
   if (cause === "WOLVES" && p.lives > 1) {
     p.lives -= 1;
     s.dawnSummary.push(nk("survivedAttack", { name: p.name }));
-    pushEvent(s, {
-      round: s.night,
-      phase: "NIGHT",
-      type: "RESCUE",
-      name: p.name,
-      bySavior: "ancien",
-    });
+    pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: p.name, bySavior: "ancien" });
     return;
   }
 
   p.alive = false;
   p.deathCause = cause;
   s.dawnSummary.push(nk("deathLine", { name: p.name, cause: DEATH_LABEL[cause] }));
-  s.log.push(
-    nk("logDeath", {
-      name: p.name,
-      role: nrole(effectiveRoleId(p)),
-      cause: DEATH_LABEL[cause],
-    }),
-  );
+  s.log.push(nk("logDeath", { name: p.name, role: nrole(effectiveRoleId(p)), cause: DEATH_LABEL[cause] }));
   pushEvent(s, {
     round: cause === "VILLAGE_VOTE" ? s.day || s.night : s.night,
-    phase:
-      cause === "VILLAGE_VOTE" || cause === "HUNTER_SHOT" || cause === "TALKATIVE_WOLF"
-        ? "DAY"
-        : "NIGHT",
+    phase: cause === "VILLAGE_VOTE" || cause === "HUNTER_SHOT" || cause === "TALKATIVE_WOLF" ? "DAY" : "NIGHT",
     type: "KILL",
     name: p.name,
     roleId: p.originalRoleId ?? effectiveRoleId(p),
@@ -980,24 +865,15 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
     }
   }
 
-  if (
-    effectiveRoleId(p) === "ancien" &&
-    (cause === "VILLAGE_VOTE" || cause === "HUNTER_SHOT" || cause === "WITCH_POISON")
-  ) {
-    s.players
-      .filter((x) => x.alive && x.team === "VILLAGEOIS")
-      .forEach((x) => {
-        x.powersDisabled = true;
-      });
+  if (effectiveRoleId(p) === "ancien" && (cause === "VILLAGE_VOTE" || cause === "HUNTER_SHOT" || cause === "WITCH_POISON")) {
+    s.players.filter((x) => x.alive && x.team === "VILLAGEOIS").forEach((x) => { x.powersDisabled = true; });
     s.dawnSummary.push(nk("elderFall"));
   }
 
-  s.players
-    .filter((x) => x.alive && x.roleModelId === p.id)
-    .forEach((x) => {
-      x.team = "WEREWOLVES";
-      s.dawnSummary.push(nk("wildAwaken", { name: x.name }));
-    });
+  s.players.filter((x) => x.alive && x.roleModelId === p.id).forEach((x) => {
+    x.team = "WEREWOLVES";
+    s.dawnSummary.push(nk("wildAwaken", { name: x.name }));
+  });
 
   if (p.isLover) {
     const other = s.players.find((x) => x.isLover && x.id !== p.id && x.alive);
@@ -1019,29 +895,14 @@ function resolveNight(state: GameState): GameState {
     if (effectiveRoleId(victim) === "chaperon-rouge" && hunterAlive) {
       s.round.attackedId = undefined;
       s.dawnSummary.push(nk("redRidingHood"));
-      pushEvent(s, {
-        round: s.night,
-        phase: "NIGHT",
-        type: "RESCUE",
-        name: victim.name,
-        bySavior: "chasseur",
-      });
+      pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: victim.name, bySavior: "chasseur" });
     }
   }
   if (s.round.villageShield) {
     if (s.round.attackedId || s.round.whiteWolfKillId) {
       s.dawnSummary.push(nk("villageShieldSaved"));
-      const saved = s.players.find(
-        (p) => p.id === (s.round.attackedId ?? s.round.whiteWolfKillId),
-      );
-      if (saved)
-        pushEvent(s, {
-          round: s.night,
-          phase: "NIGHT",
-          type: "RESCUE",
-          name: saved.name,
-          bySavior: "salvateur",
-        });
+      const saved = s.players.find((p) => p.id === (s.round.attackedId ?? s.round.whiteWolfKillId));
+      if (saved) pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: saved.name, bySavior: "salvateur" });
     }
     s.round.attackedId = undefined;
     s.round.whiteWolfKillId = undefined;
@@ -1050,75 +911,34 @@ function resolveNight(state: GameState): GameState {
     const saved = s.players.find((p) => p.id === s.round.attackedId);
     s.round.attackedId = undefined;
     s.dawnSummary.push(nk("saviorFoiled"));
-    if (saved)
-      pushEvent(s, {
-        round: s.night,
-        phase: "NIGHT",
-        type: "RESCUE",
-        name: saved.name,
-        bySavior: "salvateur",
-      });
+    if (saved) pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: saved.name, bySavior: "salvateur" });
   }
   if (s.round.attackedId && s.round.attackedId === s.round.jailedId) {
     const saved = s.players.find((p) => p.id === s.round.attackedId);
     s.round.attackedId = undefined;
     s.dawnSummary.push(nk("jailerSafe"));
-    if (saved)
-      pushEvent(s, {
-        round: s.night,
-        phase: "NIGHT",
-        type: "RESCUE",
-        name: saved.name,
-        bySavior: "geolier",
-      });
+    if (saved) pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: saved.name, bySavior: "geolier" });
   }
 
   if (s.round.attackedId) {
     const attackedPlayer = s.players.find((p) => p.id === s.round.attackedId);
-
     if (attackedPlayer && effectiveRoleId(attackedPlayer) === "marionnettiste") {
       const puppetPlayer = s.players.find((p) => p.alive && p.hasPuppetShield);
-
       if (puppetPlayer) {
         puppetPlayer.hasPuppetShield = false;
         attackedPlayer.abilityUsed = true;
-
-        const isPuppetProtected =
-          s.round.protectedId === puppetPlayer.id || s.round.villageShield;
-
+        const isPuppetProtected = s.round.protectedId === puppetPlayer.id || s.round.villageShield;
         if (isPuppetProtected) {
           s.round.attackedId = undefined;
-          s.dawnSummary.push(
-            `Les loups ont attaqué le Marionnettiste, mais l'attaque redirigée vers la marionnette de ${puppetPlayer.name} a été bloquée par le Salvateur !`,
-          );
-          pushEvent(s, {
-            round: s.night,
-            phase: "NIGHT",
-            type: "RESCUE",
-            name: puppetPlayer.name,
-            bySavior: "salvateur",
-          });
+          s.dawnSummary.push(`L'attaque du Marionnettiste redirigée vers ${puppetPlayer.name} a été bloquée par le Salvateur !`);
+          pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: puppetPlayer.name, bySavior: "salvateur" });
         } else {
           s.round.attackedId = puppetPlayer.id;
           attackedPlayer.signLanguageMute = true;
-
-          s.dawnSummary.push(
-            `Les loups ont attaqué le Marionnettiste ! La marionnette portée par ${puppetPlayer.name} a absorbé le coup et a péri à sa place. Le Marionnettiste ne peut plus s'exprimer qu'par gestes et signes.`,
-          );
-          rep(
-            s,
-            `La marionnette portée par ${puppetPlayer.name} a été détruite en absorbant l'attaque des loups.`,
-          );
-          pushEvent(s, {
-            round: s.night,
-            phase: "NIGHT",
-            type: "RESCUE",
-            name: attackedPlayer.name,
-            bySavior: "marionnettiste",
-          });
+          s.dawnSummary.push(`Le Marionnettiste a été attaqué ! La marionnette de ${puppetPlayer.name} a encaissé le coup à sa place.`);
+          rep(s, `La marionnette de ${puppetPlayer.name} a été détruite.`);
+          pushEvent(s, { round: s.night, phase: "NIGHT", type: "RESCUE", name: attackedPlayer.name, bySavior: "marionnettiste" });
         }
-      } else {
-        // Pas de marionnette active
       }
     }
   }
@@ -1132,9 +952,7 @@ function resolveNight(state: GameState): GameState {
   s.pendingDeaths.forEach((d) => killPlayer(s, d.id, d.cause));
   s.pendingDeaths = [];
 
-  if (s.round.bearGrowls) {
-    s.dawnSummary.push(nk("bearNear"));
-  }
+  if (s.round.bearGrowls) s.dawnSummary.push(nk("bearNear"));
 
   s.players.forEach((p) => {
     if (p.alive && effectiveRoleId(p) === "marionnettiste" && p.abilityUsed) {
@@ -1168,28 +986,13 @@ function resolveNight(state: GameState): GameState {
 
   const deaths = s.players.filter((p) => !p.alive && aliveBefore.has(p.id));
   deaths.forEach((p) =>
-    rep(
-      s,
-      nk("repDied", {
-        name: p.name,
-        role: nrole(p.originalRoleId ?? effectiveRoleId(p)),
-        cause: p.deathCause ? DEATH_LABEL[p.deathCause] : "",
-      }),
-    ),
+    rep(s, nk("repDied", { name: p.name, role: nrole(p.originalRoleId ?? effectiveRoleId(p)), cause: p.deathCause ? DEATH_LABEL[p.deathCause] : "" })),
   );
-  s.events
-    .filter((e) => e.phase === "NIGHT" && e.round === s.night && e.type === "RESCUE")
-    .forEach((e) =>
-      rep(s, nk("repSavedBy", { name: e.name, role: nrole(e.bySavior ?? "salvateur") })),
-    );
-  s.players
-    .filter((p) => p.alive && p.mutedForDay)
-    .forEach((p) => rep(s, nk("repMuted", { name: p.name })));
-  s.players
-    .filter((p) => p.alive && p.signLanguageMute)
-    .forEach((p) => rep(s, `${p.name} conserve son temps de parole mais ne peut s'exprimer que par signes.`));
+  s.events.filter((e) => e.phase === "NIGHT" && e.round === s.night && e.type === "RESCUE").forEach((e) =>
+    rep(s, nk("repSavedBy", { name: e.name, role: nrole(e.bySavior ?? "salvateur") })),
+  );
+  s.players.filter((p) => p.alive && p.mutedForDay).forEach((p) => rep(s, nk("repMuted", { name: p.name })));
   if (deaths.length === 0) rep(s, nk("repNoDeaths"));
-
   if (s.dawnSummary.length === 0) s.dawnSummary.push(nk("nobodyDied"));
 
   s.phase = s.hunterPending ? "EVENEMENT_MORT" : "AUBE";
@@ -1201,7 +1004,7 @@ export function resolveHunter(state: GameState, targetId: string): GameState {
   const s = clone(state);
   s.hunterPending = undefined;
   killPlayer(s, targetId, "HUNTER_SHOT");
-  s.phase = s.hunterPending ? "EVENEMENT_MORT" : s.day > 0 ? "AUBE" : "AUBE";
+  s.phase = s.hunterPending ? "EVENEMENT_MORT" : "AUBE";
   return checkVictory(s);
 }
 
@@ -1243,16 +1046,45 @@ export function assignCaptain(state: GameState, targetId: string): GameState {
   return s;
 }
 
+export function executeTalkativeWolfAndSkip(state: GameState): GameState {
+  let s = clone(state);
+  const talkative = s.players.find((p) => p.alive && effectiveRoleId(p) === "loup-bavard");
+  if (talkative) {
+    killPlayer(s, talkative.id, "TALKATIVE_WOLF");
+    s.log.push(`Le Loup Bavard ${talkative.name} n'a pas prononcé son mot secret et succombe.`);
+  }
+  s.players.forEach((p) => { p.penaltyVotes = 0; });
+  s = checkVictory(s);
+  if (s.phase === "FIN") return s;
+  return startNight(s);
+}
+
+export function startNight(state: GameState): GameState {
+  const s = clone(state);
+  s.night += 1;
+  s.phase = `NUIT` as Phase;
+  s.stepIndex = 0;
+  s.round = { previousProtectedId: state.round.protectedId, previousMutedId: state.round.mutedId };
+  s.players.forEach((p) => {
+    p.mutedForDay = false;
+    p.signLanguageMute = false;
+    p.canVote = true;
+    p.immuneToDayVote = false;
+    p.penaltyVotes = 0;
+  });
+  s.steps = buildNightSteps(s);
+  return checkVictory(s);
+}
+
 export function skipVote(state: GameState): GameState {
   const s = clone(state);
   s.voteSkippedOffer = true;
   s.log.push(nk("day1NoVote"));
-  // Réinitialiser les pénalités à la fin du vote
   s.players.forEach((p) => { p.penaltyVotes = 0; });
   return startNight(s);
 }
 
-export function submitVote(state: GameState, targetId: string, talkativeSpoke = true): GameState {
+export function submitVote(state: GameState, targetId: string): GameState {
   let s = clone(state);
   const target = s.players.find((p) => p.id === targetId);
   s.lastEliminated = [];
@@ -1268,175 +1100,46 @@ export function submitVote(state: GameState, targetId: string, talkativeSpoke = 
     if (roleId === "idiot-du-village" && !target.abilityUsed) {
       target.abilityUsed = true;
       target.canVote = false;
-      s.dawnSummary = [nk("idiotSurvives", { name: target.name })];
-    } else {
-      s.dawnSummary = [];
-      killPlayer(s, target.id, "VILLAGE_VOTE");
-      s.lastEliminated = [
-        {
-          id: target.id,
-          name: target.name,
-          roleId: target.originalRoleId ?? effectiveRoleId(target),
-        },
-      ];
+      s.dawnSummary.push(`${target.name} a été gracié en révélant son rôle d'Idiot du Village !`);
+      s.log.push(`${target.name} révèle son rôle d'Idiot du Village et échappe au bûcher.`);
+      s.players.forEach((p) => { p.penaltyVotes = 0; });
+      return startNight(s);
     }
-  } else if (target) {
-    s.dawnSummary = [nk("untouchableToday", { name: target.name })];
+    killPlayer(s, target.id, "VILLAGE_VOTE");
+    s.lastEliminated = [{ id: target.id, roleId, name: target.name }];
   }
 
-  if (s.day === 1) {
-    s.players
-      .filter((p) => effectiveRoleId(p) === "ange" && p.alive)
-      .forEach((p) => {
-        p.roleId = "simple-villageois";
-        p.copiedRoleId = undefined;
-        p.team = "VILLAGEOIS";
-      });
-  }
-
-  if (!talkativeSpoke) {
-    const talk = s.players.find((p) => p.alive && effectiveRoleId(p) === "loup-bavard");
-    if (talk) killPlayer(s, talk.id, "TALKATIVE_WOLF");
-  }
-
-  // Réinitialiser les pénalités après le vote
   s.players.forEach((p) => { p.penaltyVotes = 0; });
 
   s = checkVictory(s);
   if (s.phase === "FIN") return s;
-  if (s.hunterPending) {
-    s.phase = "EVENEMENT_MORT";
-    return s;
-  }
+
+  if (s.hunterPending || s.captainSuccessionPending) return s;
   return startNight(s);
 }
 
-export function eliminateTied(state: GameState, ids: string[], talkativeSpoke = true): GameState {
-  let s = clone(state);
-  s.dawnSummary = [];
-  s.lastEliminated = [];
-  ids.forEach((id) => {
-    const p = s.players.find((x) => x.id === id);
-    if (!p || !p.alive || p.immuneToDayVote) return;
-    killPlayer(s, id, "VILLAGE_VOTE");
-    s.lastEliminated!.push({
-      id: p.id,
-      name: p.name,
-      roleId: p.originalRoleId ?? effectiveRoleId(p),
-    });
-  });
+export function checkVictory(s: GameState): GameState {
+  const alive = s.players.filter((p) => p.alive);
+  const wolves = alive.filter((p) => p.team === "WEREWOLVES" || p.isConvertedToWolf);
+  const nonWolves = alive.filter((p) => p.team !== "WEREWOLVES" && !p.isConvertedToWolf);
+  const lovers = alive.filter((p) => p.isLover);
 
-  if (!talkativeSpoke) {
-    const talk = s.players.find((p) => p.alive && effectiveRoleId(p) === "loup-bavard");
-    if (talk) killPlayer(s, talk.id, "TALKATIVE_WOLF");
-  }
-
-  // Réinitialiser les pénalités après le vote
-  s.players.forEach((p) => { p.penaltyVotes = 0; });
-
-  s = checkVictory(s);
-  if (s.phase === "FIN") return s;
-  if (s.hunterPending) {
-    s.phase = "EVENEMENT_MORT";
-    return s;
-  }
-  return startNight(s);
-}
-
-export function executeTalkativeWolfAndSkip(state: GameState): GameState {
-  let s = clone(state);
-  const talk = s.players.find((p) => p.alive && effectiveRoleId(p) === "loup-bavard");
-  if (talk) {
-    killPlayer(s, talk.id, "TALKATIVE_WOLF");
-    s.log.push(nk("logTalkativeExecuted", { d: s.day }));
-  }
-  s.players.forEach((p) => { p.penaltyVotes = 0; });
-  s = checkVictory(s);
-  if (s.phase === "FIN") return s;
-  if (s.hunterPending) {
-    s.phase = "EVENEMENT_MORT";
-    return s;
-  }
-  return startNight(s);
-}
-
-export function startNight(state: GameState): GameState {
-  const s = clone(state);
-  s.night += 1;
-  s.phase = "NUIT";
-  s.round = {
-    previousProtectedId: state.round.protectedId,
-    previousMutedId: state.round.mutedId,
-  };
-  s.stepIndex = 0;
-  s.reveal = undefined;
-  s.dawnSummary = [];
-  s.nightReport = [];
-  s.players.forEach((p) => {
-    p.disabledNightAbility = false;
-    p.penaltyVotes = 0;
-  });
-  s.steps = buildNightSteps(s);
-  s.log.push(nk("nightHeader", { n: s.night }));
-  return s;
-}
-
-export function checkVictory(state: GameState): GameState {
-  const s = clone(state);
-  const living = s.players.filter((p) => p.alive);
-  if (living.length === 0) {
+  if (lovers.length === 2 && alive.length === 2) {
     s.phase = "FIN";
     s.winnerTeam = "OTHER";
-    s.winner = nk("winNobody");
+    s.winner = "Victoire du couple d'amoureux !";
     return s;
   }
-
-  const lovers = living.filter((p) => p.team === "LOVERS");
-  if (lovers.length === 2 && living.length === 2) {
-    s.phase = "FIN";
-    s.winnerTeam = "OTHER";
-    s.winner = nk("winLovers", { a: lovers[0].name, b: lovers[1].name });
-    return s;
-  }
-
-  const whiteWolf = living.find((p) => effectiveRoleId(p) === "loup-blanc");
-  if (whiteWolf && living.length === 1) {
-    s.phase = "FIN";
-    s.winnerTeam = "WOLVES";
-    s.winner = nk("winWhiteWolf", { name: whiteWolf.name });
-    return s;
-  }
-
-  const piper = living.find((p) => effectiveRoleId(p) === "joueur-de-flute");
-  if (piper) {
-    const enchanted = living.filter((p) => p.enchanted && p.id !== piper.id);
-    if (enchanted.length === living.length - 1) {
-      s.phase = "FIN";
-      s.winnerTeam = "OTHER";
-      s.winner = nk("winPiper", { name: piper.name });
-      return s;
-    }
-  }
-
-  const maniac = living.find((p) => effectiveRoleId(p) === "maniaque");
-  if (maniac && living.length <= 2) {
-    s.phase = "FIN";
-    s.winnerTeam = "OTHER";
-    s.winner = nk("winManiac", { name: maniac.name });
-    return s;
-  }
-
-  const wolves = living.filter((p) => p.team === "WEREWOLVES");
-  if (wolves.length === 0 && !maniac) {
+  if (wolves.length === 0) {
     s.phase = "FIN";
     s.winnerTeam = "VILLAGE";
-    s.winner = nk("winVillage");
+    s.winner = "Le village a éliminé tous les loups !";
     return s;
   }
-  if (wolves.length > 0 && !maniac && wolves.length >= living.length - wolves.length) {
+  if (wolves.length >= nonWolves.length) {
     s.phase = "FIN";
     s.winnerTeam = "WOLVES";
-    s.winner = nk("winWolves");
+    s.winner = "Les Loups-Garous ont pris le contrôle du village !";
     return s;
   }
   return s;
