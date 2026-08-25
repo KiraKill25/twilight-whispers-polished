@@ -1276,6 +1276,61 @@ export function submitVote(state: GameState, targetId: string, talkativeSpoke = 
   return startNight(s);
 }
 
+export function eliminateTied(
+  state: GameState,
+  targetIds: string[],
+  talkativeSpoke = true
+): GameState {
+  let s = clone(state);
+  s.lastEliminated = [];
+
+  if (!talkativeSpoke) {
+    const talkative = s.players.find(
+      (p) => p.alive && effectiveRoleId(p) === "loup-bavard"
+    );
+    if (talkative) {
+      killPlayer(s, talkative.id, "TALKATIVE_WOLF");
+    }
+  }
+
+  const eliminatedList: { id: string; roleId: string; name: string }[] = [];
+
+  for (const targetId of targetIds) {
+    const target = s.players.find((p) => p.id === targetId);
+    if (target && !target.immuneToDayVote) {
+      const roleId = effectiveRoleId(target);
+      if (roleId === "ange" && s.day === 1) {
+        s.phase = "FIN";
+        s.winnerTeam = "OTHER";
+        s.winner = nk("winAngel", { name: target.name });
+        return s;
+      }
+      if (roleId === "idiot" && !target.abilityUsed) {
+        target.abilityUsed = true;
+        target.canVote = false;
+        s.dawnSummary.push(nk("idiotSaved", { name: target.name }));
+        s.log.push(nk("logIdiotSaved", { name: target.name }));
+      } else {
+        killPlayer(s, target.id, "VILLAGE_VOTE");
+        eliminatedList.push({
+          id: target.id,
+          roleId: target.originalRoleId ?? roleId,
+          name: target.name,
+        });
+      }
+    }
+  }
+
+  s.lastEliminated = eliminatedList;
+
+  s.players.forEach((p) => {
+    p.penaltyVotes = 0;
+  });
+
+  if (s.phase === "FIN") return s;
+  return startNight(s);
+}
+
 export function executeTalkativeWolfAndSkip(state: GameState): GameState {
   let s = clone(state);
   const talkative = s.players.find(
