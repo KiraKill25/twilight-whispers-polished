@@ -262,6 +262,17 @@ export function addDebatePenalty(state: GameState, playerId: string): GameState 
   return s;
 }
 
+/** Permet au Maître du Jeu de retirer un point de pénalité de débat à un joueur en cas d'erreur. */
+export function removeDebatePenalty(state: GameState, playerId: string): GameState {
+  const s = clone(state);
+  const p = s.players.find((x) => x.id === playerId);
+  if (p && p.alive && (p.penaltyVotes ?? 0) > 0) {
+    p.penaltyVotes = (p.penaltyVotes ?? 0) - 1;
+    s.log.push(`Le Maître du Jeu a retiré un point de pénalité de débat à ${p.name}.`);
+  }
+  return s;
+}
+
 export function buildNightSteps(s: GameState): Step[] {
   const first = s.night === 1;
   const steps: Step[] = [];
