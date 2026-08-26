@@ -56,6 +56,60 @@ function ModalShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Interactive penalty badge that adds on tap and removes on hold (long press) */
+function PenaltyBadge({
+  count,
+  onAdd,
+  onRemove,
+}: {
+  count: number;
+  onAdd: () => void;
+  onRemove: () => void;
+}) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPress = useRef(false);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isLongPress.current = false;
+
+    timerRef.current = setTimeout(() => {
+      isLongPress.current = true;
+      onRemove();
+    }, 500);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    if (!isLongPress.current) {
+      onAdd();
+    }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  return (
+    <span
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerCancel}
+      onPointerCancel={handlePointerCancel}
+      onContextMenu={(e) => e.preventDefault()}
+      className="mt-0.5 inline-block cursor-pointer select-none touch-none rounded-full bg-destructive px-1.5 text-[9px] font-black text-destructive-foreground tabular-nums shadow-md transition-transform active:scale-95"
+      title="Tap: +1 Pénalité | Appui long (0.5s): Retirer pénalité"
+    >
+      +{count} ⚠️
+    </span>
+  );
+}
+
 /** Étape 1 — début de journée : le capitaine choisit UNIQUEMENT le sens du débat. */
 export function DebateSetupModal({
   captainName,
@@ -185,18 +239,17 @@ export function DebateWheel({
   onFinish,
   onStar,
   onPenalty,
+  onRemovePenalty,
 }: {
   seating: Player[];
   seconds: number;
   captainId?: string;
   direction: RotationDirection;
-  /** Le timer ne démarre qu'après validation des choix du capitaine. */
   armed?: boolean;
   onFinish: () => void;
-  /** Attribution d'étoiles à l'orateur actif (tap = +1, appui long = -1). */
   onStar?: (playerId: string, delta: number) => void;
-  /** Attribution de points de pénalité (tap sur le nom du joueur dans le cercle). */
   onPenalty?: (playerId: string) => void;
+  onRemovePenalty?: (playerId: string) => void;
 }) {
   const { t } = useI18n();
   const queue = buildDebateQueue(seating, captainId, direction).filter(
@@ -294,11 +347,14 @@ export function DebateWheel({
         direction={direction}
         captainId={captainId}
         onNodeClick={(id) => onPenalty?.(id)}
+        onNodeLongPress={(id) => onRemovePenalty?.(id)}
         badge={(p) =>
           (p.penaltyVotes ?? 0) > 0 ? (
-            <span className="mt-0.5 inline-block rounded-full bg-destructive px-1.5 text-[9px] font-black text-destructive-foreground tabular-nums shadow-md">
-              +{p.penaltyVotes} ⚠️
-            </span>
+            <PenaltyBadge
+              count={p.penaltyVotes!}
+              onAdd={() => onPenalty?.(p.id)}
+              onRemove={() => onRemovePenalty?.(p.id)}
+            />
           ) : null
         }
         center={
