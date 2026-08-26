@@ -113,6 +113,23 @@ function GamePage() {
     });
   };
 
+  /** Decrement debate penalty points by 1 (floored at 0) */
+  const removePenalty = (playerId: string) => {
+    if (!state) return;
+    const p = state.players.find((x) => x.id === playerId);
+    if (p && (p.penaltyVotes ?? 0) > 0) {
+      updateState({
+        ...state,
+        players: state.players.map((x) =>
+          x.id === playerId
+            ? { ...x, penaltyVotes: Math.max(0, (x.penaltyVotes ?? 0) - 1) }
+            : x
+        ),
+      });
+      toast.info(`Pénalité retirée à ${p.name}`);
+    }
+  };
+
   /** Restore the previous snapshot. */
   const undo = () => {
     setStateHistory((h) => {
@@ -192,17 +209,15 @@ function GamePage() {
     !victims &&
     !state.captainSuccessionPending &&
     state.phase !== "EVENEMENT_MORT";
-  /** Rapport nocturne du Maître du Jeu, avant toute action du jour. */
+
   const needsNightReport =
     !isNight && state.phase === "AUBE" && reportDay !== state.day && overlayFree;
-  /** Étape 1 : sens du débat, demandé au début de la journée. */
   const needsDebateSetup =
     !isNight &&
     state.phase === "AUBE" &&
     !needsNightReport &&
     directionDay !== state.day &&
     overlayFree;
-  /** Étape 2 : réglages du vote, demandés une fois le débat terminé. */
   const needsVoteSetup =
     !isNight &&
     state.phase === "JOUR_VOTE" &&
@@ -337,6 +352,7 @@ function GamePage() {
           debateDone={debateDoneDay === state.day}
           onDebateDone={() => setDebateDoneDay(state.day)}
           onChange={updateState}
+          onRemovePenalty={removePenalty}
           onUndo={undo}
           canUndo={canUndo}
         />
@@ -360,6 +376,7 @@ function GamePage() {
                 toast.error(`Pénalité de débat infligée à ${p.name}`);
               }
             }}
+            onRemovePenalty={removePenalty}
           />
         ) : null
       ) : (
@@ -401,7 +418,6 @@ function Overlay({
   );
 }
 
-/** Sanction du MJ : élimination immédiate pour révélation de rôle. */
 function SuicideModal({
   state,
   onClose,
@@ -494,7 +510,6 @@ function RoleList({
   );
 }
 
-/** Anneaux lumineux thématiques par rôle. */
 const PICKER_ACCENT = {
   arcane: "border-primary bg-primary/15 text-primary shadow-[0_0_18px_rgba(99,102,241,0.45)]",
   poison: "border-emerald-400 bg-emerald-400/15 text-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.45)]",
@@ -553,8 +568,6 @@ function PlayerPicker({
     </div>
   );
 }
-
-// ─── Night panel ──────────────────────────────────────────────────────────────
 
 function NightPanel({
   state,
@@ -781,7 +794,6 @@ function NightPanel({
             >
               {t("bavardSeen")}
             </button>
-
           </div>
         ) : step.mode === "wolves" ? (
           <div className="space-y-3">
@@ -1212,13 +1224,10 @@ function NightPanel({
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
 }
-
-// ─── Dawn panel ───────────────────────────────────────────────────────────────
 
 function DawnPanel({
   state,
@@ -1228,6 +1237,7 @@ function DawnPanel({
   debateDone,
   onDebateDone,
   onChange,
+  onRemovePenalty,
 }: {
   state: GameState;
   settings: GameSettings | null;
@@ -1236,6 +1246,7 @@ function DawnPanel({
   debateDone: boolean;
   onDebateDone: () => void;
   onChange: (s: GameState) => void;
+  onRemovePenalty?: (playerId: string) => void;
   onUndo?: () => void;
   canUndo?: boolean;
 }) {
@@ -1292,8 +1303,8 @@ function DawnPanel({
             })
           }
           onPenalty={(id) => onChange(addDebatePenalty(state, id))}
+          onRemovePenalty={onRemovePenalty}
         />
-
       </NarratorCard>
     );
 
@@ -1382,8 +1393,6 @@ function DawnPanel({
   );
 }
 
-// ─── Captain succession ───────────────────────────────────────────────────────
-
 function CaptainSuccessionPanel({
   state,
   onDone,
@@ -1415,8 +1424,6 @@ function CaptainSuccessionPanel({
     </NarratorCard>
   );
 }
-
-// ─── Hunter panel ─────────────────────────────────────────────────────────────
 
 function HunterPanel({
   state,
@@ -1451,7 +1458,6 @@ function HunterPanel({
   );
 }
 
-/** Champ inline permettant au MJ de consulter et modifier le mot du Loup Bavard. */
 function InlineWordEditor({
   word,
   onChange,
