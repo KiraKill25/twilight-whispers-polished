@@ -255,22 +255,27 @@ function hasRole(s: GameState, roleId: string) {
 export function addDebatePenalty(state: GameState, playerId: string): GameState {
   const s = clone(state);
   const p = s.players.find((x) => x.id === playerId);
-  if (p && p.alive) {
+  if (p) {
     p.penaltyVotes = (p.penaltyVotes ?? 0) + 1;
     s.log.push(`Le Maître du Jeu a infligé un point de pénalité de débat à ${p.name}.`);
   }
   return s;
 }
 
-/** Permet au Maître du Jeu de retirer un point de pénalité de débat à un joueur en cas d'erreur. */
+/** Permet au Maître du Jeu de retirer un point de pénalité de débat à un joueur. */
 export function removeDebatePenalty(state: GameState, playerId: string): GameState {
   const s = clone(state);
   const p = s.players.find((x) => x.id === playerId);
-  if (p && p.alive && (p.penaltyVotes ?? 0) > 0) {
+  if (p && (p.penaltyVotes ?? 0) > 0) {
     p.penaltyVotes = (p.penaltyVotes ?? 0) - 1;
     s.log.push(`Le Maître du Jeu a retiré un point de pénalité de débat à ${p.name}.`);
   }
   return s;
+}
+
+/** Retourne le total des voix de pénalité/handicap accumulées contre un joueur. */
+export function getPlayerPenaltyVotes(p: Player): number {
+  return (p.baseVotes ?? 0) + (p.penaltyVotes ?? 0);
 }
 
 export function buildNightSteps(s: GameState): Step[] {
@@ -444,7 +449,7 @@ export function buildNightSteps(s: GameState): Step[] {
   push("maniaque", "Le Maniaque", "Désigne la victime que rien ne peut protéger.", "one", true);
   push("joueur-de-flute", "Joueur de Flûte", "Enchante deux joueurs.", "two", true);
   if (!first) push("corbeau", "Corbeau", "Sur qui déposes-tu la plume noire ?", "one", true);
-  push("tavernier", "Tavernier", "À qui offres-tu un verre ?", "one", true);
+  push("tavernier", "Tavernier", "À qui offers-tu un verre ?", "one", true);
 
   if (s.night === 2 || s.night === 3) {
     const gen = hasRole(s, "general");
