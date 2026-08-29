@@ -172,6 +172,30 @@ export function effectiveRoleId(p: Player) {
   return p.copiedRoleId ?? p.roleId;
 }
 
+/**
+ * Retourne le joueur attaqué par la meute nécessitant d'être sauvé.
+ * Exclut L'Ancien lors de sa première attaque (lives > 1) car il survit automatiquement.
+ */
+export function getWitchVictim(s: GameState): Player | undefined {
+  if (!s.round.attackedId) return undefined;
+  const victim = s.players.find((p) => p.id === s.round.attackedId);
+  if (!victim || !victim.alive) return undefined;
+  if (effectiveRoleId(victim) === "ancien" && victim.lives > 1) {
+    return undefined;
+  }
+  return victim;
+}
+
+/** Indique si une potion de soin/sauvetage peut être utilisée ce tour-ci. */
+export function canWitchHeal(s: GameState): boolean {
+  return !!getWitchVictim(s);
+}
+
+/** Alias pour récuperer le joueur attaqué pouvant être sauvé. */
+export function getAttackedPlayer(s: GameState): Player | undefined {
+  return getWitchVictim(s);
+}
+
 function rep(s: GameState, line: string) {
   if (!s.nightReport) s.nightReport = [];
   s.nightReport.push(line);
@@ -452,8 +476,7 @@ export function buildNightSteps(s: GameState): Step[] {
   }
 
   push("maniaque", "Le Maniaque", "Désigne la victime que rien ne peut protéger.", "one", true);
-  
-  // Joueur de Flûte: 1 target if starting village <= 10, 2 targets if >= 11
+
   const fluteMode: Step["mode"] = s.players.length > 10 ? "two" : "one";
   const flutePrompt = s.players.length > 10 ? "Enchante deux joueurs." : "Enchante un joueur.";
   push("joueur-de-flute", "Joueur de Flûte", flutePrompt, fluteMode, true);
@@ -651,14 +674,14 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
               result: nrole(seenId),
             }),
           );
-        } else if (power === "life" && s.round.attackedId) {
-          const saved = s.players.find((p) => p.id === s.round.attackedId);
-          s.round.attackedId = undefined;
-          s.round.healed = true;
-          actor.facesUsed.push("potion");
-          s.reveal = nk("facesLifeMsg");
-          rep(s, nk("repWitchLife", { name: saved?.name ?? "" }));
-          if (saved)
+        } else if (power === "life") {
+          const saved = getWitchVictim(s);
+          if (saved) {
+            s.round.attackedId = undefined;
+            s.round.healed = true;
+            actor.facesUsed.push("potion");
+            s.reveal = nk("facesLifeMsg");
+            rep(s, nk("repWitchLife", { name: saved.name }));
             pushEvent(s, {
               round: s.night,
               phase: "NIGHT",
@@ -666,6 +689,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
               name: saved.name,
               bySavior: "trois-faces",
             });
+          }
         } else if (power === "poison" && target) {
           s.round.facesPoisonedId = target.id;
           actor.facesUsed.push("potion");
@@ -828,22 +852,21 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       break;
     }
     case "sorciere": {
-      if (payload.healUsed && s.round.attackedId) {
-        const saved = s.players.find((p) => p.id === s.round.attackedId);
+      const saved = getWitchVictim(s);
+      if (payload.healUsed && saved) {
         s.round.healed = true;
         s.round.attackedId = undefined;
         actor.healUsed = true;
         actor.hasUsedLifePotion = true;
         s.reveal = nk("witchSaved");
-        rep(s, nk("repWitchLife", { name: saved?.name ?? "" }));
-        if (saved)
-          pushEvent(s, {
-            round: s.night,
-            phase: "NIGHT",
-            type: "RESCUE",
-            name: saved.name,
-            bySavior: "sorciere",
-          });
+        rep(s, nk("repWitchLife", { name: saved.name }));
+        pushEvent(s, {
+          round: s.night,
+          phase: "NIGHT",
+          type: "RESCUE",
+          name: saved.name,
+          bySavior: "sorciere",
+        });
       }
       if (payload.poisonId) {
         s.round.poisonedId = payload.poisonId;
@@ -1162,7 +1185,6 @@ function resolveNight(state: GameState): GameState {
     }
   }
 
-  // Corbeau: 1 vote penalty if starting players <= 10, otherwise 2 votes penalty if >= 11
   if (s.round.ravenTargetId) {
     const r = s.players.find((p) => p.id === s.round.ravenTargetId);
     if (r) {
