@@ -10,6 +10,7 @@ export const zh = {
     soloPackSuffix: " — 单人狼群",
     stepWakeAlt: "{role} 请睁眼",
     narratorAlt: "主持人，身穿斗篷、手持发光魔导书的讲述者",
+
     // Common
     back: "← 返回",
     next: "下一步",
@@ -246,6 +247,7 @@ export const zh = {
     gmConfirmElim: "确认淘汰",
     gmRevoteAction: "重新组织投票",
     undoStep: "← 撤销",
+
     // Suicide / Revelation
     causeSuicide: "违规自爆 / 自报身份",
     gmSuicide: "违规自爆 / 自报身份",
@@ -253,9 +255,11 @@ export const zh = {
     suicideDesc: "选择违反规则或自报身份的玩家。该玩家将立即被淘汰并进入黑夜。",
     suicideConfirm: "💀 确认淘汰",
     suicideDone: "{name} 已被淘汰：违规自爆 / 自报身份。",
+
     // Undo
     undoLabel: "撤销",
     undoDoneToast: "已撤销操作",
+
     // Black Wolf — actions hub
     bwHubTitle: "大黑狼 — 行动",
     bwTabAttack: "袭击",
@@ -270,6 +274,7 @@ export const zh = {
     gmTurnGuide: "{role} 回合 — {name}。请引导该玩家并确认行动。",
     validateAction: "确认行动",
     passTurn: "跳过回合",
+
     // Summary — badges & evaluation
     recapRounds: "历经 {n} 轮",
     turningPointTitle: "转折点",
