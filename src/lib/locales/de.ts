@@ -222,6 +222,7 @@ export const de = {
     revoteSuffix: " (Stichwahl)",
     voteText:
       "Das Dorf muss den Verurteilten bestimmen. Zähle die Stimmen: Mindestens ein Spieler sollte eliminiert werden.",
+    logRavenTarget: "Der Rabe visiert {name} an. Dieser Spieler startet die Abstimmung mit {count} Stimme(n) gegen sich.",
     voteTotal: "Vergebene Stimmen: {c} / {t}",
     voteTotalHint:
       "Mögliche Gesamtstimmen entsprechen Anzahl der Lebenden + 1 (doppelte Hauptmannsstimme).",
@@ -231,7 +232,7 @@ export const de = {
     bavardAsk: "Hat er sein Wort '{word}' gesagt?",
     bavardInactiveDay1: "Der Plapperwolf war in der 1. Nacht inaktiv — keine Überprüfung.",
     tieJudge:
-      "Gleichstand: Der Richter entscheidet. Er wählt einen oder mehrere Unentschiedene zur Elimination oder ordnet eine Stichwahl an.",
+      "Gleichstand: Der Richter entscheidet. Er wählt einen oder mehere Unentschiedene zur Elimination oder ordnet eine Stichwahl an.",
     judgeExecute: "Urteil des Richters vollstrecken",
     orderRevote: "Stichwahl anordnen",
     tieBreakOnly: "Gleichstand brechen — nur die {n} unentschiedenen Spieler werden angezeigt",
