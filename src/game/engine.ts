@@ -10,7 +10,6 @@ export type DeathCause =
   | "HUNTER_SHOT"
   | "HEARTBREAK"
   | "VILLAGE_VOTE"
-  | "JAILER_EXECUTION"
   | "SPY_DETECTED"
   | "TALKATIVE_WOLF"
   | "GENERAL_STRIKE"
@@ -27,7 +26,6 @@ export const DEATH_LABEL: Record<DeathCause, string> = {
   HUNTER_SHOT: nk("cause_HUNTER_SHOT"),
   HEARTBREAK: nk("cause_HEARTBREAK"),
   VILLAGE_VOTE: nk("cause_VILLAGE_VOTE"),
-  JAILER_EXECUTION: nk("cause_JAILER_EXECUTION"),
   SPY_DETECTED: nk("cause_SPY_DETECTED"),
   TALKATIVE_WOLF: nk("cause_TALKATIVE_WOLF"),
   GENERAL_STRIKE: nk("cause_GENERAL_STRIKE"),
@@ -309,7 +307,14 @@ export function buildNightSteps(s: GameState): Step[] {
     push("enfant-sauvage", "Enfant Sauvage", "Choisis ton modèle.", "one");
   }
 
-  if (!first) push("geolier", "Geôlier", "Qui séquestres-tu cette nuit ?", "one");
+  if (!first) {
+    push(
+      "geolier",
+      "Geôlier",
+      "Qui prives-tu de son droit de vote pour le débat de demain ?",
+      "one",
+    );
+  }
   if (!first) push("voyante", "Voyante", "Quel joueur veux-tu sonder ?", "one");
 
   {
@@ -447,7 +452,12 @@ export function buildNightSteps(s: GameState): Step[] {
   }
 
   push("maniaque", "Le Maniaque", "Désigne la victime que rien ne peut protéger.", "one", true);
-  push("joueur-de-flute", "Joueur de Flûte", "Enchante deux joueurs.", "two", true);
+  
+  // Joueur de Flûte: 1 target if starting village <= 10, 2 targets if >= 11
+  const fluteMode: Step["mode"] = s.players.length > 10 ? "two" : "one";
+  const flutePrompt = s.players.length > 10 ? "Enchante deux joueurs." : "Enchante un joueur.";
+  push("joueur-de-flute", "Joueur de Flûte", flutePrompt, fluteMode, true);
+
   if (!first) push("corbeau", "Corbeau", "Sur qui déposes-tu la plume noire ?", "one", true);
   push("tavernier", "Tavernier", "À qui offers-tu un verre ?", "one", true);
 
@@ -547,6 +557,9 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     case "mime": {
       if (target) {
         actor.copiedRoleId = target.roleId;
+        if (target.roleId === "ancien") {
+          actor.lives = 2;
+        }
         s.reveal = nk("mimeCopy", { role: nrole(target.roleId) });
       }
       break;
@@ -561,14 +574,9 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     case "geolier": {
       if (target) {
         s.round.jailedId = target.id;
-        target.disabledNightAbility = true;
-        if (payload.yes) {
-          s.pendingDeaths.push({ id: target.id, cause: "JAILER_EXECUTION" });
-          s.reveal = nk("jailExecuted", { name: target.name });
-        } else {
-          s.reveal = nk("jailLocked", { name: target.name });
-        }
-        s.steps = rebuildRemaining(s);
+        s.reveal = `${target.name} sera enfermé et ne pourra pas voter demain.`;
+        s.log.push(`Le Geôlier a ciblé ${target.name} pour le priver de vote.`);
+        rep(s, `Le Geôlier a enfermé ${target.name} pour le priver de son droit de vote.`);
       }
       break;
     }
@@ -593,10 +601,11 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         actor.roleId = stolen;
         actor.copiedRoleId = undefined;
         actor.team = target.team;
-        actor.lives = stolen === "ancien" ? 2 : actor.lives;
+        actor.lives = stolen === "ancien" ? 2 : 1;
         target.roleId = "simple-villageois";
         target.copiedRoleId = undefined;
         target.team = "VILLAGEOIS";
+        target.lives = 1;
         target.hasPuppetShield = false;
         s.reveal = nk("thiefSteal", { name: target.name, role: nrole(stolen) });
         s.log.push(nk("logThiefSteal", { name: target.name, role: nrole(stolen) }));
@@ -608,7 +617,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
             role: nrole(stolen),
           }),
         );
-        s.steps = rebuildRemaining(s);
       }
       break;
     }
@@ -848,7 +856,8 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       break;
     }
     case "joueur-de-flute": {
-      (payload.targetIds ?? []).forEach((id) => {
+      const ids = payload.targetIds ?? (payload.targetId ? [payload.targetId] : []);
+      ids.forEach((id) => {
         const p = s.players.find((x) => x.id === id);
         if (p) p.enchanted = true;
       });
@@ -913,17 +922,6 @@ function seenRoleId(target: Player): string {
   return id === "maniaque" ? "simple-villageois" : id;
 }
 
-function rebuildRemaining(s: GameState): Step[] {
-  const done = s.steps.slice(0, s.stepIndex + 1);
-  const jailed = s.round.jailedId;
-  return [
-    ...done,
-    ...s.steps
-      .slice(s.stepIndex + 1)
-      .filter((st) => st.actorId !== jailed || st.roleId === "loup-garou"),
-  ];
-}
-
 function pushEvent(s: GameState, e: GameEvent) {
   if (!s.events) s.events = [];
   s.events.push(e);
@@ -933,7 +931,8 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
   const p = s.players.find((x) => x.id === id);
   if (!p || !p.alive) return;
 
-  if (cause === "WOLVES" && p.lives > 1) {
+  // L'Ancien résiste à la première attaque directe des Loups-Garous ou du Loup Blanc
+  if ((cause === "WOLVES" || cause === "WHITE_WOLF_KILL") && p.lives > 1) {
     p.lives -= 1;
     s.dawnSummary.push(nk("survivedAttack", { name: p.name }));
     pushEvent(s, {
@@ -976,10 +975,16 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
     }
   }
 
-  if (
-    effectiveRoleId(p) === "ancien" &&
-    (cause === "VILLAGE_VOTE" || cause === "HUNTER_SHOT" || cause === "WITCH_POISON")
-  ) {
+  // Si l'Ancien est éliminé par une faute du Village, tous les Villageois perdent leurs pouvoirs
+  const VILLAGE_KILL_CAUSES: DeathCause[] = [
+    "VILLAGE_VOTE",
+    "HUNTER_SHOT",
+    "WITCH_POISON",
+    "GENERAL_STRIKE",
+    "GENERAL_FAILED",
+  ];
+
+  if (effectiveRoleId(p) === "ancien" && VILLAGE_KILL_CAUSES.includes(cause)) {
     s.players
       .filter((x) => x.alive && x.team === "VILLAGEOIS")
       .forEach((x) => {
@@ -1053,19 +1058,6 @@ function resolveNight(state: GameState): GameState {
         type: "RESCUE",
         name: saved.name,
         bySavior: "salvateur",
-      });
-  }
-  if (s.round.attackedId && s.round.attackedId === s.round.jailedId) {
-    const saved = s.players.find((p) => p.id === s.round.attackedId);
-    s.round.attackedId = undefined;
-    s.dawnSummary.push(nk("jailerSafe"));
-    if (saved)
-      pushEvent(s, {
-        round: s.night,
-        phase: "NIGHT",
-        type: "RESCUE",
-        name: saved.name,
-        bySavior: "geolier",
       });
   }
 
@@ -1147,17 +1139,35 @@ function resolveNight(state: GameState): GameState {
   s.players.forEach((p) => {
     p.immuneToDayVote = false;
     p.baseVotes = 0;
+    if (effectiveRoleId(p) !== "idiot" || !p.abilityUsed) {
+      p.canVote = true;
+    }
   });
+
+  if (s.round.jailedId) {
+    const jailed = s.players.find((p) => p.id === s.round.jailedId);
+    if (jailed && jailed.alive) {
+      jailed.canVote = false;
+      s.dawnSummary.push(
+        `${jailed.name} a été enfermé par le Geôlier et ne pourra pas voter aujourd'hui.`,
+      );
+    }
+  }
+
   if (s.round.drinkTargetId) {
     const d = s.players.find((p) => p.id === s.round.drinkTargetId);
-    if (d) {
+    if (d && d.alive) {
       d.immuneToDayVote = true;
       d.canVote = false;
     }
   }
+
+  // Corbeau: 1 vote penalty if starting players <= 10, otherwise 2 votes penalty if >= 11
   if (s.round.ravenTargetId) {
     const r = s.players.find((p) => p.id === s.round.ravenTargetId);
-    if (r) r.baseVotes = 2;
+    if (r) {
+      r.baseVotes = s.players.length > 10 ? 2 : 1;
+    }
   }
 
   const deaths = s.players.filter((p) => !p.alive && aliveBefore.has(p.id));
