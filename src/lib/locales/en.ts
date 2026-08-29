@@ -222,6 +222,7 @@ export const en = {
     revoteSuffix: " (Revote)",
     voteText:
       "Village must pick the condemned. Tally votes: at least 1 player should be eliminated.",
+    logRavenTarget: "The Raven targets {name}. This player starts the vote with {count} vote(s) against them.",
     voteTotal: "Allocated: {c} / {t} votes",
     voteTotalHint:
       "Total possible votes equal count of living + 1 (Captain's double vote).",
