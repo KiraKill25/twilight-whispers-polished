@@ -221,6 +221,7 @@ export const fr = {
     revoteSuffix: " (Revote)",
     voteText:
       "Le village doit désigner le condamné. Comptez les voix : au moins un joueur doit être éliminé.",
+    logRavenTarget: "Le Corbeau cible {name}. Ce joueur commence le vote avec {count} vote(s) contre lui.",
     voteTotal: "Total attribué : {c} / {t} voix",
     voteTotalHint:
       "Le total des voix possibles correspond au nombre de vivants + 1 (double voix du Capitaine).",
@@ -484,7 +485,7 @@ export const fr = {
     "montreur-dours": "L'ours renifle ses voisins directs…",
     "trois-faces": "Choisissez l'un de vos trois visages : protection, potion ou inspection.",
     voleur: "Volez le rôle d'un joueur : il deviendra un simple villageois.",
-    maniaque: "Désignez la victime qu'aucune protection ne peut arrêter.",
+    maniaque: "Désignez la victime qu'aucune protection ne peut l'arrêter.",
     marionnettiste: "Désignez votre marionnette. Si vous êtes attaqué, votre marionnette subit les dégâts à votre place et vous devenez muet durant le débat.",
   } as Record<string, string>,
   teams: {
