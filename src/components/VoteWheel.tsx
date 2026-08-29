@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, Crown, Gavel, RotateCcw, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, Crown, Gavel, RotateCcw, ShieldAlert, Timer, X } from "lucide-react";
 import { NarratorCard } from "@/components/NarratorCard";
 import {
   SeatingWheel,
@@ -58,6 +58,28 @@ export function VoteWheel({
   const [splitPick, setSplitPick] = useState<string[]>([]);
   const [doubleElim, setDoubleElim] = useState(false);
 
+  // --- Defense Timer Logic State ---
+  const defenseThreshold = state.players.length <= 10 ? 2 : 3;
+  const [defensePlayerId, setDefensePlayerId] = useState<string | null>(null);
+  const [defendedPlayerIds, setDefendedPlayerIds] = useState<string[]>([]);
+  const [timerSeconds, setTimerSeconds] = useState(60);
+
+  // Defense countdown timer effect
+  useEffect(() => {
+    if (!defensePlayerId) return;
+    setTimerSeconds(60);
+    const interval = setInterval(() => {
+      setTimerSeconds((prev) => {
+        if (prev <= 1) {
+          setDefensePlayerId(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [defensePlayerId]);
+
   const judge = state.players.find(
     (p) => p.alive && effectiveRoleId(p) === "juge",
   );
@@ -107,12 +129,6 @@ export function VoteWheel({
     return c;
   }, [votes, alive, inTieBreak, tieSubset]);
 
-  const voterList = (targetId: string) =>
-    Object.entries(votes)
-      .filter(([, targets]) => targets.includes(targetId))
-      .map(([vid]) => state.players.find((p) => p.id === vid))
-      .filter((p): p is Player => !!p);
-
   const currentVoter = voters[idx];
   const isCaptainTurn =
     !!currentVoter && currentVoter.id === state.villageCaptainId;
@@ -123,10 +139,38 @@ export function VoteWheel({
 
   const commit = (voterId: string, targets: string[]) => {
     playVoteTick();
-    setVotes((v) => ({ ...v, [voterId]: targets }));
+    const nextVotes = { ...votes, [voterId]: targets };
+    setVotes(nextVotes);
     setIdx((i) => i + 1);
     setSplitMode(false);
     setSplitPick([]);
+
+    // Calculate updated counts immediately to check threshold trigger
+    const updatedCounts: Record<string, number> = {};
+    for (const p of alive) {
+      updatedCounts[p.id] =
+        (inTieBreak && !tieSubset.includes(p.id) ? 0 : p.baseVotes) +
+        (p.penaltyVotes ?? 0);
+    }
+    for (const tList of Object.values(nextVotes)) {
+      for (const tId of tList) {
+        if (tId === ABSTAIN) continue;
+        updatedCounts[tId] = (updatedCounts[tId] ?? 0) + 1;
+      }
+    }
+
+    // Check if any target reached/exceeded threshold for the first time this round
+    const triggeredId = targets.find(
+      (tId) =>
+        tId !== ABSTAIN &&
+        (updatedCounts[tId] ?? 0) >= defenseThreshold &&
+        !defendedPlayerIds.includes(tId),
+    );
+
+    if (triggeredId) {
+      setDefensePlayerId(triggeredId);
+      setDefendedPlayerIds((prev) => [...prev, triggeredId]);
+    }
   };
 
   /** Clic simple : 1 point (2 pour le capitaine hors revote et hors mode séparé). */
@@ -157,6 +201,7 @@ export function VoteWheel({
     setTallied(false);
     setJudgeMode(false);
     setCaptainMode(false);
+    setDefensePlayerId(null);
   };
 
   const resetRound = (subset: string[]) => {
@@ -170,6 +215,8 @@ export function VoteWheel({
     setSplitPick([]);
     setTieSubset(subset);
     setRevoteRound((r) => r + 1);
+    setDefensePlayerId(null);
+    setDefendedPlayerIds([]);
   };
 
   const ranked = [...candidates].sort(
@@ -240,6 +287,34 @@ export function VoteWheel({
       title={`${t("voteTitle", { n: state.day })}${revoteRound ? t("revoteSuffix") : ""}`}
       text={t("voteText")}
     >
+      {/* Active Defense Timer Banner */}
+      {defensePlayerId && (
+        <div className="space-y-2 rounded-2xl border border-amber-500/50 bg-amber-500/10 p-4 text-center animate-in fade-in zoom-in-95">
+          <div className="flex items-center justify-center gap-2 text-amber-500">
+            <ShieldAlert className="size-5 animate-pulse" />
+            <h4 className="text-sm font-black tracking-wider uppercase">
+              Temps de Défense ({defenseThreshold} votes)
+            </h4>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="font-bold text-foreground">
+              {state.players.find((p) => p.id === defensePlayerId)?.name}
+            </span>{" "}
+            dispose d'une minute pour plaider sa cause !
+          </p>
+          <div className="flex items-center justify-center gap-2 text-2xl font-black text-amber-500 tabular-nums">
+            <Timer className="size-6 animate-spin" style={{ animationDuration: "3s" }} />
+            <span>{timerSeconds}s</span>
+          </div>
+          <button
+            onClick={() => setDefensePlayerId(null)}
+            className="w-full rounded-full border border-amber-500/40 bg-amber-500/20 py-2 text-xs font-bold text-amber-500 transition-colors hover:bg-amber-500/30"
+          >
+            Terminer la défense
+          </button>
+        </div>
+      )}
+
       {inTieBreak && (
         <div className="space-y-1">
           <p className="rounded-xl border border-primary/40 px-3 py-2 text-center text-xs tracking-widest text-primary uppercase">
@@ -313,26 +388,26 @@ export function VoteWheel({
             {isRevote ? t("captainRevoteOneVote") : t("captainSplitTitle")}
           </p>
           {!isRevote && (
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => {
-                setSplitMode(false);
-                setSplitPick([]);
-              }}
-              className={`rounded-full py-2 text-[11px] font-bold ${!splitMode ? "bg-accent text-background" : "border border-accent/60 text-accent"}`}
-            >
-              {t("captainVoteBoth")}
-            </button>
-            <button
-              onClick={() => {
-                setSplitMode(true);
-                setSplitPick([]);
-              }}
-              className={`rounded-full py-2 text-[11px] font-bold ${splitMode ? "bg-accent text-background" : "border border-accent/60 text-accent"}`}
-            >
-              {t("captainVoteSplit")}
-            </button>
-          </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setSplitMode(false);
+                  setSplitPick([]);
+                }}
+                className={`rounded-full py-2 text-[11px] font-bold ${!splitMode ? "bg-accent text-background" : "border border-accent/60 text-accent"}`}
+              >
+                {t("captainVoteBoth")}
+              </button>
+              <button
+                onClick={() => {
+                  setSplitMode(true);
+                  setSplitPick([]);
+                }}
+                className={`rounded-full py-2 text-[11px] font-bold ${splitMode ? "bg-accent text-background" : "border border-accent/60 text-accent"}`}
+              >
+                {t("captainVoteSplit")}
+              </button>
+            </div>
           )}
           {!isRevote && splitMode && (
             <p className="text-[11px] text-muted-foreground">
