@@ -222,6 +222,7 @@ export const es = {
     revoteSuffix: " (Desempate)",
     voteText:
       "La aldea debe designar al condenado. Cuenta los votos: al menos un jugador debe ser eliminado.",
+    logRavenTarget: "El Cuervo apunta a {name}. Este jugador comienza la votación con {count} voto(s) en su contra.",
     voteTotal: "Votos asignados: {c} / {t}",
     voteTotalHint:
       "El total de votos posibles equivale al número de vivos + 1 (voto doble del Capitán).",
