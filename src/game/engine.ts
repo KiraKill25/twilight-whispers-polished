@@ -557,6 +557,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       if (target) {
         s.players.forEach((p) => (p.hasPuppetShield = false));
         target.hasPuppetShield = true;
+        actor.abilityUsed = true;
         s.reveal = `La marionnette veille sur ${target.name} cette nuit.`;
         s.log.push(`Le Marionnettiste place sa marionnette sur ${target.name}.`);
         rep(s, `Le Marionnettiste a placé sa marionnette sur ${target.name}.`);
@@ -572,6 +573,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           a.team = "LOVERS";
           b.team = "LOVERS";
         }
+        actor.abilityUsed = true;
         s.reveal = nk("lovers", { a: a.name, b: b.name });
         s.log.push(nk("logCupid", { a: a.name, b: b.name }));
       }
@@ -583,6 +585,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         if (target.roleId === "ancien") {
           actor.lives = 2;
         }
+        actor.abilityUsed = true;
         s.reveal = nk("mimeCopy", { role: nrole(target.roleId) });
       }
       break;
@@ -590,6 +593,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     case "enfant-sauvage": {
       if (target) {
         actor.roleModelId = target.id;
+        actor.abilityUsed = true;
         s.reveal = nk("wildModel", { name: target.name });
       }
       break;
@@ -625,6 +629,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         actor.copiedRoleId = undefined;
         actor.team = target.team;
         actor.lives = stolen === "ancien" ? 2 : 1;
+        actor.abilityUsed = true;
         target.roleId = "simple-villageois";
         target.copiedRoleId = undefined;
         target.team = "VILLAGEOIS";
@@ -658,6 +663,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         actor.facesUsed = actor.facesUsed ?? [];
         if (power === "protect" && target) {
           s.round.protectedId = target.id;
+          s.round.previousProtectedId = target.id;
           actor.facesUsed.push("protect");
           s.reveal = nk("facesProtectMsg", { name: target.name });
           s.log.push(nk("logFaces", { power: nk("repFacePower_protect"), name: target.name }));
@@ -712,6 +718,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       }
       if (target) {
         s.round.protectedId = target.id;
+        s.round.previousProtectedId = target.id;
         s.reveal = nk("protectedTonight", { name: target.name });
         rep(s, nk("repProtect", { role: nrole("salvateur"), name: target.name }));
       }
@@ -954,7 +961,6 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
   const p = s.players.find((x) => x.id === id);
   if (!p || !p.alive) return;
 
-  // L'Ancien résiste à la première attaque directe des Loups-Garous ou du Loup Blanc
   if ((cause === "WOLVES" || cause === "WHITE_WOLF_KILL") && p.lives > 1) {
     p.lives -= 1;
     s.dawnSummary.push(nk("survivedAttack", { name: p.name }));
@@ -998,7 +1004,6 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
     }
   }
 
-  // Si l'Ancien est éliminé par une faute du Village, tous les Villageois perdent leurs pouvoirs
   const VILLAGE_KILL_CAUSES: DeathCause[] = [
     "VILLAGE_VOTE",
     "HUNTER_SHOT",
@@ -1406,7 +1411,12 @@ export function startNight(state: GameState): GameState {
   s.night += 1;
   s.phase = "NUIT";
   s.stepIndex = 0;
-  s.round = {};
+  const prevProtected = s.round.protectedId;
+  const prevMuted = s.round.mutedId;
+  s.round = {
+    previousProtectedId: prevProtected,
+    previousMutedId: prevMuted,
+  };
   s.dawnSummary = [];
   s.players.forEach((p) => {
     p.mutedForDay = false;
