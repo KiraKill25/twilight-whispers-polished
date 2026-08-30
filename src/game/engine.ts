@@ -87,6 +87,8 @@ export interface Player {
   facesUsed?: string[];
   /** Étoiles attribuées par le meneur pendant les débats. */
   stars: number;
+  /** Pénalités de votes accumulées. */
+  penaltyVotes?: number;
 }
 
 export interface Step {
@@ -221,6 +223,7 @@ export function createGame(
     hasUsedDeathPotion: false,
     hasPuppetShield: false,
     stars: 0,
+    penaltyVotes: 0,
   }));
 
   const captain = players.find((p) => p.name === villageCaptainId);
@@ -429,7 +432,7 @@ export function buildNightSteps(s: GameState): Step[] {
 
   push("maniaque", "Le Maniaque", "Désigne la victime que rien ne peut protéger.", "one", true);
   push("joueur-de-flute", "Joueur de Flûte", "Enchante deux joueurs.", "two", true);
-  if (!first) push("corbeau", "Corbeau", "Sur who déposes-tu la plume noire ?", "one", true);
+  if (!first) push("corbeau", "Corbeau", "Sur qui déposes-tu la plume noire ?", "one", true);
   push("tavernier", "Tavernier", "À qui offres-tu un verre ?", "one", true);
 
   if (s.night === 2 || s.night === 3) {
@@ -1057,20 +1060,17 @@ function resolveNight(state: GameState): GameState {
     const attackedPlayer = s.players.find((p) => p.id === s.round.attackedId);
 
     if (attackedPlayer && effectiveRoleId(attackedPlayer) === "marionnettiste") {
-      // Trouver le joueur qui porte la marionnette
       const puppetPlayer = s.players.find((p) => p.alive && p.hasPuppetShield);
 
       if (puppetPlayer) {
-        // La marionnette est consommée / détruite
         puppetPlayer.hasPuppetShield = false;
         attackedPlayer.abilityUsed = true;
 
-        // Cas 4 : La marionnette est protégée par le Salvateur ou bouclier du village
         const isPuppetProtected =
           s.round.protectedId === puppetPlayer.id || s.round.villageShield;
 
         if (isPuppetProtected) {
-          s.round.attackedId = undefined; // L'attaque est complètement perdue
+          s.round.attackedId = undefined;
           s.dawnSummary.push(
             `Les loups ont attaqué le Marionnettiste, mais l'attaque redirigée vers la marionnette de ${puppetPlayer.name} a été bloquée par le Salvateur !`,
           );
@@ -1082,9 +1082,8 @@ function resolveNight(state: GameState): GameState {
             bySavior: "salvateur",
           });
         } else {
-          // Cas 2 : L'attaque est redirigée vers le porteur de la marionnette (qui meurt à la place)
-          s.round.attackedId = puppetPlayer.id; // Redirection de la mort vers le porteur
-          attackedPlayer.mutedForDay = true;     // Le Marionnettiste devient muet
+          s.round.attackedId = puppetPlayer.id;
+          attackedPlayer.mutedForDay = true;
 
           s.dawnSummary.push(
             `Les loups ont attaqué le Marionnettiste ! La marionnette portée par ${puppetPlayer.name} a absorbé le coup et a péri à sa place. Le Marionnettiste est désormais muet.`,
@@ -1101,9 +1100,6 @@ function resolveNight(state: GameState): GameState {
             bySavior: "marionnettiste",
           });
         }
-      } else {
-        // Cas 3 : Plus de marionnette active (déjà détruite ou absente), le Marionnettiste prend l'attaque et meurt normalement.
-        // s.round.attackedId reste le Marionnettiste, killPlayer s'en chargera.
       }
     }
   }
@@ -1121,7 +1117,6 @@ function resolveNight(state: GameState): GameState {
     s.dawnSummary.push(nk("bearNear"));
   }
 
-  // Silence permanent pour le Marionnettiste dont la marionnette a été détruite
   s.players.forEach((p) => {
     if (p.alive && effectiveRoleId(p) === "marionnettiste" && p.abilityUsed) {
       p.mutedForDay = true;
@@ -1411,6 +1406,19 @@ export function checkVictory(state: GameState): GameState {
     s.winnerTeam = "WOLVES";
     s.winner = nk("winWolves");
     return s;
+  }
+  return s;
+}
+
+export function canWitchHeal(s: GameState): boolean {
+  return !!s.round.attackedId;
+}
+
+export function addDebatePenalty(state: GameState, playerId: string): GameState {
+  const s = clone(state);
+  const p = s.players.find((x) => x.id === playerId);
+  if (p) {
+    p.penaltyVotes = (p.penaltyVotes ?? 0) + 1;
   }
   return s;
 }
