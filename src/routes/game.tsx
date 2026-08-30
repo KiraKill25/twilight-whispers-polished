@@ -60,7 +60,6 @@ import {
   createGame,
   currentStep,
   effectiveRoleId,
-  executeTalkativeWolfAndSkip,
   goToVote,
   resolveHunter,
   skipVote,
@@ -111,7 +110,6 @@ function GamePage() {
   const [suicideOpen, setSuicideOpen] = useState(false);
   const lastPhase = useRef<string>("");
 
-  /** Push current state to history then apply next. Max 30 snapshots. */
   const updateState = (next: GameState) => {
     setState((cur) => {
       if (cur) setStateHistory((h) => [...h, cur].slice(-30));
@@ -119,7 +117,6 @@ function GamePage() {
     });
   };
 
-  /** Decrement debate penalty points by 1 (floored at 0) */
   const removePenalty = (playerId: string) => {
     if (!state) return;
     const p = state.players.find((x) => x.id === playerId);
@@ -136,7 +133,6 @@ function GamePage() {
     }
   };
 
-  /** Restore the previous snapshot. */
   const undo = () => {
     setStateHistory((h) => {
       const prev = h[h.length - 1];
@@ -163,7 +159,6 @@ function GamePage() {
     else navigate({ to: "/setup" });
   }, [navigate]);
 
-  // Phase transition cards
   useEffect(() => {
     if (!state) return;
     const isNight = state.phase.startsWith("NUIT");
@@ -175,7 +170,6 @@ function GamePage() {
     lastPhase.current = key;
   }, [state]);
 
-  // End-of-game SFX
   useEffect(() => {
     if (state?.phase !== "FIN") return;
     if (state.winnerTeam === "WOLVES") playWolfHowl();
@@ -186,7 +180,6 @@ function GamePage() {
     if (state) saveGame(state);
   }, [state]);
 
-  // BGM lifecycle
   useEffect(() => {
     if (!state) return;
     if (state.phase === "FIN") { clearBgm(); return; }
@@ -398,8 +391,6 @@ function GamePage() {
     </main>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 function Overlay({
   children,
@@ -1275,8 +1266,6 @@ function NightPanel({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 function HunterPanel({
   state,
   onDone,
@@ -1409,7 +1398,6 @@ function DawnPanel({
         </div>
       )}
 
-      {/* Debate Wheel & Penalty Controls */}
       <div className="space-y-3">
         <h3 className="text-xs tracking-widest text-primary uppercase">{t("debateTitle")}</h3>
         <DebateWheel
