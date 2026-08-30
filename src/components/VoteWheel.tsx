@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Crown, Gavel, RotateCcw, ShieldAlert, Timer, X } from "lucide-react";
+import {
+  ChevronDown,
+  Crown,
+  Gavel,
+  Pause,
+  Play,
+  RotateCcw,
+  ShieldAlert,
+  Timer,
+  X,
+} from "lucide-react";
 import { NarratorCard } from "@/components/NarratorCard";
 import {
   SeatingWheel,
@@ -63,22 +73,33 @@ export function VoteWheel({
   const [defensePlayerId, setDefensePlayerId] = useState<string | null>(null);
   const [defendedPlayerIds, setDefendedPlayerIds] = useState<string[]>([]);
   const [timerSeconds, setTimerSeconds] = useState(60);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+  // Reset timer state when a new player triggers defense mode
+  useEffect(() => {
+    if (defensePlayerId) {
+      setTimerSeconds(60);
+      setIsTimerRunning(true);
+    }
+  }, [defensePlayerId]);
 
   // Defense countdown timer effect
   useEffect(() => {
-    if (!defensePlayerId) return;
-    setTimerSeconds(60);
+    if (!defensePlayerId || !isTimerRunning) return;
+
     const interval = setInterval(() => {
       setTimerSeconds((prev) => {
         if (prev <= 1) {
           setDefensePlayerId(null);
+          setIsTimerRunning(false);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+
     return () => clearInterval(interval);
-  }, [defensePlayerId]);
+  }, [defensePlayerId, isTimerRunning]);
 
   const judge = state.players.find(
     (p) => p.alive && effectiveRoleId(p) === "juge",
@@ -202,6 +223,7 @@ export function VoteWheel({
     setJudgeMode(false);
     setCaptainMode(false);
     setDefensePlayerId(null);
+    setIsTimerRunning(false);
   };
 
   const resetRound = (subset: string[]) => {
@@ -217,6 +239,7 @@ export function VoteWheel({
     setRevoteRound((r) => r + 1);
     setDefensePlayerId(null);
     setDefendedPlayerIds([]);
+    setIsTimerRunning(false);
   };
 
   const ranked = [...candidates].sort(
@@ -289,7 +312,7 @@ export function VoteWheel({
     >
       {/* Active Defense Timer Banner */}
       {defensePlayerId && (
-        <div className="space-y-2 rounded-2xl border border-amber-500/50 bg-amber-500/10 p-4 text-center animate-in fade-in zoom-in-95">
+        <div className="space-y-3 rounded-2xl border border-amber-500/50 bg-amber-500/10 p-4 text-center animate-in fade-in zoom-in-95">
           <div className="flex items-center justify-center gap-2 text-amber-500">
             <ShieldAlert className="size-5 animate-pulse" />
             <h4 className="text-sm font-black tracking-wider uppercase">
@@ -303,15 +326,38 @@ export function VoteWheel({
             dispose d'une minute pour plaider sa cause !
           </p>
           <div className="flex items-center justify-center gap-2 text-2xl font-black text-amber-500 tabular-nums">
-            <Timer className="size-6 animate-spin" style={{ animationDuration: "3s" }} />
+            <Timer
+              className={`size-6 ${isTimerRunning ? "animate-spin" : ""}`}
+              style={{ animationDuration: "3s" }}
+            />
             <span>{timerSeconds}s</span>
           </div>
-          <button
-            onClick={() => setDefensePlayerId(null)}
-            className="w-full rounded-full border border-amber-500/40 bg-amber-500/20 py-2 text-xs font-bold text-amber-500 transition-colors hover:bg-amber-500/30"
-          >
-            Terminer la défense
-          </button>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsTimerRunning((prev) => !prev)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/20 py-2 text-xs font-bold text-amber-500 transition-colors hover:bg-amber-500/30"
+            >
+              {isTimerRunning ? (
+                <>
+                  <Pause className="size-3.5" /> Pause
+                </>
+              ) : (
+                <>
+                  <Play className="size-3.5" /> Démarrer
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                setDefensePlayerId(null);
+                setIsTimerRunning(false);
+              }}
+              className="flex-1 rounded-full border border-amber-500/40 bg-amber-500/20 py-2 text-xs font-bold text-amber-500 transition-colors hover:bg-amber-500/30"
+            >
+              Terminer la défense
+            </button>
+          </div>
         </div>
       )}
 
