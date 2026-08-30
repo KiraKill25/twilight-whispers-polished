@@ -1368,63 +1368,61 @@ function DawnPanel({
   onDebateDone: () => void;
   onChange: (s: GameState) => void;
   onRemovePenalty: (id: string) => void;
-  onUndo: () => void;
+  onUndo?: () => void;
   canUndo?: boolean;
 }) {
   const { t } = useI18n();
-  const alivePlayers = state.players.filter((p) => p.alive);
-  const captain = state.players.find((p) => p.id === state.villageCaptainId);
 
   return (
     <div className="surface-card animate-rise-in space-y-5 rounded-3xl p-5">
-      <div className="space-y-2 text-center">
-        <p className="text-xs font-bold tracking-[0.3em] text-amber-400 uppercase">
-          {t("dawnSummaryTitle")}
-        </p>
-        <h2 className="text-2xl font-black">{t("dayN", { n: state.day })}</h2>
+      <div className="flex items-center gap-3 text-primary">
+        <Sparkles className="size-6" />
+        <h2 className="text-lg font-black uppercase">{t("dawnTitle", { n: state.day })}</h2>
       </div>
 
-      {state.dawnSummary.length > 0 && (
-        <div className="space-y-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-          <p className="text-xs font-bold text-amber-400 uppercase">{t("eventsTitle")}</p>
-          <ul className="space-y-1 text-sm text-foreground">
-            {state.dawnSummary.map((line, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-amber-400">•</span>
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="space-y-2 rounded-2xl border border-border bg-card p-4">
+        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+          {t("nightReportTitle")}
+        </p>
+        <ul className="space-y-1.5 text-sm">
+          {state.dawnSummary.map((line, i) => (
+            <li key={i} className="flex items-center gap-2">
+              <span className="size-1.5 rounded-full bg-primary" />
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {setupDone && (
+        <div className="space-y-4">
+          <DebateWheel
+            players={state.players}
+            direction={direction}
+            captainId={state.villageCaptainId}
+            onRemovePenalty={onRemovePenalty}
+          />
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => {
+                onDebateDone();
+                onChange(goToVote(state));
+              }}
+              className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground shadow-lg transition active:scale-95"
+            >
+              {t("proceedToVote")}
+            </button>
+            {settings?.allowSkipVote && state.day === 1 && (
+              <button
+                onClick={() => onChange(skipVote(state))}
+                className="w-full rounded-full border border-border py-2.5 text-xs font-semibold text-muted-foreground"
+              >
+                {t("skipVoteDay1")}
+              </button>
+            )}
+          </div>
         </div>
       )}
-
-      <div className="space-y-3">
-        <h3 className="text-xs tracking-widest text-primary uppercase">{t("debateTitle")}</h3>
-        <DebateWheel
-          players={alivePlayers}
-          direction={direction}
-          captainId={captain?.id}
-          onPenalty={(id) => onChange(addDebatePenalty(state, id))}
-          onRemovePenalty={onRemovePenalty}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2 pt-2">
-        <button
-          onClick={() => onChange(goToVote(state))}
-          className="w-full rounded-full bg-primary py-3.5 text-base font-bold text-primary-foreground transition active:scale-95 shadow-lg"
-        >
-          {t("proceedToVote")}
-        </button>
-        {state.day === 1 && !state.voteSkippedOffer && (
-          <button
-            onClick={() => onChange(skipVote(state))}
-            className="w-full rounded-full border border-border py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-card active:scale-95"
-          >
-            {t("skipDay1Vote")}
-          </button>
-        )}
-      </div>
     </div>
   );
 }
