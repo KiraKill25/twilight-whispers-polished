@@ -4,10 +4,14 @@ import { toast } from "sonner";
 import {
   Crown,
   Droplet,
+  Flame,
+  Heart,
   MicOff,
   Pencil,
   RotateCcw,
+  Shield,
   Skull,
+  Sparkles,
   Swords,
   X,
 } from "lucide-react";
@@ -49,6 +53,9 @@ import {
 } from "@/lib/session";
 import {
   addDebatePenalty,
+  assignCaptain,
+  bearNeighbors,
+  canWitchHeal,
   createGame,
   currentStep,
   effectiveRoleId,
@@ -58,8 +65,6 @@ import {
   skipVote,
   submitStep,
   suicideReveal,
-  assignCaptain,
-  bearNeighbors,
   type GameState,
   type Player,
 } from "@/game/engine";
@@ -572,6 +577,8 @@ function PlayerPicker({
 function NightPanel({
   state,
   onChange,
+  onUndo,
+  canUndo,
 }: {
   state: GameState;
   onChange: (s: GameState) => void;
@@ -592,6 +599,7 @@ function NightPanel({
   const [facePower, setFacePower] = useState<
     "protect" | "life" | "poison" | "inspect" | null
   >(null);
+  const [spyChoice, setSpyChoice] = useState<boolean | null>(null);
 
   useEffect(() => {
     setSel([]);
@@ -604,6 +612,7 @@ function NightPanel({
     setWordDraft("");
     setShieldConfirm(false);
     setFacePower(null);
+    setSpyChoice(null);
   }, [step?.key]);
 
   useEffect(() => {
@@ -677,11 +686,6 @@ function NightPanel({
       !p.powersDisabled,
   );
 
-  const isAttackedPlayerSaved =
-    step.mode === "witch" &&
-    state.round.attackedId != null &&
-    state.round.attackedId === state.round.protectedId;
-
   const attackedPlayerName = state.players.find((p) => p.id === state.round.attackedId)?.name;
 
   const stepPrompt = prompt(step.roleId) || step.prompt;
@@ -702,7 +706,7 @@ function NightPanel({
         <p className="absolute bottom-3 left-4 text-lg font-black text-primary">
           {stepTitle}
         </p>
-        <div className="absolute right-3 bottom-3">
+        <div className="absolute right-3 bottom-3 flex items-center gap-2">
           <SpeakButton text={stepTitle} />
         </div>
       </div>
@@ -834,15 +838,15 @@ function NightPanel({
             const marks: Record<string, React.ReactNode> = {};
             if (victimId)
               marks[victimId] = infect ? (
-                <Droplet className="size-3.5" />
+                <Droplet className="size-3.5 text-emerald-400" />
               ) : (
-                <Swords className="size-3.5" />
+                <Swords className="size-3.5 text-destructive" />
               );
             if (mute)
               marks[mute] = (
                 <span className="flex items-center gap-1">
                   {marks[mute]}
-                  <MicOff className="size-3.5" />
+                  <MicOff className="size-3.5 text-amber-400" />
                 </span>
               );
             const TABS = [
@@ -941,290 +945,415 @@ function NightPanel({
                   ) : victim ? (
                     <button
                       onClick={() => setInfect((v) => !v)}
-                      className={`flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold transition active:scale-95 ${
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl border p-4 text-sm font-bold transition ${
                         infect
-                          ? "border-destructive bg-destructive/15 text-destructive shadow-[0_0_18px_rgba(236,72,153,0.45)]"
-                          : "border-border text-muted-foreground"
+                          ? "border-emerald-400 bg-emerald-400/20 text-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.45)]"
+                          : "border-border text-foreground"
                       }`}
                     >
                       <Droplet className="size-4" />
-                      {t("infectPlayer", { name: victim.name })}
+                      {infect
+                        ? t("bwInfectingTarget", { name: victim.name })
+                        : t("bwInfectPrompt", { name: victim.name })}
                     </button>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {t("bwNoVictimHint")}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("bwNoVictimToInfect")}</p>
                   ))}
 
-                {tab === "mute" &&
-                  (muteLocked ? (
-                    <p className="text-xs text-muted-foreground">
-                      {t("muteUnavailable")}
-                    </p>
-                  ) : (
-                    <PlayerPicker
-                      players={candidates.filter(
-                        (p) => p.id !== state.round.previousMutedId,
-                      )}
-                      selected={mute ? [mute] : []}
-                      onToggle={(id) => setMute((m) => (m === id ? null : id))}
-                      accent="crimson"
-                      marks={marks}
-                    />
-                  ))}
+                {tab === "mute" && (
+                  <PlayerPicker
+                    players={candidates}
+                    selected={mute ? [mute] : []}
+                    onToggle={(id) => setMute((cur) => (cur === id ? null : id))}
+                    disabledIds={state.round.previousMutedId ? [state.round.previousMutedId] : []}
+                    accent="arcane"
+                    marks={marks}
+                  />
+                )}
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex gap-2 pt-2">
                   <button
-                    disabled={step.soloKill && sel.length !== 1}
                     onClick={() =>
                       send({
-                        targetId: step.soloKill ? sel[0] : undefined,
+                        targetId: sel[0],
                         yes: infect,
                         muteId: mute ?? undefined,
                       })
                     }
-                    className="flex-1 rounded-full bg-primary py-3 font-bold text-primary-foreground transition active:scale-95 disabled:opacity-40"
+                    className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
                   >
-                    {t("validateAction")}
+                    {t("validate")}
                   </button>
-                  <button
-                    onClick={() => send({})}
-                    className="rounded-full border border-border px-5 py-3 text-sm text-muted-foreground transition active:scale-95"
-                  >
-                    {t("passTurn")}
-                  </button>
+                  {step.optional && (
+                    <button
+                      onClick={() => send({})}
+                      className="w-full rounded-full border border-border py-3 text-sm font-semibold text-muted-foreground"
+                    >
+                      {t("pass")}
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })()
         ) : step.mode === "threefaces" ? (
-          (() => {
-            const used = actor.facesUsed ?? [];
-            const victimName = state.players.find(
-              (p) => p.id === state.round.attackedId,
-            )?.name;
-            const options: { key: "protect" | "life" | "poison" | "inspect"; label: string }[] = [];
-            if (!used.includes("protect"))
-              options.push({ key: "protect", label: t("facesProtect") });
-            if (!used.includes("potion")) {
-              if (state.round.attackedId)
-                options.push({
-                  key: "life",
-                  label: t("facesLifePotion", { name: victimName ?? "" }),
-                });
-              options.push({ key: "poison", label: t("facesPoisonPotion") });
-            }
-            if (!used.includes("inspect"))
-              options.push({ key: "inspect", label: t("facesInspect") });
-            const needsTarget = facePower !== null && facePower !== "life";
-            return (
-              <div className="space-y-3">
-                <p className="text-xs tracking-widest text-primary uppercase">
-                  {t("facesChoosePower")}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("facesRemaining", { n: 3 - used.length })}
-                </p>
-                {options.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t("facesNoPowerLeft")}</p>
-                ) : (
-                  <div className="grid gap-2">
-                    {options.map((o) => (
-                      <button
-                        key={o.key}
-                        onClick={() => {
-                          setFacePower(o.key);
-                          setSel([]);
-                        }}
-                        className={`rounded-xl border px-3 py-3 text-sm transition ${
-                          facePower === o.key
-                            ? "neon-ring border-primary bg-primary/15 text-primary"
-                            : "border-border"
-                        }`}
-                      >
-                        {o.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {needsTarget && (
-                  <>
-                    <p className="text-xs tracking-widest text-primary uppercase">
-                      {t("facesPickTarget")}
-                    </p>
-                    <PlayerPicker players={candidates} selected={sel} onToggle={toggle} />
-                  </>
-                )}
+          <div className="space-y-3">
+            <p className="text-xs tracking-widest text-primary uppercase">{t("facesChoosePower")}</p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                disabled={actor.facesUsed?.includes("protect")}
+                onClick={() => setFacePower("protect")}
+                className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-xs font-bold ${
+                  facePower === "protect" ? "border-primary bg-primary/20 text-primary" : "border-border"
+                } disabled:opacity-30`}
+              >
+                <Shield className="size-4" />
+                {t("facesProtect")}
+              </button>
+              <button
+                disabled={actor.facesUsed?.includes("potion")}
+                onClick={() => setFacePower("life")}
+                className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-xs font-bold ${
+                  facePower === "life" || facePower === "poison"
+                    ? "border-emerald-400 bg-emerald-400/20 text-emerald-300"
+                    : "border-border"
+                } disabled:opacity-30`}
+              >
+                <Sparkles className="size-4" />
+                {t("facesPotion")}
+              </button>
+              <button
+                disabled={actor.facesUsed?.includes("inspect")}
+                onClick={() => setFacePower("inspect")}
+                className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-xs font-bold ${
+                  facePower === "inspect" ? "border-amber-400 bg-amber-400/20 text-amber-300" : "border-border"
+                } disabled:opacity-30`}
+              >
+                <Eye className="size-4" />
+                {t("facesInspect")}
+              </button>
+            </div>
+
+            {facePower === "protect" && (
+              <PlayerPicker
+                players={candidates}
+                selected={sel}
+                onToggle={toggleTarget}
+                accent="arcane"
+              />
+            )}
+            {facePower === "inspect" && (
+              <PlayerPicker
+                players={candidates.filter((p) => p.id !== actor.id)}
+                selected={sel}
+                onToggle={toggleTarget}
+                accent="arcane"
+              />
+            )}
+            {facePower === "life" && (
+              <div className="space-y-2">
                 <button
-                  disabled={!facePower || (needsTarget && sel.length !== 1)}
-                  onClick={() =>
-                    send({
-                      facePower: facePower ?? undefined,
-                      targetId: needsTarget ? sel[0] : undefined,
-                    })
-                  }
-                  className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
+                  onClick={() => send({ facePower: "life" })}
+                  disabled={!canWitchHeal(state)}
+                  className="w-full rounded-full bg-emerald-500 py-3 font-bold text-black disabled:opacity-40"
                 >
-                  {t("validate")}
+                  {attackedPlayerName
+                    ? t("facesHealVictim", { name: attackedPlayerName })
+                    : t("facesNoVictimToHeal")}
                 </button>
                 <button
-                  onClick={() => send({})}
-                  className="w-full rounded-full border border-border py-3 text-sm text-muted-foreground"
+                  onClick={() => setFacePower("poison")}
+                  className="w-full rounded-full border border-destructive py-2.5 text-xs font-bold text-destructive"
                 >
-                  {t("skip")}
+                  {t("facesSwitchPoison")}
                 </button>
               </div>
-            );
-          })()
-        ) : step.mode === "bear" ? (
-          <>
-            <div className="space-y-1 rounded-2xl border border-border p-3 text-sm">
-              <p className="text-[11px] tracking-widest text-primary uppercase">
-                {t("bearNeighbors")}
-              </p>
-              {(() => {
-                const { left, right } = bearNeighbors(state, actor.id);
-                return [left, right].map((n, idx) =>
-                  n ? (
-                    <p key={idx} className="text-muted-foreground">
-                      {idx === 0 ? t("left") : t("right")} :{" "}
-                      <span className="font-semibold text-foreground">{n.name}</span>{" "}
-                      — {roleName(n.originalRoleId ?? effectiveRoleId(n))}
-                      {n.isConvertedToWolf && t("infected")}
-                    </p>
-                  ) : null,
-                );
-              })()}
-            </div>
-            <button
-              onClick={() => send({})}
-              className="neon-ring w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
-            >
-              {t("bearSniff")}
-            </button>
-          </>
-        ) : step.mode === "yesno" ? (
-          <div className="flex gap-3">
-            <button
-              onClick={() => send({ yes: true })}
-              className="flex-1 rounded-full bg-primary py-3 font-bold text-primary-foreground"
-            >
-              {t("yes")}
-            </button>
-            <button
-              onClick={() => send({ yes: false })}
-              className="flex-1 rounded-full border border-border py-3 font-semibold"
-            >
-              {t("no")}
-            </button>
+            )}
+            {facePower === "poison" && (
+              <PlayerPicker
+                players={candidates.filter((p) => p.id !== actor.id)}
+                selected={sel}
+                onToggle={toggleTarget}
+                accent="poison"
+              />
+            )}
+
+            {(facePower === "protect" || facePower === "inspect" || facePower === "poison") && (
+              <button
+                disabled={sel.length !== 1}
+                onClick={() => send({ facePower, targetId: sel[0] })}
+                className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
+              >
+                {t("validate")}
+              </button>
+            )}
+
+            {step.optional && (
+              <button
+                onClick={() => send({})}
+                className="w-full rounded-full border border-border py-2 text-xs font-semibold text-muted-foreground"
+              >
+                {t("pass")}
+              </button>
+            )}
           </div>
         ) : step.mode === "witch" ? (
-          <div className="space-y-3">
-            {isAttackedPlayerSaved ? (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
-                🛡️ {t("witchTargetProtected")}
-              </div>
-            ) : (
-              state.round.attackedId && !actor.healUsed && (
-                <label className="flex items-center gap-3 rounded-xl border border-border p-3 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={heal}
-                    onChange={(e) => setHeal(e.target.checked)}
-                  />
-                  {t("healSave", { name: attackedPlayerName ?? "" })}
-                </label>
-              )
-            )}
-            {!actor.poisonUsed && (
-              <>
-                <p className="text-xs tracking-widest text-primary uppercase">
-                  {t("poisonPotion")}
-                </p>
-                <PlayerPicker players={candidates} selected={sel} onToggle={toggle} />
-              </>
-            )}
-            <button
-              onClick={() => send({ healUsed: isAttackedPlayerSaved ? false : heal, poisonId: sel[0] })}
-              className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
-            >
-              {t("validate")}
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <PlayerPicker
-              players={candidates}
-              selected={sel}
-              onToggle={toggleTarget}
-              disabledIds={forbiddenWolfIds}
-            />
-            {step.roleId === "salvateur" && !actor.ultimateShieldUsed && (
-              <div className="space-y-2 rounded-2xl border border-accent/50 bg-accent/5 p-3">
-                <p className="text-xs tracking-widest text-accent uppercase">
-                  {t("ultimateShield")}
-                </p>
-                <p className="text-xs text-muted-foreground">{t("ultimateShieldDesc")}</p>
-                {shieldConfirm ? (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-destructive">
-                      {t("ultimateShieldWarn")}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => send({ ultimateShield: true })}
-                        className="flex-1 rounded-full bg-accent py-2.5 text-sm font-bold text-accent-foreground"
-                      >
-                        {t("ultimateShieldConfirm")}
-                      </button>
-                      <button
-                        onClick={() => setShieldConfirm(false)}
-                        className="rounded-full border border-border px-4 py-2.5 text-sm"
-                      >
-                        {t("no")}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShieldConfirm(true)}
-                    className="w-full rounded-full border border-accent py-2.5 text-sm font-bold text-accent"
-                  >
-                    🛡️ {t("ultimateShieldActivate")}
-                  </button>
-                )}
-              </div>
-            )}
-            {step.roleId === "geolier" && (
-              <label className="flex items-center gap-3 rounded-xl border border-destructive/50 p-3 text-sm">
-                <input
-                  type="checkbox"
-                  checked={execute}
-                  onChange={(e) => setExecute(e.target.checked)}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-xs tracking-widest text-primary uppercase">{t("witchLifePotion")}</p>
+              {actor.hasUsedLifePotion || actor.healUsed ? (
+                <p className="text-xs text-muted-foreground">{t("witchLifeUsed")}</p>
+              ) : attackedPlayerName ? (
+                <button
+                  onClick={() => setHeal((v) => !v)}
+                  className={`w-full rounded-2xl border p-4 text-sm font-bold transition ${
+                    heal
+                      ? "border-emerald-400 bg-emerald-400/20 text-emerald-300"
+                      : "border-border text-foreground"
+                  }`}
+                >
+                  {heal
+                    ? t("witchSavingVictim", { name: attackedPlayerName })
+                    : t("witchSaveVictimPrompt", { name: attackedPlayerName })}
+                </button>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("nobodyAttacked")}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs tracking-widest text-destructive uppercase">
+                {t("witchDeathPotion")}
+              </p>
+              {actor.hasUsedDeathPotion || actor.poisonUsed ? (
+                <p className="text-xs text-muted-foreground">{t("witchDeathUsed")}</p>
+              ) : (
+                <PlayerPicker
+                  players={candidates.filter((p) => p.id !== actor.id)}
+                  selected={sel}
+                  onToggle={toggleTarget}
+                  accent="poison"
                 />
-                {t("execPrisoner")}
-              </label>
-            )}
-            <div className="flex gap-3">
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-2">
               <button
-                disabled={step.mode === "two" ? sel.length !== 2 : sel.length !== 1}
-                onClick={() => send({ targetId: sel[0], targetIds: sel, yes: execute })}
-                className="flex-1 rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
+                onClick={() => send({ healUsed: heal, poisonId: sel[0] })}
+                className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
               >
                 {t("validate")}
               </button>
               {step.optional && (
                 <button
                   onClick={() => send({})}
-                  className="rounded-full border border-border px-5 py-3 text-sm"
+                  className="w-full rounded-full border border-border py-3 text-sm font-semibold text-muted-foreground"
                 >
-                  {t("skip")}
+                  {t("pass")}
+                </button>
+              )}
+            </div>
+          </div>
+        ) : step.mode === "bear" ? (
+          <div className="space-y-4 text-center">
+            {(() => {
+              const { left, right } = bearNeighbors(state, actor.id);
+              const growls = state.round.bearGrowls ?? false;
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-around rounded-2xl border border-primary/20 bg-card p-4">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">{t("bearLeftNeighbor")}</p>
+                      <p className="text-sm font-bold">{left?.name ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">{t("bearRightNeighbor")}</p>
+                      <p className="text-sm font-bold">{right?.name ?? "—"}</p>
+                    </div>
+                  </div>
+                  <div
+                    className={`rounded-2xl border p-4 font-black text-lg ${
+                      growls
+                        ? "border-destructive bg-destructive/10 text-destructive animate-pulse"
+                        : "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                    }`}
+                  >
+                    {growls ? t("bearStatusGrowling") : t("bearStatusCalm")}
+                  </div>
+                </div>
+              );
+            })()}
+            <button
+              onClick={() => send({})}
+              className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
+            >
+              {t("continue")}
+            </button>
+          </div>
+        ) : step.mode === "yesno" ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setSpyChoice(true)}
+                className={`rounded-2xl border p-4 text-sm font-bold transition ${
+                  spyChoice === true
+                    ? "border-primary bg-primary/20 text-primary"
+                    : "border-border text-foreground"
+                }`}
+              >
+                {t("petiteFillePeek")}
+              </button>
+              <button
+                onClick={() => setSpyChoice(false)}
+                className={`rounded-2xl border p-4 text-sm font-bold transition ${
+                  spyChoice === false
+                    ? "border-primary bg-primary/20 text-primary"
+                    : "border-border text-foreground"
+                }`}
+              >
+                {t("petiteFilleSleep")}
+              </button>
+            </div>
+            <button
+              disabled={spyChoice === null}
+              onClick={() => send({ yes: spyChoice ?? false })}
+              className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
+            >
+              {t("validate")}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {step.roleId === "salvateur" && !actor.ultimateShieldUsed && (
+              <button
+                onClick={() => setShieldConfirm((v) => !v)}
+                className={`w-full rounded-2xl border p-3 text-xs font-bold transition ${
+                  shieldConfirm
+                    ? "border-accent bg-accent/20 text-accent"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                <Shield className="inline size-4 mr-1" />
+                {t("ultimateShieldToggle")}
+              </button>
+            )}
+
+            {!shieldConfirm && (
+              <PlayerPicker
+                players={candidates}
+                selected={sel}
+                onToggle={toggleTarget}
+                disabledIds={forbiddenWolfIds}
+                accent={step.roleId === "maniaque" ? "crimson" : "arcane"}
+              />
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                disabled={!shieldConfirm && sel.length !== (step.mode === "two" ? 2 : 1)}
+                onClick={() =>
+                  send(shieldConfirm ? { ultimateShield: true } : { targetId: sel[0], targetIds: sel })
+                }
+                className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
+              >
+                {t("validate")}
+              </button>
+              {step.optional && (
+                <button
+                  onClick={() => send({})}
+                  className="w-full rounded-full border border-border py-3 text-sm font-semibold text-muted-foreground"
+                >
+                  {t("pass")}
                 </button>
               )}
             </div>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function HunterPanel({
+  state,
+  onDone,
+}: {
+  state: GameState;
+  onDone: (s: GameState) => void;
+}) {
+  const { t } = useI18n();
+  const [targetId, setTargetId] = useState<string | null>(null);
+  const hunter = state.players.find((p) => p.id === state.hunterPending);
+  const aliveCandidates = state.players.filter((p) => p.alive);
+
+  return (
+    <div className="surface-card animate-rise-in neon-ring space-y-4 rounded-3xl p-5">
+      <div className="flex items-center gap-3 text-destructive">
+        <Flame className="size-6 animate-pulse" />
+        <h2 className="text-lg font-black uppercase">{t("hunterShotTitle")}</h2>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {t("hunterShotDesc", { name: hunter?.name ?? "Le Chasseur" })}
+      </p>
+
+      <PlayerPicker
+        players={aliveCandidates}
+        selected={targetId ? [targetId] : []}
+        onToggle={(id) => setTargetId(id)}
+        accent="crimson"
+      />
+
+      <button
+        disabled={!targetId}
+        onClick={() => targetId && onDone(resolveHunter(state, targetId))}
+        className="w-full rounded-full bg-destructive py-3 font-bold text-destructive-foreground transition active:scale-95 disabled:opacity-40"
+      >
+        {t("hunterFireConfirm")}
+      </button>
+    </div>
+  );
+}
+
+function CaptainSuccessionPanel({
+  state,
+  onDone,
+}: {
+  state: GameState;
+  onDone: (s: GameState) => void;
+}) {
+  const { t } = useI18n();
+  const [targetId, setTargetId] = useState<string | null>(null);
+  const formerCaptain = state.players.find(
+    (p) => p.id === state.captainSuccessionPending,
+  );
+  const aliveCandidates = state.players.filter((p) => p.alive);
+
+  return (
+    <div className="surface-card animate-rise-in neon-ring space-y-4 rounded-3xl p-5">
+      <div className="flex items-center gap-3 text-amber-400">
+        <Crown className="size-6 animate-bounce" />
+        <h2 className="text-lg font-black uppercase">{t("captainSuccessionTitle")}</h2>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {t("captainSuccessionDesc", { name: formerCaptain?.name ?? "Le Capitaine" })}
+      </p>
+
+      <PlayerPicker
+        players={aliveCandidates}
+        selected={targetId ? [targetId] : []}
+        onToggle={(id) => setTargetId(id)}
+        accent="arcane"
+      />
+
+      <button
+        disabled={!targetId}
+        onClick={() => targetId && onDone(assignCaptain(state, targetId))}
+        className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground transition active:scale-95 disabled:opacity-40"
+      >
+        {t("assignCaptainConfirm")}
+      </button>
     </div>
   );
 }
@@ -1238,6 +1367,8 @@ function DawnPanel({
   onDebateDone,
   onChange,
   onRemovePenalty,
+  onUndo,
+  canUndo,
 }: {
   state: GameState;
   settings: GameSettings | null;
@@ -1246,278 +1377,65 @@ function DawnPanel({
   debateDone: boolean;
   onDebateDone: () => void;
   onChange: (s: GameState) => void;
-  onRemovePenalty?: (playerId: string) => void;
-  onUndo?: () => void;
+  onRemovePenalty: (id: string) => void;
+  onUndo: () => void;
   canUndo?: boolean;
 }) {
   const { t } = useI18n();
-  const narrate = useNarrate();
-  const [bavardModal, setBavardModal] = useState(false);
-  const firstDay = state.day === 1 && !state.voteSkippedOffer;
-  const alive = state.players.filter((p) => p.alive);
-
-  const talkative = state.players.find(
-    (p) => p.alive && effectiveRoleId(p) === "loup-bavard",
-  );
-  const needsBavardCheck = !!talkative && state.day > 1;
-
-  const handleGoToVote = () => {
-    if (needsBavardCheck) {
-      setBavardModal(true);
-    } else {
-      onChange(goToVote(state));
-    }
-  };
-
-  if (settings?.isDebateTimerEnabled && !debateDone)
-    return (
-      <NarratorCard
-        title={t("debateTitle", { n: state.day })}
-        text={t("debateText")}
-      >
-        {alive.some((p) => p.mutedForDay) && (
-          <p className="rounded-xl border border-destructive/50 p-3 text-xs text-muted-foreground">
-            {t("mutedBy", {
-              names: alive
-                .filter((p) => p.mutedForDay)
-                .map((p) => p.name)
-                .join(", "),
-            })}
-          </p>
-        )}
-        <DebateWheel
-          seating={alive}
-          seconds={settings.debateTimePerPlayer}
-          captainId={state.villageCaptainId}
-          direction={direction}
-          armed={setupDone}
-          onFinish={onDebateDone}
-          onStar={(id, delta) =>
-            onChange({
-              ...state,
-              players: state.players.map((p) =>
-                p.id === id
-                  ? { ...p, stars: Math.max(0, (p.stars ?? 0) + delta) }
-                  : p,
-              ),
-            })
-          }
-          onPenalty={(id) => onChange(addDebatePenalty(state, id))}
-          onRemovePenalty={onRemovePenalty}
-        />
-      </NarratorCard>
-    );
+  const alivePlayers = state.players.filter((p) => p.alive);
+  const captain = state.players.find((p) => p.id === state.villageCaptainId);
 
   return (
-    <>
-      {bavardModal && (
-        <div className="fixed inset-0 z-50 flex w-screen max-w-full items-center justify-center overflow-x-hidden overflow-y-auto bg-black/85 p-4 backdrop-blur-md">
-          <div className="surface-card animate-rise-in neon-ring mx-auto box-border max-h-[85vh] w-full max-w-sm shrink-0 space-y-5 overflow-y-auto overscroll-contain rounded-3xl p-6 text-center shadow-2xl sm:max-w-md">
-            <p className="text-[11px] tracking-widest text-primary uppercase">
-              {t("bavardPreVoteTitle")}
-            </p>
-            <p className="text-base font-semibold">
-              {t("bavardPreVoteAsk", {
-                word: state.round.requiredWord
-                  ? `« ${state.round.requiredWord} »`
-                  : "—",
-              })}
-            </p>
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => {
-                  setBavardModal(false);
-                  onChange(goToVote(state));
-                }}
-                className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
-              >
-                {t("bavardPreVoteYes")}
-              </button>
-              <button
-                onClick={() => {
-                  setBavardModal(false);
-                  onChange(executeTalkativeWolfAndSkip(state));
-                }}
-                className="w-full rounded-full border border-destructive py-3 font-bold text-destructive"
-              >
-                {t("bavardPreVoteNo")}
-              </button>
-            </div>
-          </div>
+    <div className="surface-card animate-rise-in space-y-5 rounded-3xl p-5">
+      <div className="space-y-2 text-center">
+        <p className="text-xs font-bold tracking-[0.3em] text-amber-400 uppercase">
+          {t("dawnSummaryTitle")}
+        </p>
+        <h2 className="text-2xl font-black">{t("dayN", { n: state.day })}</h2>
+      </div>
+
+      {state.dawnSummary.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-xs font-bold text-amber-400 uppercase">{t("eventsTitle")}</p>
+          <ul className="space-y-1 text-sm text-foreground">
+            {state.dawnSummary.map((line, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="text-amber-400">•</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
-      <NarratorCard
-        title={t("dawnTitle", { n: state.day })}
-        text={state.dawnSummary.map((l) => narrate(l)).join(" ")}
-      >
-        {state.round.requiredWord && (
-          <InlineWordEditor
-            word={state.round.requiredWord}
-            onChange={(w) =>
-              onChange({ ...state, round: { ...state.round, requiredWord: w } })
-            }
-          />
-        )}
+      {/* Debate Wheel & Penalty Controls */}
+      <div className="space-y-3">
+        <h3 className="text-xs tracking-widest text-primary uppercase">{t("debateTitle")}</h3>
+        <DebateWheel
+          players={alivePlayers}
+          direction={direction}
+          captainId={captain?.id}
+          onPenalty={(id) => onChange(addDebatePenalty(state, id))}
+          onRemovePenalty={onRemovePenalty}
+        />
+      </div>
 
-        {firstDay ? (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              {t("firstDayVoteQuestion")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleGoToVote}
-                className="flex-1 rounded-full bg-primary py-3 font-bold text-primary-foreground"
-              >
-                {t("vote")}
-              </button>
-              <button
-                onClick={() => onChange(skipVote(state))}
-                className="flex-1 rounded-full border border-border py-3 font-semibold"
-              >
-                {t("noVote")}
-              </button>
-            </div>
-          </div>
-        ) : (
+      <div className="flex flex-col gap-2 pt-2">
+        <button
+          onClick={() => onChange(goToVote(state))}
+          className="w-full rounded-full bg-primary py-3.5 text-base font-bold text-primary-foreground transition active:scale-95 shadow-lg"
+        >
+          {t("proceedToVote")}
+        </button>
+        {state.day === 1 && !state.voteSkippedOffer && (
           <button
-            onClick={handleGoToVote}
-            className="neon-ring w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
+            onClick={() => onChange(skipVote(state))}
+            className="w-full rounded-full border border-border py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-card active:scale-95"
           >
-            {t("forceVote")}
+            {t("skipDay1Vote")}
           </button>
         )}
-      </NarratorCard>
-    </>
-  );
-}
-
-function CaptainSuccessionPanel({
-  state,
-  onDone,
-}: {
-  state: GameState;
-  onDone: (s: GameState) => void;
-}) {
-  const { t } = useI18n();
-  const [sel, setSel] = useState<string[]>([]);
-  const dead = state.players.find((p) => p.id === state.captainSuccessionPending);
-  const candidates = state.players.filter((p) => p.alive);
-  return (
-    <NarratorCard
-      title={t("captainSuccession")}
-      text={t("captainSuccessionText", { name: dead?.name ?? t("captain") })}
-    >
-      <PlayerPicker
-        players={candidates}
-        selected={sel}
-        onToggle={(id) => setSel([id])}
-      />
-      <button
-        disabled={sel.length !== 1}
-        onClick={() => onDone(assignCaptain(state, sel[0]))}
-        className="neon-ring w-full rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
-      >
-        {t("transmit")}
-      </button>
-    </NarratorCard>
-  );
-}
-
-function HunterPanel({
-  state,
-  onDone,
-}: {
-  state: GameState;
-  onDone: (s: GameState) => void;
-}) {
-  const { t } = useI18n();
-  const [sel, setSel] = useState<string[]>([]);
-  const candidates = state.players.filter(
-    (p) => p.alive && p.id !== state.hunterPending,
-  );
-  return (
-    <NarratorCard
-      title={t("hunterTitle")}
-      text={t("hunterText")}
-    >
-      <PlayerPicker
-        players={candidates}
-        selected={sel}
-        onToggle={(id) => setSel([id])}
-      />
-      <button
-        disabled={sel.length !== 1}
-        onClick={() => onDone(resolveHunter(state, sel[0]))}
-        className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
-      >
-        {t("shoot")}
-      </button>
-    </NarratorCard>
-  );
-}
-
-function InlineWordEditor({
-  word,
-  onChange,
-}: {
-  word: string;
-  onChange: (w: string) => void;
-}) {
-  const { t } = useI18n();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(word);
-
-  if (editing)
-    return (
-      <div className="flex items-center gap-2 rounded-xl border border-primary/50 p-3">
-        <input
-          autoFocus
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && draft.trim()) {
-              onChange(draft.trim());
-              setEditing(false);
-            }
-            if (e.key === "Escape") setEditing(false);
-          }}
-          className="flex-1 rounded-lg bg-input px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-primary"
-        />
-        <button
-          onClick={() => {
-            if (draft.trim()) onChange(draft.trim());
-            setEditing(false);
-          }}
-          className="rounded-full bg-primary px-3 py-2 text-xs font-bold text-primary-foreground"
-        >
-          OK
-        </button>
-        <button
-          onClick={() => setEditing(false)}
-          aria-label={t("remove")}
-          className="rounded-full border border-border p-2 text-muted-foreground"
-        >
-          <X className="size-3.5" />
-        </button>
       </div>
-    );
-
-  return (
-    <p className="flex items-center gap-2 rounded-xl border border-border p-3 text-sm">
-      {t("bavardWordOfDay")}{" "}
-      <span className="font-bold text-primary">{word}</span>
-      <button
-        onClick={() => {
-          setDraft(word);
-          setEditing(true);
-        }}
-        aria-label={t("editWord")}
-        className="ms-auto rounded-full border border-primary/40 p-1.5 text-primary/70 transition hover:border-primary hover:text-primary"
-      >
-        <Pencil className="size-3.5" />
-      </button>
-    </p>
+    </div>
   );
 }
