@@ -248,6 +248,7 @@ export const ar = {
     gmConfirmElim: "تأكيد الاستبعاد",
     gmRevoteAction: "الأمر بإعادة التصويت",
     undoStep: "← تراجع",
+
     // Suicide / Revelation
     causeSuicide: "انتحار / كشف الهوية",
     gmSuicide: "انتحار / كشف",
@@ -255,9 +256,11 @@ export const ar = {
     suicideDesc: "حدد اللاعب الذي خالف القواعد أو كشف عن دوره. يتم استبعاده فوراً ويهبط الليل.",
     suicideConfirm: "💀 تأكيد الاستبعاد",
     suicideDone: "تم استبعاد {name}: انتحار / كشف الهوية.",
+
     // Undo
     undoLabel: "السابق",
     undoDoneToast: "تم إلغاء الإجراء",
+
     // Black Wolf — actions hub
     bwHubTitle: "الذئب الأسود — الإجراءات",
     bwTabAttack: "هجوم",
@@ -272,6 +275,7 @@ export const ar = {
     gmTurnGuide: "دور {role} — {name}. وجه اللاعب، ثم أكد الإجراء.",
     validateAction: "تأكيد الإجراء",
     passTurn: "تخطي الدور",
+
     // Summary — badges & evaluation
     recapRounds: "{n} جولات",
     turningPointTitle: "نقطة التحول",
@@ -504,6 +508,3 @@ export const ar = {
     }
   } as Record<string, { name: string; description: string; power: string }>,
 };
-
-export type UiKey = keyof typeof ar.ui;
-export type Dictionary = typeof ar;
