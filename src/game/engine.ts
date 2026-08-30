@@ -18,7 +18,6 @@ export type DeathCause =
   | "THREE_FACES_POISON"
   | "SUICIDE_REVEAL";
 
-/** Libellé traduisible d'une cause de mort (jeton de narration). */
 export const DEATH_LABEL: Record<DeathCause, string> = {
   WOLVES: nk("cause_WOLVES"),
   WITCH_POISON: nk("cause_WITCH_POISON"),
@@ -35,7 +34,6 @@ export const DEATH_LABEL: Record<DeathCause, string> = {
   SUICIDE_REVEAL: nk("cause_SUICIDE_REVEAL"),
 };
 
-/** Évènement horodaté de la partie, utilisé par la frise du bilan. */
 export interface GameEvent {
   round: number;
   phase: "NIGHT" | "DAY";
@@ -172,10 +170,6 @@ export function effectiveRoleId(p: Player) {
   return p.copiedRoleId ?? p.roleId;
 }
 
-/**
- * Retourne le joueur attaqué par la meute nécessitant d'être sauvé.
- * Exclut L'Ancien lors de sa première attaque (lives > 1) car il survit automatiquement.
- */
 export function getWitchVictim(s: GameState): Player | undefined {
   if (!s?.round?.attackedId) return undefined;
   const victim = s.players?.find((p) => p.id === s.round.attackedId);
@@ -186,12 +180,10 @@ export function getWitchVictim(s: GameState): Player | undefined {
   return victim;
 }
 
-/** Indique si une potion de soin/sauvetage peut être utilisée ce tour-ci. */
 export function canWitchHeal(s: GameState): boolean {
   return !!getWitchVictim(s);
 }
 
-/** Alias pour récuperer le joueur attaqué pouvant être sauvé. */
 export function getAttackedPlayer(s: GameState): Player | undefined {
   return getWitchVictim(s);
 }
@@ -273,7 +265,6 @@ function hasRole(s: GameState, roleId: string) {
   });
 }
 
-/** Permet au Maître du Jeu d'infliger un point de pénalité de débat à un joueur. */
 export function addDebatePenalty(state: GameState, playerId: string): GameState {
   const s = clone(state);
   const p = s.players?.find((x) => x.id === playerId);
@@ -285,7 +276,6 @@ export function addDebatePenalty(state: GameState, playerId: string): GameState 
   return s;
 }
 
-/** Permet au Maître du Jeu de retirer un point de pénalité de débat à un joueur. */
 export function removeDebatePenalty(state: GameState, playerId: string): GameState {
   const s = clone(state);
   const p = s.players?.find((x) => x.id === playerId);
@@ -297,7 +287,6 @@ export function removeDebatePenalty(state: GameState, playerId: string): GameSta
   return s;
 }
 
-/** Retourne le total des voix de pénalité/handicap accumulées contre un joueur. */
 export function getPlayerPenaltyVotes(p: Player): number {
   return (p.baseVotes ?? 0) + (p.penaltyVotes ?? 0);
 }
@@ -486,7 +475,7 @@ export function buildNightSteps(s: GameState): Step[] {
   const flutePrompt = totalPlayers > 10 ? "Enchante deux joueurs." : "Enchante un joueur.";
   push("joueur-de-flute", "Joueur de Flûte", flutePrompt, fluteMode, true);
 
-  if (!first) push("corbeau", "Corbeau", "Sur qui déposes-tu la plume noire ?", "one", true);
+  if (!first) push("corbeau", "Corbeau", "Sur who déposes-tu la plume noire ?", "one", true);
   push("tavernier", "Tavernier", "À qui offers-tu un verre ?", "one", true);
 
   if (s.night === 2 || s.night === 3) {
@@ -527,8 +516,8 @@ export function bearNeighbors(s: GameState, bearId: string) {
 }
 
 export function bearShouldGrowl(s: GameState, bearId: string): boolean {
-  const bear = s?.players?.find((p) => p.id === bearId);
   const { left, right } = bearNeighbors(s, bearId);
+  const bear = s?.players?.find((p) => p.id === bearId);
   return [left, right, bear].some(
     (n) => !!n && (n.team === "WEREWOLVES" || n.isConvertedToWolf === true),
   );
@@ -1249,19 +1238,14 @@ function resolveNight(state: GameState): GameState {
     .forEach((p) => rep(s, `${p.name} conserve son temps de parole mais ne peut s'exprimer que par signes.`));
   if (deaths.length === 0) rep(s, nk("repNoDeaths"));
 
-  if (s.dawnSummary.length === 0) s.dawnSummary.push(nk("nobodyDied"));
+  s.phase = "AUBE";
+  s.day += 1;
+  s.night += 1;
+  s.round = {};
+  s.steps = buildNightSteps(s);
+  s.stepIndex = 0;
 
-  s.phase = s.hunterPending ? "EVENEMENT_MORT" : "AUBE";
-  s.day = s.night;
-  return checkVictory(s);
-}
-
-export function resolveHunter(state: GameState, targetId: string): GameState {
-  const s = clone(state);
-  s.hunterPending = undefined;
-  killPlayer(s, targetId, "HUNTER_SHOT");
-  s.phase = s.hunterPending ? "EVENEMENT_MORT" : "AUBE";
-  return checkVictory(s);
+  return s;
 }
 
 export function goToVote(state: GameState): GameState {
@@ -1270,259 +1254,38 @@ export function goToVote(state: GameState): GameState {
   return s;
 }
 
-export function suicideReveal(state: GameState, targetId: string): GameState {
-  let s = clone(state);
-  const target = s.players?.find((p) => p.id === targetId);
-  if (!target || !target.alive) return state;
-  s.dawnSummary = [];
-  s.lastEliminated = [];
-  killPlayer(s, targetId, "SUICIDE_REVEAL");
-  s.log = s.log ?? [];
-  s.log.push(nk("logSuicideReveal", { name: target.name }));
+export function skipVote(state: GameState): GameState {
+  const s = clone(state);
+  s.voteSkippedOffer = true;
+  s.phase = "NUIT";
+  return s;
+}
+
+export function suicideReveal(state: GameState, playerId: string): GameState {
+  const s = clone(state);
+  killPlayer(s, playerId, "SUICIDE_REVEAL");
+  return s;
+}
+
+export function resolveHunter(state: GameState, targetId: string): GameState {
+  const s = clone(state);
+  killPlayer(s, targetId, "HUNTER_SHOT");
   s.hunterPending = undefined;
-  s.captainSuccessionPending = undefined;
-  s = checkVictory(s);
-  if (s.phase === "FIN") return s;
-  return startNight(s);
+  return s;
 }
 
 export function assignCaptain(state: GameState, targetId: string): GameState {
   const s = clone(state);
-  s.players = s.players ?? [];
   s.players.forEach((p) => {
     p.isCaptain = false;
     p.voteWeight = 1;
   });
-  const next = s.players.find((p) => p.id === targetId && p.alive);
-  if (next) {
-    next.isCaptain = true;
-    next.voteWeight = 2;
-    s.villageCaptainId = next.id;
-    s.log = s.log ?? [];
-    s.log.push(nk("newCaptain", { name: next.name }));
+  const newCap = s.players.find((p) => p.id === targetId);
+  if (newCap) {
+    newCap.isCaptain = true;
+    newCap.voteWeight = 2;
+    s.villageCaptainId = newCap.id;
   }
   s.captainSuccessionPending = undefined;
-  return s;
-}
-
-export function skipVote(state: GameState): GameState {
-  const s = clone(state);
-  s.voteSkippedOffer = true;
-  s.log = s.log ?? [];
-  s.log.push(nk("day1NoVote"));
-  s.players?.forEach((p) => { p.penaltyVotes = 0; });
-  return startNight(s);
-}
-
-export function submitVote(state: GameState, targetId: string, talkativeSpoke = true): GameState {
-  let s = clone(state);
-  s.players = s.players ?? [];
-  const target = s.players.find((p) => p.id === targetId);
-  s.lastEliminated = [];
-
-  if (!talkativeSpoke) {
-    const talkative = s.players.find(
-      (p) => p.alive && effectiveRoleId(p) === "loup-bavard"
-    );
-    if (talkative) {
-      killPlayer(s, talkative.id, "TALKATIVE_WOLF");
-    }
-  }
-
-  if (target && !target.immuneToDayVote) {
-    const roleId = effectiveRoleId(target);
-    if (roleId === "ange" && s.day === 1) {
-      s.phase = "FIN";
-      s.winnerTeam = "OTHER";
-      s.winner = nk("winAngel", { name: target.name });
-      return s;
-    }
-    if ((roleId === "idiot" || roleId === "idiot-du-village") && !target.abilityUsed) {
-      target.abilityUsed = true;
-      target.canVote = false;
-      s.dawnSummary = s.dawnSummary ?? [];
-      s.log = s.log ?? [];
-      s.dawnSummary.push(nk("idiotSaved", { name: target.name }));
-      s.log.push(nk("logIdiotSaved", { name: target.name }));
-    } else {
-      killPlayer(s, target.id, "VILLAGE_VOTE");
-      s.lastEliminated = [
-        {
-          id: target.id,
-          roleId: target.originalRoleId ?? roleId,
-          name: target.name,
-        },
-      ];
-    }
-  }
-
-  s.players.forEach((p) => {
-    p.penaltyVotes = 0;
-  });
-
-  if (s.phase === "FIN") return s;
-  return startNight(s);
-}
-
-export function eliminateTied(
-  state: GameState,
-  targetIds: string[],
-  talkativeSpoke = true
-): GameState {
-  let s = clone(state);
-  s.players = s.players ?? [];
-  s.lastEliminated = [];
-
-  if (!talkativeSpoke) {
-    const talkative = s.players.find(
-      (p) => p.alive && effectiveRoleId(p) === "loup-bavard"
-    );
-    if (talkative) {
-      killPlayer(s, talkative.id, "TALKATIVE_WOLF");
-    }
-  }
-
-  const eliminatedList: { id: string; roleId: string; name: string }[] = [];
-
-  for (const targetId of targetIds) {
-    const target = s.players.find((p) => p.id === targetId);
-    if (target && !target.immuneToDayVote) {
-      const roleId = effectiveRoleId(target);
-      if (roleId === "ange" && s.day === 1) {
-        s.phase = "FIN";
-        s.winnerTeam = "OTHER";
-        s.winner = nk("winAngel", { name: target.name });
-        return s;
-      }
-      if ((roleId === "idiot" || roleId === "idiot-du-village") && !target.abilityUsed) {
-        target.abilityUsed = true;
-        target.canVote = false;
-        s.dawnSummary = s.dawnSummary ?? [];
-        s.log = s.log ?? [];
-        s.dawnSummary.push(nk("idiotSaved", { name: target.name }));
-        s.log.push(nk("logIdiotSaved", { name: target.name }));
-      } else {
-        killPlayer(s, target.id, "VILLAGE_VOTE");
-        eliminatedList.push({
-          id: target.id,
-          roleId: target.originalRoleId ?? roleId,
-          name: target.name,
-        });
-      }
-    }
-  }
-
-  s.lastEliminated = eliminatedList;
-
-  s.players.forEach((p) => {
-    p.penaltyVotes = 0;
-  });
-
-  if (s.phase === "FIN") return s;
-  return startNight(s);
-}
-
-export function executeTalkativeWolfAndSkip(state: GameState): GameState {
-  let s = clone(state);
-  s.players = s.players ?? [];
-  const talkative = s.players.find(
-    (p) => p.alive && effectiveRoleId(p) === "loup-bavard"
-  );
-  if (talkative) {
-    killPlayer(s, talkative.id, "TALKATIVE_WOLF");
-    s.lastEliminated = [
-      {
-        id: talkative.id,
-        roleId: talkative.originalRoleId ?? effectiveRoleId(talkative),
-        name: talkative.name,
-      },
-    ];
-  }
-  s.players.forEach((p) => {
-    p.penaltyVotes = 0;
-  });
-  if (s.phase === "FIN") return s;
-  return startNight(s);
-}
-
-export function startNight(state: GameState): GameState {
-  let s = clone(state);
-  s.night += 1;
-  s.phase = "NUIT";
-  s.stepIndex = 0;
-  const prevProtected = s.round?.protectedId;
-  const prevMuted = s.round?.mutedId;
-  s.round = {
-    previousProtectedId: prevProtected,
-    previousMutedId: prevMuted,
-  };
-  s.dawnSummary = [];
-  s.players = s.players ?? [];
-  s.players.forEach((p) => {
-    p.mutedForDay = false;
-    p.penaltyVotes = 0;
-  });
-  s.steps = buildNightSteps(s);
-  return checkVictory(s);
-}
-
-export function checkVictory(state: GameState): GameState {
-  const s = clone(state);
-  const living = s.players?.filter((p) => p.alive) ?? [];
-  const wolves = living.filter(
-    (p) => p.team === "WEREWOLVES" || p.isConvertedToWolf
-  );
-  const villagers = living.filter(
-    (p) => p.team === "VILLAGEOIS" && !p.isConvertedToWolf
-  );
-  const lovers = living.filter((p) => p.isLover);
-  const flutePlayer = living.find((p) => effectiveRoleId(p) === "joueur-de-flute");
-  const maniac = living.find((p) => effectiveRoleId(p) === "maniaque");
-
-  if (flutePlayer) {
-    const nonFluteLiving = living.filter((p) => p.id !== flutePlayer.id);
-    if (nonFluteLiving.length > 0 && nonFluteLiving.every((p) => p.enchanted)) {
-      s.phase = "FIN";
-      s.winnerTeam = "OTHER";
-      s.winner = nk("winFlutePlayer", { name: flutePlayer.name });
-      return s;
-    }
-  }
-
-  if (lovers.length === 2 && living.length === 2) {
-    s.phase = "FIN";
-    s.winnerTeam = "OTHER";
-    s.winner = nk("winLovers", { names: lovers.map((p) => p.name).join(" & ") });
-    return s;
-  }
-
-  if (maniac && living.length === 1) {
-    s.phase = "FIN";
-    s.winnerTeam = "OTHER";
-    s.winner = nk("winManiac", { name: maniac.name });
-    return s;
-  }
-
-  if (wolves.length >= villagers.length && wolves.length > 0 && living.length === wolves.length) {
-    s.phase = "FIN";
-    s.winnerTeam = "WOLVES";
-    s.winner = nk("winWolves");
-    return s;
-  }
-
-  if (wolves.length === 0 && living.length > 0) {
-    s.phase = "FIN";
-    s.winnerTeam = "VILLAGE";
-    s.winner = nk("winVillage");
-    return s;
-  }
-
-  if (living.length === 0) {
-    s.phase = "FIN";
-    s.winnerTeam = "OTHER";
-    s.winner = nk("winNobody");
-    return s;
-  }
-
   return s;
 }
