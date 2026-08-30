@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   Crown,
   Droplet,
+  Eye,
   Flame,
   Heart,
   MicOff,
