@@ -66,7 +66,7 @@ export const ROLES: RoleDef[] = [
     power:
       "À l'aube il reçoit un mot imposé. S'il ne l'a pas prononcé avant la fin du jour, il meurt.",
     order: 43,
-    hasNightAction: false,
+    hasNightAction: true,
   },
   {
     id: "loup-matriarche",
@@ -345,7 +345,6 @@ export const ROLES: RoleDef[] = [
   },
 ];
 
-// Association automatique fichier vidéo ↔ rôle (par identifiant)
 for (const role of ROLES) {
   const url = roleVideo(role.id);
   if (url) role.videoUrl = url;
