@@ -413,6 +413,7 @@ export const fr = {
     ultimateShieldWarn: "Attention : Une fois activé, le Salvateur perd définitivement tous ses pouvoirs de protection.",
     ultimateShieldActivate: "Activer le Bouclier Ultime",
     ultimateShieldConfirm: "Oui, activer et perdre les pouvoirs",
+    ultimateShieldToggle: "Bouclier Ultime",
     voteRanking: "Classement des votes — Du plus voté au moins voté",
 
     newWordPlaceholder: "Nouveau mot…",
