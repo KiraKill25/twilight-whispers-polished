@@ -20,6 +20,7 @@ export const en = {
     no: "No",
     validate: "Confirm",
     skip: "Skip",
+    pass: "Skip Turn",
     random: "🎲 Random",
     language: "Language",
     sound: "Sound",
@@ -124,6 +125,46 @@ export const en = {
     healSave: "Save {name}",
     poisonPotion: "Poison Potion (optional)",
     witchTargetProtected: "Guardian protects this victim — Life potion useless.",
+
+    // Black Wolf Specific
+    bwInfectingTarget: "Infecting {name}",
+    bwInfectPrompt: "Infect {name} (joins pack instead of dying)",
+    bwNoVictimToInfect: "No victim available to infect.",
+
+    // Witch & Three Faces Specific
+    facesHealVictim: "Save {name} (Life Potion)",
+    facesNoVictimToHeal: "No attacked victim to save",
+    facesSwitchPoison: "Switch to Poison Potion",
+    witchLifePotion: "Life Potion",
+    witchLifeUsed: "Life Potion already used",
+    witchSavingVictim: "Saving {name}",
+    witchSaveVictimPrompt: "Save {name} (Life Potion)",
+    nobodyAttacked: "Nobody was attacked tonight.",
+    witchDeathPotion: "Death Potion (Poison)",
+    witchDeathUsed: "Death Potion already used",
+
+    // Bear & Little Girl
+    bearLeftNeighbor: "Left Neighbor",
+    bearRightNeighbor: "Right Neighbor",
+    bearStatusGrowling: "🐻 Bear GROWLS! (At least 1 wolf nearby)",
+    bearStatusCalm: "🐻 Bear is calm (No wolves nearby)",
+    petiteFillePeek: "Peek at the Werewolves",
+    petiteFilleSleep: "Stay asleep safely",
+
+    // Guardian
+    ultimateShieldToggle: "Activate Ultimate Shield (Single use)",
+
+    // Death / Succession / Dawn
+    hunterShotTitle: "Hunter's Revenge",
+    hunterShotDesc: "{name} was eliminated! They can choose one last victim to take down with them.",
+    hunterFireConfirm: "Shoot Selected Target",
+    captainSuccessionTitle: "Captain Succession",
+    captainSuccessionDesc: "{name} has fallen and must choose the new Captain.",
+    assignCaptainConfirm: "Pass Captaincy",
+    dawnSummaryTitle: "Dawn Summary",
+    eventsTitle: "Night Events",
+    proceedToVote: "Proceed to Village Vote",
+    skipDay1Vote: "Skip Day 1 Vote (Optional)",
 
     // Dawn & debate
     debateTitle: "Debate — Day {n}",
