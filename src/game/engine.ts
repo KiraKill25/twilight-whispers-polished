@@ -1194,7 +1194,8 @@ function resolveNight(state: GameState): GameState {
   s.players.forEach((p) => {
     p.immuneToDayVote = false;
     p.baseVotes = 0;
-    if (effectiveRoleId(p) !== "idiot" || !p.abilityUsed) {
+    const role = effectiveRoleId(p);
+    if ((role !== "idiot" && role !== "idiot-du-village") || !p.abilityUsed) {
       p.canVote = true;
     }
   });
@@ -1336,7 +1337,7 @@ export function submitVote(state: GameState, targetId: string, talkativeSpoke = 
       s.winner = nk("winAngel", { name: target.name });
       return s;
     }
-    if (roleId === "idiot" && !target.abilityUsed) {
+    if ((roleId === "idiot" || roleId === "idiot-du-village") && !target.abilityUsed) {
       target.abilityUsed = true;
       target.canVote = false;
       s.dawnSummary = s.dawnSummary ?? [];
@@ -1393,7 +1394,7 @@ export function eliminateTied(
         s.winner = nk("winAngel", { name: target.name });
         return s;
       }
-      if (roleId === "idiot" && !target.abilityUsed) {
+      if ((roleId === "idiot" || roleId === "idiot-du-village") && !target.abilityUsed) {
         target.abilityUsed = true;
         target.canVote = false;
         s.dawnSummary = s.dawnSummary ?? [];
