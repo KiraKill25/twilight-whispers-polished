@@ -895,8 +895,10 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           actor.poisonUsed = true;
           actor.hasUsedDeathPotion = true;
           const v = s.players.find((p) => p.id === payload.poisonId);
-          s.reveal = nk("poisoned", { name: v?.name ?? "" });
-          rep(s, nk("repWitchPoison", { name: v?.name ?? "" }));
+          if (v) {
+            s.reveal = nk("poisoned", { name: v.name });
+            rep(s, nk("repWitchPoison", { name: v.name }));
+          }
         }
         break;
       }
