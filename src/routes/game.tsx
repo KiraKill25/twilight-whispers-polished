@@ -2,18 +2,29 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  ChevronRight,
   Crown,
   Droplet,
   Eye,
   Flame,
   Heart,
+  HelpCircle,
+  Info,
   MicOff,
+  Moon,
   Pencil,
   RotateCcw,
   Shield,
   Skull,
   Sparkles,
+  Sun,
   Swords,
+  UserX,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 import { OverlayCard } from "@/components/OverlayCard";
@@ -108,6 +119,9 @@ function GamePage() {
   const [voteHistory, setVoteHistory] = useState<VoteRecord[]>([]);
   const [stateHistory, setStateHistory] = useState<GameState[]>([]);
   const [suicideOpen, setSuicideOpen] = useState(false);
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
+  const [gmNotesOpen, setGmNotesOpen] = useState(false);
+  const [gmNotesText, setGmNotesText] = useState("");
   const lastPhase = useRef<string>("");
 
   const updateState = (next: GameState) => {
@@ -229,9 +243,16 @@ function GamePage() {
   return (
     <main className="mx-auto min-h-screen w-full max-w-lg space-y-5 box-border overflow-x-hidden overflow-y-auto px-4 py-6 pb-16">
       <header className="sticky top-0 z-40 -mx-4 flex items-center justify-between gap-2 bg-background/80 px-4 py-2 backdrop-blur">
-        <span className="text-xs tracking-widest text-muted-foreground uppercase">
-          {phaseLabel}
-        </span>
+        <div className="flex items-center gap-2">
+          {isNight ? (
+            <Moon className="size-4 text-indigo-400" />
+          ) : (
+            <Sun className="size-4 text-amber-400" />
+          )}
+          <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
+            {phaseLabel}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           {canUndo && (
             <button
@@ -255,6 +276,14 @@ function GamePage() {
               <span className="hidden sm:inline">{t("gmSuicide")}</span>
             </button>
           )}
+          <button
+            onClick={() => setGuideModalOpen(true)}
+            aria-label="Guide"
+            title="Guide du Meneur"
+            className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition active:scale-95"
+          >
+            <HelpCircle className="size-3.5" />
+          </button>
           <LanguageSwitcher />
           <MuteButton />
           <button
@@ -289,6 +318,10 @@ function GamePage() {
             toast.error(t("suicideDone", { name }));
           }}
         />
+      )}
+
+      {guideModalOpen && (
+        <GuideModal onClose={() => setGuideModalOpen(false)} />
       )}
 
       {victims && (
@@ -382,8 +415,31 @@ function GamePage() {
         <NightPanel state={state} onChange={updateState} onUndo={undo} canUndo={canUndo} />
       )}
 
+      {/* Bloc de notes privées pour le Meneur */}
       <section className="surface-card rounded-2xl p-4">
-        <h2 className="mb-2 text-xs tracking-widest text-primary uppercase">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xs font-bold tracking-widest text-primary uppercase">
+            Notes du Meneur
+          </h2>
+          <button
+            onClick={() => setGmNotesOpen((v) => !v)}
+            className="text-xs text-muted-foreground hover:text-primary transition"
+          >
+            {gmNotesOpen ? "Masquer" : "Afficher"}
+          </button>
+        </div>
+        {gmNotesOpen && (
+          <textarea
+            value={gmNotesText}
+            onChange={(e) => setGmNotesText(e.target.value)}
+            placeholder="Prenez vos notes ici (ex: indices, soupçons, alliances)..."
+            className="w-full h-24 rounded-xl border border-border bg-input/50 p-3 text-xs outline-none focus:ring-1 focus:ring-primary"
+          />
+        )}
+      </section>
+
+      <section className="surface-card rounded-2xl p-4">
+        <h2 className="mb-2 text-xs font-bold tracking-widest text-primary uppercase">
           {t("village", { n: state.players.filter((p) => p.alive).length })}
         </h2>
         <RoleList players={state.players} revealAll />
@@ -457,6 +513,34 @@ function SuicideModal({
           {t("cancel")}
         </button>
       </div>
+    </OverlayCard>
+  );
+}
+
+function GuideModal({ onClose }: { onClose: () => void }) {
+  return (
+    <OverlayCard tone="NIGHT" label="Guide du Meneur">
+      <div className="space-y-4 text-left max-h-[60vh] overflow-y-auto pr-1">
+        <h3 className="text-sm font-bold text-primary">Règles & Astuces de Gestion</h3>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          - <strong>Nuit :</strong> Suivez les appels de l'écran dans l'ordre. Chaque rôle effectue son action secrètement.
+        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          - <strong>Aube :</strong> Révélez le rapport de la nuit et lancez la roue de débat. Les joueurs s'expriment à tour de rôle.
+        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          - <strong>Vote :</strong> Suivez le sens de la roue pour recueillir les choix de chaque villageois en toute équité.
+        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          - <strong>Bouton Annuler :</strong> Si vous faites une erreur de saisie pendant la nuit ou le vote, vous pouvez revenir en arrière.
+        </p>
+      </div>
+      <button
+        onClick={onClose}
+        className="mt-4 w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
+      >
+        Fermer
+      </button>
     </OverlayCard>
   );
 }
