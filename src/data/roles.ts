@@ -42,7 +42,7 @@ export const ROLES: RoleDef[] = [
     description:
       "Loup d'ombre capable de contaminer plutôt que de dévorer. Son souffle transforme la victime en membre de la meute.",
     power:
-      "Une fois par partie, après le vote des loups : la victime n'est pas tuée mais rejoint le camp des Loups en conservant son pouvoir d'origine.",
+      "Une fois par partie, après le vote des loups : la victime n'est pas tuée mais rejoint le camp des Loups en conservant son pouvoir d'origine. S'il se retrouve seul survivant de la meute, il peut effectuer une attaque nocturne classique chaque nuit.",
     order: 41,
     hasNightAction: true,
   },
@@ -341,6 +341,17 @@ export const ROLES: RoleDef[] = [
     power:
       "Chaque nuit, il tue une cible indépendamment des loups. Son attaque ignore toute protection (Salvateur, potion de vie). Inspecté, il apparaît comme Simple Villageois. Il gagne s'il reste seul ou en duel final.",
     order: 46,
+    hasNightAction: true,
+  },
+  {
+    id: "canard",
+    name: "Canard",
+    team: "VILLAGEOIS",
+    description:
+      "Le messager du village. Il reçoit un résumé des événements nocturnes du Maître de Jeu et choisit un allié de confiance pour transmettre ses secrets.",
+    power:
+      "Chaque nuit, le Maître du Jeu informe sommairement le Canard des événements survenus. Une fois par partie, il peut désigner un allié et lui transmettre ses secrets. Si l'un des deux révèle publiquement ces informations, il est éliminé et l'autre devient le JOKER (son élimination au vote fait gagner le Village).",
+    order: 22,
     hasNightAction: true,
   },
 ];
