@@ -75,11 +75,11 @@ export function VoteWheel({
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // Reset timer state when a new player triggers defense mode
+  // Reset timer state when a new player triggers defense mode, starting paused
   useEffect(() => {
     if (defensePlayerId) {
       setTimerSeconds(60);
-      setIsTimerRunning(true);
+      setIsTimerRunning(false);
     }
   }, [defensePlayerId]);
 
@@ -641,7 +641,7 @@ export function VoteWheel({
               <p className="text-xs text-muted-foreground">{t("tieNote")}</p>
               <button
                 onClick={() => eliminate(leaders.map((p) => p.id))}
-                className="w-full rounded-full bg-destructive py-3 text-sm font-bold text-destructive-foreground"
+                className="w-full rounded-full bg-destructive py-3 font-bold text-destructive-foreground"
               >
                 {t("validateExec")}
               </button>
