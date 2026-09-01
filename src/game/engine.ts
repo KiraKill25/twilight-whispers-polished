@@ -10,7 +10,6 @@ export type DeathCause =
   | "HUNTER_SHOT"
   | "HEARTBREAK"
   | "VILLAGE_VOTE"
-  | "JAILER_EXECUTION"
   | "SPY_DETECTED"
   | "TALKATIVE_WOLF"
   | "GENERAL_STRIKE"
@@ -27,7 +26,6 @@ export const DEATH_LABEL: Record<DeathCause, string> = {
   HUNTER_SHOT: nk("cause_HUNTER_SHOT"),
   HEARTBREAK: nk("cause_HEARTBREAK"),
   VILLAGE_VOTE: nk("cause_VILLAGE_VOTE"),
-  JAILER_EXECUTION: nk("cause_JAILER_EXECUTION"),
   SPY_DETECTED: nk("cause_SPY_DETECTED"),
   TALKATIVE_WOLF: nk("cause_TALKATIVE_WOLF"),
   GENERAL_STRIKE: nk("cause_GENERAL_STRIKE"),
@@ -81,6 +79,8 @@ export interface Player {
   mutedForDay?: boolean;
   /** Salvateur : Bouclier Ultime consommé (protection définitivement perdue). */
   ultimateShieldUsed?: boolean;
+  /** Salvateur : Historique des joueurs protégés pour la boucle de réinitialisation. */
+  protectedHistory?: string[];
   /** Marionnettiste : Le joueur désigné porte la marionnette cette nuit. */
   hasPuppetShield?: boolean;
   /** 3 faces : pouvoirs déjà utilisés ("protect" | "potion" | "inspect"). */
@@ -118,6 +118,7 @@ export interface RoundState {
   protectedId?: string;
   previousProtectedId?: string;
   jailedId?: string;
+  previousJailedId?: string;
   poisonedId?: string;
   healed?: boolean;
   whiteWolfKillId?: string;
@@ -145,6 +146,7 @@ export interface GameState {
   phase: Phase;
   night: number;
   day: number;
+  initialPlayerCount: number;
   players: Player[];
   steps: Step[];
   stepIndex: number;
@@ -222,6 +224,7 @@ export function createGame(
     hasUsedLifePotion: false,
     hasUsedDeathPotion: false,
     hasPuppetShield: false,
+    protectedHistory: [],
     stars: 0,
     penaltyVotes: 0,
   }));
@@ -236,6 +239,7 @@ export function createGame(
     phase: "NUIT_1",
     night: 1,
     day: 0,
+    initialPlayerCount: players.length,
     players,
     steps: [],
     stepIndex: 0,
@@ -292,10 +296,9 @@ export function buildNightSteps(s: GameState): Step[] {
     push("enfant-sauvage", "Enfant Sauvage", "Choisis ton modèle.", "one");
   }
 
-  if (!first) push("geolier", "Geôlier", "Qui séquestres-tu cette nuit ?", "one");
+  if (!first) push("geolier", "Geôlier", "Qui séquestres-tu cette nuit ? (désactive son droit de vote demain)", "one");
   if (!first) push("voyante", "Voyante", "Quel joueur veux-tu sonder ?", "one");
 
-  // Marionnettiste : s'éveille uniquement à la Nuit 2 pour équiper sa marionnette
   {
     const puppeteer = hasRole(s, "marionnettiste");
     if (puppeteer && s.night === 2 && !puppeteer.abilityUsed && !puppeteer.powersDisabled) {
@@ -306,7 +309,7 @@ export function buildNightSteps(s: GameState): Step[] {
   {
     const savior = hasRole(s, "salvateur");
     if (savior && !savior.ultimateShieldUsed) {
-      push("salvateur", "Salvateur", "Qui protèges-tu cette nuit ? (jamais deux fois de suite)", "one");
+      push("salvateur", "Salvateur", "Qui protèges-tu cette nuit ?", "one");
     }
   }
   push(
@@ -431,9 +434,14 @@ export function buildNightSteps(s: GameState): Step[] {
   }
 
   push("maniaque", "Le Maniaque", "Désigne la victime que rien ne peut protéger.", "one", true);
-  push("joueur-de-flute", "Joueur de Flûte", "Enchante deux joueurs.", "two", true);
+
+  const piperMode = (s.initialPlayerCount ?? s.players.length) <= 10 ? "one" : "two";
+  const piperPrompt =
+    piperMode === "one" ? "Enchante un joueur." : "Enchante deux joueurs.";
+  push("joueur-de-flute", "Joueur de Flûte", piperPrompt, piperMode, true);
+
   if (!first) push("corbeau", "Corbeau", "Sur qui déposes-tu la plume noire ?", "one", true);
-  push("tavernier", "Tavernier", "À qui offres-tu un verre ?", "one", true);
+  push("tavernier", "Tavernier", "À qui offers-tu un verre ?", "one", true);
 
   if (s.night === 2 || s.night === 3) {
     const gen = hasRole(s, "general");
@@ -544,15 +552,13 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     }
     case "geolier": {
       if (target) {
-        s.round.jailedId = target.id;
-        target.disabledNightAbility = true;
-        if (payload.yes) {
-          s.pendingDeaths.push({ id: target.id, cause: "JAILER_EXECUTION" });
-          s.reveal = nk("jailExecuted", { name: target.name });
-        } else {
-          s.reveal = nk("jailLocked", { name: target.name });
+        if (target.id === s.round.previousJailedId) {
+          s.reveal = "Tu ne peux pas séquestrer le même joueur deux nuits d'affilée.";
+          return state;
         }
-        s.steps = rebuildRemaining(s);
+        s.round.jailedId = target.id;
+        target.canVote = false; // Prevents voting during the next day phase
+        s.reveal = nk("jailLocked", { name: target.name });
       }
       break;
     }
@@ -592,7 +598,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
             role: nrole(stolen),
           }),
         );
-        s.steps = rebuildRemaining(s);
       }
       break;
     }
@@ -627,7 +632,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
               result: nrole(seenId),
             }),
           );
-        } else if (power === "life" && s.round.attackedId) {
+        } else if (power === "life" && canWitchHeal(s)) {
           const saved = s.players.find((p) => p.id === s.round.attackedId);
           s.round.attackedId = undefined;
           s.round.healed = true;
@@ -663,6 +668,20 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         break;
       }
       if (target) {
+        const otherLiving = s.players.filter((p) => p.alive && p.id !== actor.id);
+        let history = actor.protectedHistory ?? [];
+        const availableTargets = otherLiving.filter((p) => !history.includes(p.id));
+
+        if (availableTargets.length === 0) {
+          history = [];
+        } else if (!availableTargets.some((p) => p.id === target.id)) {
+          s.reveal = "Tu dois protéger d'autres joueurs avant de pouvoir ré-sélectionner ce joueur.";
+          return state;
+        }
+
+        history.push(target.id);
+        actor.protectedHistory = history;
+
         s.round.protectedId = target.id;
         s.reveal = nk("protectedTonight", { name: target.name });
         rep(s, nk("repProtect", { role: nrole("salvateur"), name: target.name }));
@@ -804,7 +823,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       break;
     }
     case "sorciere": {
-      if (payload.healUsed && s.round.attackedId) {
+      if (payload.healUsed && s.round.attackedId && canWitchHeal(s)) {
         const saved = s.players.find((p) => p.id === s.round.attackedId);
         s.round.healed = true;
         s.round.attackedId = undefined;
@@ -832,7 +851,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       break;
     }
     case "joueur-de-flute": {
-      (payload.targetIds ?? []).forEach((id) => {
+      (payload.targetIds ?? (payload.targetId ? [payload.targetId] : [])).forEach((id) => {
         const p = s.players.find((x) => x.id === id);
         if (p) p.enchanted = true;
       });
@@ -895,17 +914,6 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
 function seenRoleId(target: Player): string {
   const id = target.originalRoleId ?? effectiveRoleId(target);
   return id === "maniaque" ? "simple-villageois" : id;
-}
-
-function rebuildRemaining(s: GameState): Step[] {
-  const done = s.steps.slice(0, s.stepIndex + 1);
-  const jailed = s.round.jailedId;
-  return [
-    ...done,
-    ...s.steps
-      .slice(s.stepIndex + 1)
-      .filter((st) => st.actorId !== jailed || st.roleId === "loup-garou"),
-  ];
 }
 
 function pushEvent(s: GameState, e: GameEvent) {
@@ -1008,6 +1016,7 @@ function resolveNight(state: GameState): GameState {
       });
     }
   }
+
   if (s.round.villageShield) {
     if (s.round.attackedId || s.round.whiteWolfKillId) {
       s.dawnSummary.push(nk("villageShieldSaved"));
@@ -1026,6 +1035,7 @@ function resolveNight(state: GameState): GameState {
     s.round.attackedId = undefined;
     s.round.whiteWolfKillId = undefined;
   }
+
   if (s.round.attackedId && s.round.attackedId === s.round.protectedId) {
     const saved = s.players.find((p) => p.id === s.round.attackedId);
     s.round.attackedId = undefined;
@@ -1039,23 +1049,7 @@ function resolveNight(state: GameState): GameState {
         bySavior: "salvateur",
       });
   }
-  if (s.round.attackedId && s.round.attackedId === s.round.jailedId) {
-    const saved = s.players.find((p) => p.id === s.round.attackedId);
-    s.round.attackedId = undefined;
-    s.dawnSummary.push(nk("jailerSafe"));
-    if (saved)
-      pushEvent(s, {
-        round: s.night,
-        phase: "NIGHT",
-        type: "RESCUE",
-        name: saved.name,
-        bySavior: "geolier",
-      });
-  }
 
-  // ---------------------------------------------------------------------------
-  // Redirection des attaques de loups sur le Marionnettiste vers sa marionnette
-  // ---------------------------------------------------------------------------
   if (s.round.attackedId) {
     const attackedPlayer = s.players.find((p) => p.id === s.round.attackedId);
 
@@ -1144,7 +1138,10 @@ function resolveNight(state: GameState): GameState {
   }
   if (s.round.ravenTargetId) {
     const r = s.players.find((p) => p.id === s.round.ravenTargetId);
-    if (r) r.baseVotes = 2;
+    if (r) {
+      const initCount = s.initialPlayerCount ?? s.players.length;
+      r.baseVotes = initCount <= 10 ? 1 : 2;
+    }
   }
 
   const deaths = s.players.filter((p) => !p.alive && aliveBefore.has(p.id));
@@ -1335,6 +1332,7 @@ export function startNight(state: GameState): GameState {
   s.phase = "NUIT";
   s.round = {
     previousProtectedId: state.round.protectedId,
+    previousJailedId: state.round.jailedId,
     previousMutedId: state.round.mutedId,
   };
   s.stepIndex = 0;
@@ -1343,6 +1341,8 @@ export function startNight(state: GameState): GameState {
   s.nightReport = [];
   s.players.forEach((p) => {
     p.disabledNightAbility = false;
+    p.canVote = true;
+    p.mutedForDay = false;
   });
   s.steps = buildNightSteps(s);
   s.log.push(nk("nightHeader", { n: s.night }));
@@ -1411,7 +1411,19 @@ export function checkVictory(state: GameState): GameState {
 }
 
 export function canWitchHeal(s: GameState): boolean {
-  return !!s.round.attackedId;
+  if (!s.round.attackedId) return false;
+  const victim = s.players.find((p) => p.id === s.round.attackedId);
+  if (victim && effectiveRoleId(victim) === "ancien" && victim.lives > 1) {
+    return false;
+  }
+  return true;
+}
+
+export function canCanardReceiveReport(s: GameState): boolean {
+  const initCount = s.initialPlayerCount ?? s.players.length;
+  if (initCount <= 10) return s.night <= 2;
+  if (initCount <= 13) return s.night <= 3;
+  return true;
 }
 
 export function addDebatePenalty(state: GameState, playerId: string): GameState {
