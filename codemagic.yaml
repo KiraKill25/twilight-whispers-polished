@@ -1,0 +1,119 @@
+workflows:
+  android-offline-apk:
+    name: Build Offline Android APK
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 20
+      java: 21
+    scripts:
+      - name: Install Dependencies
+        script: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/splash-screen
+
+      - name: Build Web App & Generate Android APK
+        script: |
+          # 1. Clean previous build folders
+          rm -rf dist android
+
+          # 2. Compile Web App explicitly to dist
+          npx vite build --outDir dist
+
+          # 3. Fail fast if dist/index.html was not created by Vite
+          if [ ! -f "dist/index.html" ]; then
+            echo "ERROR: Vite build failed! dist/index.html was not generated."
+            ls -la
+            exit 1
+          fi
+
+          # 4. Fix relative asset paths
+          node -e '
+            const fs = require("fs"), path = require("path");
+            function fixPaths(dir) {
+              for (const file of fs.readdirSync(dir)) {
+                const fullPath = path.join(dir, file);
+                if (fs.statSync(fullPath).isDirectory()) {
+                  fixPaths(fullPath);
+                } else if (fullPath.endsWith(".html") || fullPath.endsWith(".js") || fullPath.endsWith(".css")) {
+                  let content = fs.readFileSync(fullPath, "utf8");
+                  content = content.replace(/href="\//g, "href=\"./").replace(/src="\//g, "src=\"./");
+                  fs.writeFileSync(fullPath, content, "utf8");
+                }
+              }
+            }
+            fixPaths("dist");
+          '
+
+          # 5. Write Capacitor Configuration
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.mouradsville.game",
+            "appName": "Mourads Ville",
+            "webDir": "dist",
+            "server": {
+              "androidScheme": "https"
+            },
+            "plugins": {
+              "SplashScreen": {
+                "launchShowDuration": 0,
+                "launchAutoHide": true,
+                "backgroundColor": "#000000",
+                "androidScaleType": "CENTER_CROP",
+                "showSpinner": false
+              }
+            }
+          }
+          EOF
+
+          # 6. Generate Android native platform with dist ready
+          npx cap add android
+          npx cap sync android
+
+          # 7. Generate and inject app icon and splash using @capacitor/assets
+          npm install @capacitor/assets --save-dev
+          mkdir -p assets
+          cp public/icon.png assets/icon.png
+          cp public/splash.png assets/splash.png
+          npx @capacitor/assets generate --android
+
+          # 8. Apply native styles
+          cat << 'EOF' > android/app/src/main/res/values/styles.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+                  <item name="colorPrimary">#000000</item>
+                  <item name="colorPrimaryDark">#000000</item>
+                  <item name="colorAccent">#000000</item>
+                  <item name="android:windowBackground">#000000</item>
+              </style>
+
+              <style name="AppTheme.NoActionBar" parent="AppTheme">
+                  <item name="windowActionBar">false</item>
+                  <item name="windowNoTitle">true</item>
+                  <item name="android:background">#000000</item>
+              </style>
+
+              <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+                  <item name="android:background">#000000</item>
+                  <item name="android:windowBackground">#000000</item>
+              </style>
+          </resources>
+          EOF
+
+          # 9. Fix Kotlin stdlib conflicts
+          cat << 'EOF' >> android/app/build.gradle
+
+          configurations.all {
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+          }
+          EOF
+
+          # 10. Execute Gradle build
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk
