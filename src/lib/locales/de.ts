@@ -502,7 +502,7 @@ export const de = {
       name: "Puppenspieler",
       description: "Du bindest dein Schicksal an eine Puppe. Wenn du nachts angegriffen wirst, erleidet deine Puppe den Schaden an deiner Stelle und du verstummst während der Morgendiskussion.",
       power: "Wähle eine Puppe. Wirst du angegriffen, fängt die Puppe den Schlag an deiner Stelle ab und du verstummst."
-    }
+    },
     renard: {
       name: "Fuchs",
       description: "Der streifende Fuchs des Dorfes. Jede Nacht erhält er einen vagen Nachtbericht vom Spielleiter. In seiner letzten Nacht muss er einen Vertrauten wählen, um seine Geheimnisse zu teilen.",

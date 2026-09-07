@@ -502,7 +502,7 @@ export const es = {
       name: "Titiritero",
       description: "Vinculas tu destino a un títere. Si eres atacado por la noche, tu títere sufrirá el daño en tu lugar y quedarás en silencio durante el debate matutino.",
       power: "Elige un títere. Si eres atacado, el títere recibe el golpe en tu lugar y quedas en silencio."
-    }
+    },
     renard: {
       name: "Zorro",
       description: "El zorro merodeador del pueblo. Cada noche, recibe un informe nocturno vago del Director de Juego. En su última noche, debe elegir un confidente para compartir sus secretos.",

@@ -502,7 +502,7 @@ export const pt = {
       name: "Marionetista",
       description: "Ligas o teu destino a uma marioneta. Se fores atacado de noite, a tua marioneta sofre o dano no teu lugar e ficas em silêncio durante o debate da manhã.",
       power: "Escolhe uma marioneta. Se fores atacado, a marioneta recebe o golpe no teu lugar e ficas em silêncio."
-    }
+    },
     renard: {
       name: "Raposa",
       description: "A raposa espreitadora da aldeia. Cada noite, recebe um relatório noturno vago do Mestre de Jogo. Na sua última noite, deve escolher um confidente para partilhar os seus segredos.",
