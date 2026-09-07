@@ -28,6 +28,7 @@ import {
   type GameState,
   type Player,
 } from "@/game/engine";
+import { GmVideoOverlay } from "@/components/GmVideoOverlay";
 
 const ABSTAIN = "__abstain__";
 
@@ -316,14 +317,14 @@ export function VoteWheel({
           <div className="flex items-center justify-center gap-2 text-amber-500">
             <ShieldAlert className="size-5 animate-pulse" />
             <h4 className="text-sm font-black tracking-wider uppercase">
-              Temps de Défense ({defenseThreshold} votes)
+              {t("defenseTitle", { n: defenseThreshold })}
             </h4>
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="font-bold text-foreground">
               {state.players.find((p) => p.id === defensePlayerId)?.name}
             </span>{" "}
-            dispose d'une minute pour plaider sa cause !
+            {t("defenseDesc", { name: state.players.find((p) => p.id === defensePlayerId)?.name ?? "" })}
           </p>
           <div className="flex items-center justify-center gap-2 text-2xl font-black text-amber-500 tabular-nums">
             <Timer
@@ -340,11 +341,11 @@ export function VoteWheel({
             >
               {isTimerRunning ? (
                 <>
-                  <Pause className="size-3.5" /> Pause
+                  <Pause className="size-3.5" /> {t("pauseBtn")}
                 </>
               ) : (
                 <>
-                  <Play className="size-3.5" /> Démarrer
+                  <Play className="size-3.5" /> {t("startBtn")}
                 </>
               )}
             </button>
@@ -355,7 +356,7 @@ export function VoteWheel({
               }}
               className="flex-1 rounded-full border border-amber-500/40 bg-amber-500/20 py-2 text-xs font-bold text-amber-500 transition-colors hover:bg-amber-500/30"
             >
-              Terminer la défense
+              {t("endDefense")}
             </button>
           </div>
         </div>
@@ -378,6 +379,8 @@ export function VoteWheel({
         </p>
       )}
 
+      <div className="relative">
+      <GmVideoOverlay />
       <SeatingWheel
         players={seating}
         activeId={currentVoter?.id}
@@ -426,6 +429,7 @@ export function VoteWheel({
           )
         }
       />
+      </div>
 
       {!allVoted && isCaptainTurn && (
         <div className="space-y-2 rounded-2xl border border-accent/40 p-3">
@@ -478,6 +482,15 @@ export function VoteWheel({
           className="w-full rounded-full border border-border py-3 text-sm font-semibold text-muted-foreground"
         >
           {t("abstain")}
+        </button>
+      )}
+
+      {!allVoted && state.day === 1 && (
+        <button
+          onClick={() => onChange(skipVote(state))}
+          className="w-full rounded-full border border-amber-500/40 py-2.5 text-xs font-semibold text-amber-400"
+        >
+          {t("skipVoteDay1Vote")}
         </button>
       )}
 

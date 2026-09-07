@@ -496,6 +496,46 @@ export const en = {
     guideStepOf: "Step {i} / {n}",
     guideClose: "Close Guide",
     guideStart: "Let's Go!",
+
+    // Fox & Confidant — Joker mechanics
+    foxReveal: "🦊 Fox Reveal",
+    foxRevealDesc: "The Fox reveals the night's events publicly: immediate suicide. The confidant becomes the Joker.",
+    foxRevealConfirm: "Confirm Fox Reveal",
+    confidantReveal: "📜 Confidant Reveal",
+    confidantRevealDesc: "The confidant reveals the Fox's secrets: immediate suicide. The Fox becomes the Joker.",
+    confidantRevealConfirm: "Confirm Confidant Reveal",
+    jokerAssignedToast: "{name} is now the Joker!",
+    foxRevealDoneToast: "{name} (Fox) eliminated: suicide. {confidant} becomes the Joker.",
+    confidantRevealDoneToast: "{name} (Confidant) eliminated: suicide. {fox} becomes the Joker.",
+
+    // GM Notes
+    gmNotesTitle: "GM Notes",
+    gmNotesShow: "Show",
+    gmNotesHide: "Hide",
+    gmNotesPlaceholder: "Take notes here (e.g. clues, suspicions, alliances)...",
+
+    // Guide modal — rules
+    guideRulesTitle: "Rules & GM Tips",
+    guideRulesNight: "Night: Follow the on-screen calls in order. Each role performs their action secretly.",
+    guideRulesDawn: "Dawn: Reveal the night report and launch the debate wheel. Players speak in turn.",
+    guideRulesVote: "Vote: Follow the wheel direction to collect each villager's choice fairly.",
+    guideRulesUndo: "Undo Button: If you make a mistake during the night or vote, you can go back.",
+    guideCloseBtn: "Close",
+
+    // Defense timer
+    defenseTitle: "Defense Time ({n} votes)",
+    defenseDesc: "{name} has one minute to plead their case!",
+    pauseBtn: "Pause",
+    startBtn: "Start",
+    endDefense: "End Defense",
+
+    // Penalty toasts
+    penaltyRemovedToast: "Penalty removed from {name}",
+    penaltyAddedToast: "Debate penalty given to {name}",
+
+    // Skip vote during first day voting
+    skipVoteDay1Vote: "Skip vote (Day 1)",
+    penaltyBadgeHint: "Tap: +1 Penalty | Long press (0.5s): Remove penalty",
     guideStep1Kicker: "Step 1",
     guideStep1Title: "Setup & Players",
     guideStep1Body:

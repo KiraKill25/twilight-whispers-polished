@@ -436,6 +436,45 @@ export const zh = {
     guideStepOf: "步骤 {i} / {n}",
     guideClose: "关闭指南",
     guideStart: "开始体验！",
+
+    // Fox & Confidant — Joker mechanics
+    foxReveal: "🦊 狐狸揭露",
+    foxRevealDesc: "狐狸公开揭露夜间事件：立即自杀。知己成为小丑。",
+    foxRevealConfirm: "确认狐狸揭露",
+    confidantReveal: "📜 知己揭露",
+    confidantRevealDesc: "知己揭露狐狸的秘密：立即自杀。狐狸成为小丑。",
+    confidantRevealConfirm: "确认知己揭露",
+    jokerAssignedToast: "{name} 现在是小丑！",
+    foxRevealDoneToast: "{name}（狐狸）被淘汰：自杀。{confidant} 成为小丑。",
+    confidantRevealDoneToast: "{name}（知己）被淘汰：自杀。{fox} 成为小丑。",
+
+    // GM Notes
+    gmNotesTitle: "主持人笔记",
+    gmNotesShow: "显示",
+    gmNotesHide: "隐藏",
+    gmNotesPlaceholder: "在此记笔记（例如：线索、怀疑、联盟）...",
+
+    // Guide modal — rules
+    guideRulesTitle: "规则与主持技巧",
+    guideRulesNight: "夜晚：按屏幕上的顺序依次唤醒。每个角色秘密执行其行动。",
+    guideRulesDawn: "黎明：揭示夜间报告并启动辩论轮。玩家轮流发言。",
+    guideRulesVote: "投票：按轮盘方向收集每个村民的选择，确保公平。",
+    guideRulesUndo: "撤销按钮：如果在夜晚或投票中输入错误，可以返回。",
+    guideCloseBtn: "关闭",
+
+    // Defense timer
+    defenseTitle: "辩护时间（{n} 票）",
+    defenseDesc: "{name} 有一分钟为自己辩护！",
+    pauseBtn: "暂停",
+    startBtn: "开始",
+    endDefense: "结束辩护",
+
+    // Penalty toasts
+    penaltyRemovedToast: "已移除 {name} 的惩罚",
+    penaltyAddedToast: "已给 {name} 辩论惩罚",
+
+    // Skip vote during first day voting
+    skipVoteDay1Vote: "跳过投票（第1天）",
     guideStep1Kicker: "步骤 1",
     guideStep1Title: "设置与玩家",
     guideStep1Body:

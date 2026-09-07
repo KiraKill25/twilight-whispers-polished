@@ -439,6 +439,45 @@ export const ru = {
     guideStepOf: "Шаг {i} / {n}",
     guideClose: "Закрыть гайд",
     guideStart: "Погнали!",
+
+    // Fox & Confidant — Joker mechanics
+    foxReveal: "🦊 Разоблачение Лисы",
+    foxRevealDesc: "Лиса публично раскрывает ночные события: немедленное самоубийство. Доверенное лицо становится Джокером.",
+    foxRevealConfirm: "Подтвердить разоблачение Лисы",
+    confidantReveal: "📜 Разоблачение Доверенного лица",
+    confidantRevealDesc: "Доверенное лицо раскрывает секреты Лисы: немедленное самоубийство. Лиса становится Джокером.",
+    confidantRevealConfirm: "Подтвердить разоблачение Доверенного лица",
+    jokerAssignedToast: "{name} теперь Джокер!",
+    foxRevealDoneToast: "{name} (Лиса) ликвидирован: самоубийство. {confidant} становится Джокером.",
+    confidantRevealDoneToast: "{name} (Доверенное лицо) ликвидирован: самоубийство. {fox} становится Джокером.",
+
+    // GM Notes
+    gmNotesTitle: "Заметки Ведущего",
+    gmNotesShow: "Показать",
+    gmNotesHide: "Скрыть",
+    gmNotesPlaceholder: "Делайте заметки здесь (например: улики, подозрения, союзы)...",
+
+    // Guide modal — rules
+    guideRulesTitle: "Правила и советы Ведущему",
+    guideRulesNight: "Ночь: Следуйте вызовам на экране по порядку. Каждая роль выполняет своё действие тайно.",
+    guideRulesDawn: "Рассвет: Раскройте ночной отчёт и запустите колесо дебатов. Игроки говорят по очереди.",
+    guideRulesVote: "Голосование: Следуйте направлению колеса, чтобы справедливо собрать выбор каждого жителя.",
+    guideRulesUndo: "Кнопка Отменить: Если вы ошиблись вводе ночью или при голосовании, можно вернуться.",
+    guideCloseBtn: "Закрыть",
+
+    // Defense timer
+    defenseTitle: "Время Защиты ({n} голосов)",
+    defenseDesc: "У {name} есть минута на защиту!",
+    pauseBtn: "Пауза",
+    startBtn: "Старт",
+    endDefense: "Завершить защиту",
+
+    // Penalty toasts
+    penaltyRemovedToast: "Штраф снят с {name}",
+    penaltyAddedToast: "Штраф за дебат начислен {name}",
+
+    // Skip vote during first day voting
+    skipVoteDay1Vote: "Пропустить голосование (День 1)",
     guideStep1Kicker: "Шаг 1",
     guideStep1Title: "Настройка и Игроки",
     guideStep1Body:

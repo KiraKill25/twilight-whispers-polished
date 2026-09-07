@@ -68,9 +68,11 @@ import {
   assignCaptain,
   bearNeighbors,
   canWitchHeal,
+  confidantReveal,
   createGame,
   currentStep,
   effectiveRoleId,
+  foxReveal,
   goToVote,
   resolveHunter,
   skipVote,
@@ -144,7 +146,7 @@ function GamePage() {
             : x
         ),
       });
-      toast.info(`Pénalité retirée à ${p.name}`);
+      toast.info(t("penaltyRemovedToast", { name: p.name }));
     }
   };
 
@@ -282,8 +284,8 @@ function GamePage() {
           )}
           <button
             onClick={() => setGuideModalOpen(true)}
-            aria-label="Guide"
-            title="Guide du Meneur"
+            aria-label={t("guideButton")}
+            title={t("guideTitle")}
             className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition active:scale-95"
           >
             <HelpCircle className="size-3.5" />
@@ -392,6 +394,10 @@ function GamePage() {
         <VoteAnnounceCard
           day={state.day}
           onClose={() => setVoteAnnounce(false)}
+          onSkip={() => {
+            setVoteAnnounce(false);
+            updateState(skipVote(state));
+          }}
           onProceed={() => {
             setVoteAnnounce(false);
             setDebateDoneDay(state.day);
@@ -435,7 +441,7 @@ function GamePage() {
               const p = state.players.find((x) => x.id === id);
               if (p) {
                 updateState(addDebatePenalty(state, id));
-                toast.error(`Pénalité de débat infligée à ${p.name}`);
+                toast.error(t("penaltyAddedToast", { name: p.name }));
               }
             }}
             onRemovePenalty={removePenalty}
@@ -449,20 +455,20 @@ function GamePage() {
       <section className="surface-card rounded-2xl p-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xs font-bold tracking-widest text-primary uppercase">
-            Notes du Meneur
+            {t("gmNotesTitle")}
           </h2>
           <button
             onClick={() => setGmNotesOpen((v) => !v)}
             className="text-xs text-muted-foreground hover:text-primary transition"
           >
-            {gmNotesOpen ? "Masquer" : "Afficher"}
+            {gmNotesOpen ? t("gmNotesHide") : t("gmNotesShow")}
           </button>
         </div>
         {gmNotesOpen && (
           <textarea
             value={gmNotesText}
             onChange={(e) => setGmNotesText(e.target.value)}
-            placeholder="Prenez vos notes ici (ex: indices, soupçons, alliances)..."
+            placeholder={t("gmNotesPlaceholder")}
             className="w-full h-24 rounded-xl border border-border bg-input/50 p-3 text-xs outline-none focus:ring-1 focus:ring-primary"
           />
         )}
@@ -504,10 +510,12 @@ function Overlay({
 function VoteAnnounceCard({
   day,
   onClose,
+  onSkip,
   onProceed,
 }: {
   day: number;
   onClose: () => void;
+  onSkip: () => void;
   onProceed: () => void;
 }) {
   const { t } = useI18n();
@@ -538,10 +546,10 @@ function VoteAnnounceCard({
           </button>
           {isFirstDay && (
             <button
-              onClick={onClose}
+              onClick={onSkip}
               className="w-full rounded-full border border-border py-2.5 text-xs font-semibold text-muted-foreground"
             >
-              {t("voteAnnounceSkip")}
+              {t("skipVoteDay1Vote")}
             </button>
           )}
         </div>
@@ -597,28 +605,29 @@ function SuicideModal({
 }
 
 function GuideModal({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   return (
-    <OverlayCard tone="NIGHT" label="Guide du Meneur">
+    <OverlayCard tone="NIGHT" label={t("guideTitle")}>
       <div className="space-y-4 text-left max-h-[60vh] overflow-y-auto pr-1">
-        <h3 className="text-sm font-bold text-primary">Règles & Astuces de Gestion</h3>
+        <h3 className="text-sm font-bold text-primary">{t("guideRulesTitle")}</h3>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          - <strong>Nuit :</strong> Suivez les appels de l'écran dans l'ordre. Chaque rôle effectue son action secrètement.
+          - <strong>{t("guideRulesNight").split(":")[0]}:</strong> {t("guideRulesNight").split(":").slice(1).join(":").trim()}
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          - <strong>Aube :</strong> Révélez le rapport de la nuit et lancez la roue de débat. Les joueurs s'expriment à tour de rôle.
+          - <strong>{t("guideRulesDawn").split(":")[0]}:</strong> {t("guideRulesDawn").split(":").slice(1).join(":").trim()}
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          - <strong>Vote :</strong> Suivez le sens de la roue pour recueillir les choix de chaque villageois en toute équité.
+          - <strong>{t("guideRulesVote").split(":")[0]}:</strong> {t("guideRulesVote").split(":").slice(1).join(":").trim()}
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          - <strong>Bouton Annuler :</strong> Si vous faites une erreur de saisie pendant la nuit ou le vote, vous pouvez revenir en arrière.
+          - <strong>{t("guideRulesUndo").split(":")[0]}:</strong> {t("guideRulesUndo").split(":").slice(1).join(":").trim()}
         </p>
       </div>
       <button
         onClick={onClose}
         className="mt-4 w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
       >
-        Fermer
+        {t("guideCloseBtn")}
       </button>
     </OverlayCard>
   );
@@ -1379,50 +1388,41 @@ function NightPanel({
           </div>
         ) : step.mode === "renard" ? (
           <div className="space-y-3">
-            {!step.optional ? (
-              <>
-                <p className="text-xs tracking-widest text-amber-400 uppercase">
-                  {t("renardFinalNight")}
-                </p>
-                <p className="text-sm text-muted-foreground">{t("renardChooseConfidant")}</p>
-                <PlayerPicker
-                  players={candidates.filter((p) => p.id !== actor.id)}
-                  selected={sel}
-                  onToggle={toggle}
-                  accent="arcane"
-                />
-                <button
-                  disabled={sel.length !== 1}
-                  onClick={() => send({ targetId: sel[0] })}
-                  className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
-                >
-                  {t("validate")}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-center">
-                  <p className="text-[11px] tracking-[0.3em] text-amber-400 uppercase">
-                    {t("renardReportTitle")}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">{stepPrompt}</p>
-                </div>
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-center">
+              <p className="text-[11px] tracking-[0.3em] text-amber-400 uppercase">
+                {t("renardReportTitle")}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{stepPrompt}</p>
+            </div>
+            {!step.optional && (
+              <p className="text-xs tracking-widest text-amber-400 uppercase">
+                {t("renardFinalNight")}
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground">{t("renardChooseConfidant")}</p>
+            <PlayerPicker
+              players={candidates.filter((p) => p.id !== actor.id)}
+              selected={sel}
+              onToggle={toggle}
+              accent="arcane"
+            />
+            <div className="flex gap-2">
+              <button
+                disabled={sel.length !== 1}
+                onClick={() => send({ targetId: sel[0] })}
+                className="flex-1 rounded-full bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40"
+              >
+                {t("validate")}
+              </button>
+              {step.optional && (
                 <button
                   onClick={() => send({})}
-                  className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground"
+                  className="flex-1 rounded-full border border-border py-3 text-sm font-semibold text-muted-foreground"
                 >
-                  {t("validate")}
+                  {t("pass")}
                 </button>
-                {step.optional && (
-                  <button
-                    onClick={() => send({})}
-                    className="w-full rounded-full border border-border py-2 text-xs font-semibold text-muted-foreground"
-                  >
-                    {t("pass")}
-                  </button>
-                )}
-              </>
-            )}
+              )}
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -1628,6 +1628,40 @@ function DawnPanel({
             onPenalty={(playerId) => onChange(addDebatePenalty(state, playerId))}
             onRemovePenalty={onRemovePenalty}
           />
+          {(() => {
+            const fox = state.players.find((p) => p.alive && effectiveRoleId(p) === "renard");
+            const confidant = fox?.confidantId
+              ? state.players.find((p) => p.id === fox.confidantId && p.alive)
+              : undefined;
+            if (!fox || !fox.confidantId || !confidant) return null;
+            return (
+              <div className="flex flex-col gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-3">
+                <p className="text-[10px] tracking-widest text-amber-400 uppercase">
+                  {t("foxReveal")} / {t("confidantReveal")}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      onChange(foxReveal(state, fox.id));
+                      toast.error(t("foxRevealDoneToast", { name: fox.name, confidant: confidant.name }));
+                    }}
+                    className="flex-1 rounded-full border border-amber-500/60 py-2.5 text-xs font-bold text-amber-400 transition active:scale-95"
+                  >
+                    {t("foxReveal")}
+                  </button>
+                  <button
+                    onClick={() => {
+                      onChange(confidantReveal(state, confidant.id));
+                      toast.error(t("confidantRevealDoneToast", { name: confidant.name, fox: fox.name }));
+                    }}
+                    className="flex-1 rounded-full border border-amber-500/60 py-2.5 text-xs font-bold text-amber-400 transition active:scale-95"
+                  >
+                    {t("confidantReveal")}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
           <div className="flex flex-col gap-2">
             <button
               onClick={() => onProceedToVote()}
@@ -1635,7 +1669,7 @@ function DawnPanel({
             >
               {t("proceedToVote")}
             </button>
-            {settings?.allowSkipVote && state.day === 1 && (
+            {state.day === 1 && (
               <button
                 onClick={() => onChange(skipVote(state))}
                 className="w-full rounded-full border border-border py-2.5 text-xs font-semibold text-muted-foreground"

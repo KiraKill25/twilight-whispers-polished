@@ -9,6 +9,7 @@ import {
 } from "@/components/SeatingWheel";
 import type { Player } from "@/game/engine";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { GmVideoOverlay } from "@/components/GmVideoOverlay";
 
 /** Choix du capitaine en début de journée : sens du débat, sens du vote, ordre de son vote. */
 export interface CaptainSetup {
@@ -66,6 +67,7 @@ function PenaltyBadge({
   onAdd: () => void;
   onRemove: () => void;
 }) {
+  const { t } = useI18n();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPress = useRef(false);
 
@@ -103,7 +105,7 @@ function PenaltyBadge({
       onPointerCancel={handlePointerCancel}
       onContextMenu={(e) => e.preventDefault()}
       className="mt-0.5 inline-block cursor-pointer select-none touch-none rounded-full bg-destructive px-1.5 text-[9px] font-black text-destructive-foreground tabular-nums shadow-md transition-transform active:scale-95"
-      title="Tap: +1 Pénalité | Appui long (0.5s): Retirer pénalité"
+      title={t("penaltyBadgeHint")}
     >
       +{count} ⚠️
     </span>
@@ -341,6 +343,7 @@ export function DebateWheel({
         )}
       </p>
 
+      <div className="relative">
       <SeatingWheel
         players={seating}
         activeId={current.player.id}
@@ -431,6 +434,8 @@ export function DebateWheel({
           </div>
         }
       />
+      <GmVideoOverlay />
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <button

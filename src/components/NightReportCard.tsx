@@ -4,12 +4,56 @@ import { useI18n } from "@/lib/i18n";
 import { useNarrate } from "@/hooks/use-narrate";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { clearBgm, startBgm } from "@/lib/audio";
+import { roleImage } from "@/data/roles";
 import type { GameState } from "@/game/engine";
+
+const OPEN = "\u27E6";
+const CLOSE = "\u27E7";
+
+/** Mapping direct : clé de rapport → ID de rôle pour l'illustration. */
+const REPORT_ROLE_MAP: Record<string, string> = {
+  repWolvesTarget: "loup-garou",
+  repNoWolvesTarget: "loup-garou",
+  repManiacTarget: "maniaque",
+  repProtect: "salvateur",
+  repVillageShield: "salvateur",
+  repWitchLife: "sorciere",
+  repWitchPoison: "sorciere",
+  repSilence: "loup-noir",
+  repSilenceSelf: "loup-noir",
+  repInfect: "loup-noir",
+  repThief: "voleur",
+  repFaces: "trois-faces",
+  repRenardConfidant: "renard",
+  renardVagueAttack: "loup-garou",
+  renardVagueProtect: "salvateur",
+  renardVaguePoison: "sorciere",
+  renardVagueManiac: "maniaque",
+  renardVagueSilence: "loup-noir",
+};
+
+/** Extrait l'ID du rôle illustrant une ligne de rapport nocturne. */
+function reportRoleId(line: string): string | null {
+  const match = line.match(new RegExp(`${OPEN}(\\w+)${CLOSE}`));
+  if (!match) return null;
+  const key = match[1];
+
+  if (key in REPORT_ROLE_MAP) return REPORT_ROLE_MAP[key];
+
+  // Jetons avec variable de rôle imbriquée (repSeerCheck, repDied, repSavedBy…)
+  const roleMatch = line.match(
+    new RegExp(`${OPEN}@role${CLOSE}\\{"id":"([^"]+)"\\}`),
+  );
+  if (roleMatch) return roleMatch[1];
+
+  return null;
+}
 
 /**
  * Rapport nocturne du Maître du Jeu.
  * Écran 100 % silencieux : aucune narration vocale, aucun effet sonore, aucune
  * musique de fond tant que la carte est affichée.
+ * Chaque ligne est illustrée par la petite image du rôle concerné.
  */
 export function NightReportCard({
   state,
@@ -24,7 +68,6 @@ export function NightReportCard({
   useScrollLock();
 
   useEffect(() => {
-    // Silence total pendant la lecture du rapport.
     clearBgm();
   }, []);
 
@@ -55,14 +98,25 @@ export function NightReportCard({
             <p className="text-sm text-muted-foreground">{t("nightReportEmpty")}</p>
           ) : (
             <ul className="space-y-2">
-              {lines.map((line, i) => (
-                <li
-                  key={i}
-                  className="rounded-xl border border-border px-3 py-2 text-sm leading-relaxed"
-                >
-                  {narrate(line)}
-                </li>
-              ))}
+              {lines.map((line, i) => {
+                const roleId = reportRoleId(line);
+                return (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2.5 rounded-xl border border-border px-3 py-2 text-sm leading-relaxed"
+                  >
+                    {roleId && (
+                      <img
+                        src={roleImage(roleId)}
+                        alt=""
+                        loading="lazy"
+                        className="size-8 shrink-0 rounded-lg object-cover"
+                      />
+                    )}
+                    <span className="flex-1">{narrate(line)}</span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

@@ -161,6 +161,9 @@ const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
     renardConfidant: "Tu as choisi {name} comme confident. Vos secrets sont désormais liés.",
     logRenardConfidant: "Le Renard désigne {name} comme confident.",
     repRenardConfidant: "🦊 Le Renard choisit {name} comme confident",
+    winJoker: "Le Joker {name} gagne : le village l'a éliminé !",
+    logFoxReveal: "{name} (Renard) a révélé les événements nocturnes en public : suicide ! {confidant} devient le Joker.",
+    logConfidantReveal: "{name} (Confident) a révélé les secrets du Renard en public : suicide ! {fox} devient le Joker.",
   },
   en: {
     logVoteTally: "Day {d} — Vote: [{tally}] → Eliminated: {names}",
@@ -287,6 +290,9 @@ const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
     renardConfidant: "You chose {name} as your confidant. Your secrets are now bound together.",
     logRenardConfidant: "The Fox designates {name} as confidant.",
     repRenardConfidant: "🦊 The Fox chooses {name} as confidant",
+    winJoker: "The Joker {name} wins: the village voted them out!",
+    logFoxReveal: "{name} (Fox) revealed the night's events in public: suicide! {confidant} becomes the Joker.",
+    logConfidantReveal: "{name} (Confidant) revealed the Fox's secrets in public: suicide! {fox} becomes the Joker.",
   },
   ar: {
     logVoteTally: "اليوم {d} — التصويت: [{tally}] ← المُقصى: {names}",
@@ -413,6 +419,9 @@ const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
     renardConfidant: "لقد اخترت {name} كواثق. أسراركما أصبحت مرتبطة الآن.",
     logRenardConfidant: "الثعلب يعيّن {name} كواثق.",
     repRenardConfidant: "🦊 الثعلب يختار {name} كواثق",
+    winJoker: "الجوكر {name} يفوز: أخرجه القرية بالتصويت!",
+    logFoxReveal: "{name} (الثعلب) كشف أحداث الليل علنًا: انتحار! {confidant} يصبح الجوكر.",
+    logConfidantReveal: "{name} (الواثق) كشف أسرار الثعلب علنًا: انتحار! {fox} يصبح الجوكر.",
   },
   es: {
     logVoteTally: "Día {d} — Voto: [{tally}] → Eliminado(s): {names}",
@@ -539,6 +548,9 @@ const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
     renardConfidant: "Has elegido a {name} como confidente. Sus secretos ahora están vinculados.",
     logRenardConfidant: "El Zorro designa a {name} como confidente.",
     repRenardConfidant: "🦊 El Zorro elige a {name} como confidente",
+    winJoker: "El Comodín {name} gana: ¡la aldea lo ha eliminado!",
+    logFoxReveal: "{name} (Zorro) reveló los eventos nocturnos en público: ¡suicidio! {confidant} se convierte en el Comodín.",
+    logConfidantReveal: "{name} (Confidente) reveló los secretos del Zorro en público: ¡suicidio! {fox} se convierte en el Comodín.",
   },
   pt: {
     logVoteTally: "Dia {d} — Votação: [{tally}] → Eliminado(s): {names}",
@@ -665,6 +677,9 @@ const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
     renardConfidant: "Escolheste {name} como confidente. Os vossos segredos estão agora ligados.",
     logRenardConfidant: "A Raposa designa {name} como confidente.",
     repRenardConfidant: "🦊 A Raposa escolhe {name} como confidente",
+    winJoker: "O Coringa {name} ganha: a aldeia votou para eliminá-lo!",
+    logFoxReveal: "{name} (Raposa) revelou os eventos noturnos em público: suicídio! {confidant} torna-se o Coringa.",
+    logConfidantReveal: "{name} (Confidente) revelou os segredos da Raposa em público: suicídio! {fox} torna-se o Coringa.",
   },
   ru: {
     logVoteTally: "День {d} — Голосование: [{tally}] → Исключен(ы): {names}",
@@ -791,6 +806,9 @@ const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
     renardConfidant: "Ты выбрал {name} своим доверенным лицом. Ваши тайны теперь связаны.",
     logRenardConfidant: "Лиса назначает {name} доверенным лицом.",
     repRenardConfidant: "🦊 Лиса выбирает {name} доверенным лицом",
+    winJoker: "Джокер {name} побеждает: деревня изгнала его голосованием!",
+    logFoxReveal: "{name} (Лиса) публично раскрыл ночные события: самоубийство! {confidant} становится Джокером.",
+    logConfidantReveal: "{name} (Доверенное лицо) публично раскрыл секреты Лисы: самоубийство! {fox} становится Джокером.",
   },
   zh: {
     logVoteTally: "第 {d} 天 — 投票：[{tally}] → 淘汰：{names}",
@@ -917,6 +935,9 @@ const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
     renardConfidant: "你选择了 {name} 作为知己。你们的秘密现已绑定。",
     logRenardConfidant: "狐狸指定 {name} 为知己。",
     repRenardConfidant: "🦊 狐狸选择 {name} 作为知己",
+    winJoker: "小丑 {name} 获胜：村庄投票淘汰了他！",
+    logFoxReveal: "{name}（狐狸）公开揭露了夜间事件：自杀！{confidant} 成为小丑。",
+    logConfidantReveal: "{name}（知己）公开揭露了狐狸的秘密：自杀！{fox} 成为小丑。",
   },
   de: {
     logVoteTally: "Tag {d} — Abstimmung: [{tally}] → Eliminiert: {names}",
@@ -1043,6 +1064,9 @@ const NARRATION: Partial<Record<Lang, Table>> & { fr: Table } = {
     renardConfidant: "Du hast {name} als Vertrauten gewählt. Eure Geheimnisse sind nun verbunden.",
     logRenardConfidant: "Der Fuchs ernennt {name} zum Vertrauten.",
     repRenardConfidant: "🦊 Der Fuchs wählt {name} als Vertrauten",
+    winJoker: "Der Joker {name} gewinnt: das Dorf hat ihn rausgewählt!",
+    logFoxReveal: "{name} (Fuchs) hat die nächtlichen Ereignisse öffentlich verraten: Selbstmord! {confidant} wird zum Joker.",
+    logConfidantReveal: "{name} (Vertrauter) hat die Geheimnisse des Fuchses öffentlich verraten: Selbstmord! {fox} wird zum Joker.",
   }
 };
 

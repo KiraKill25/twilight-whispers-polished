@@ -459,6 +459,46 @@ export const fr = {
     guideStepOf: "Étape {i} / {n}",
     guideClose: "Fermer le guide",
     guideStart: "C'est parti !",
+
+    // Fox & Confidant — Joker mechanics
+    foxReveal: "🦊 Révélation du Renard",
+    foxRevealDesc: "Le Renard révèle publiquement les événements nocturnes : suicide immédiat. Le confident devient le Joker.",
+    foxRevealConfirm: "Confirmer la révélation du Renard",
+    confidantReveal: "📜 Révélation du Confident",
+    confidantRevealDesc: "Le confident révèle les secrets du Renard : suicide immédiat. Le Renard devient le Joker.",
+    confidantRevealConfirm: "Confirmer la révélation du Confident",
+    jokerAssignedToast: "{name} est maintenant le Joker !",
+    foxRevealDoneToast: "{name} (Renard) a été éliminé : suicide. {confidant} devient le Joker.",
+    confidantRevealDoneToast: "{name} (Confident) a été éliminé : suicide. {fox} devient le Joker.",
+
+    // GM Notes
+    gmNotesTitle: "Notes du Meneur",
+    gmNotesShow: "Afficher",
+    gmNotesHide: "Masquer",
+    gmNotesPlaceholder: "Prenez vos notes ici (ex: indices, soupçons, alliances)...",
+
+    // Guide modal — rules
+    guideRulesTitle: "Règles & Astuces de Gestion",
+    guideRulesNight: "Nuit : Suivez les appels de l'écran dans l'ordre. Chaque rôle effectue son action secrètement.",
+    guideRulesDawn: "Aube : Révélez le rapport de la nuit et lancez la roue de débat. Les joueurs s'expriment à tour de rôle.",
+    guideRulesVote: "Vote : Suivez le sens de la roue pour recueillir les choix de chaque villageois en toute équité.",
+    guideRulesUndo: "Bouton Annuler : Si vous faites une erreur de saisie pendant la nuit ou le vote, vous pouvez revenir en arrière.",
+    guideCloseBtn: "Fermer",
+
+    // Defense timer
+    defenseTitle: "Temps de Défense ({n} votes)",
+    defenseDesc: "{name} dispose d'une minute pour plaider sa cause !",
+    pauseBtn: "Pause",
+    startBtn: "Démarrer",
+    endDefense: "Terminer la défense",
+
+    // Penalty toasts
+    penaltyRemovedToast: "Pénalité retirée à {name}",
+    penaltyAddedToast: "Pénalité de débat infligée à {name}",
+
+    // Skip vote during first day voting
+    skipVoteDay1Vote: "Passer le vote (Jour 1)",
+    penaltyBadgeHint: "Tap : +1 Pénalité | Appui long (0.5s) : Retirer pénalité",
     guideStep1Kicker: "Étape 1",
     guideStep1Title: "Mise en place & Joueurs",
     guideStep1Body:

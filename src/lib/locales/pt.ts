@@ -433,6 +433,45 @@ export const pt = {
     guideStepOf: "Passo {i} / {n}",
     guideClose: "Fechar guia",
     guideStart: "Vamos a isso!",
+
+    // Fox & Confidant — Joker mechanics
+    foxReveal: "🦊 Revelação da Raposa",
+    foxRevealDesc: "A Raposa revela publicamente os eventos noturnos: suicídio imediato. O confidente torna-se o Coringa.",
+    foxRevealConfirm: "Confirmar revelação da Raposa",
+    confidantReveal: "📜 Revelação do Confidente",
+    confidantRevealDesc: "O confidente revela os segredos da Raposa: suicídio imediato. A Raposa torna-se o Coringa.",
+    confidantRevealConfirm: "Confirmar revelação do Confidente",
+    jokerAssignedToast: "{name} é agora o Coringa!",
+    foxRevealDoneToast: "{name} (Raposa) eliminado: suicídio. {confidant} torna-se o Coringa.",
+    confidantRevealDoneToast: "{name} (Confidente) eliminado: suicídio. {fox} torna-se o Coringa.",
+
+    // GM Notes
+    gmNotesTitle: "Notas do Mestre",
+    gmNotesShow: "Mostrar",
+    gmNotesHide: "Ocultar",
+    gmNotesPlaceholder: "Toma as tuas notas aqui (ex: pistas, suspeitas, alianças)...",
+
+    // Guide modal — rules
+    guideRulesTitle: "Regras e Dicas de Mestre",
+    guideRulesNight: "Noite: Segue as chamadas do ecrã em ordem. Cada papel realiza a sua ação em segredo.",
+    guideRulesDawn: "Amanhecer: Revela o relatório noturno e lança a roda de debate. Os jogadores falam por turnos.",
+    guideRulesVote: "Votação: Segue a direção da roda para recolher a escolha de cada aldeão com equidade.",
+    guideRulesUndo: "Botão Desfazer: Se cometeres um erro durante a noite ou votação, podes voltar atrás.",
+    guideCloseBtn: "Fechar",
+
+    // Defense timer
+    defenseTitle: "Tempo de Defesa ({n} votos)",
+    defenseDesc: "{name} tem um minuto para se defender!",
+    pauseBtn: "Pausa",
+    startBtn: "Iniciar",
+    endDefense: "Terminar defesa",
+
+    // Penalty toasts
+    penaltyRemovedToast: "Penalização removida de {name}",
+    penaltyAddedToast: "Penalização de debate dada a {name}",
+
+    // Skip vote during first day voting
+    skipVoteDay1Vote: "Saltar votação (Dia 1)",
     guideStep1Kicker: "Passo 1",
     guideStep1Title: "Configuração e Jogadores",
     guideStep1Body:

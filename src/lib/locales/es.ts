@@ -433,6 +433,46 @@ export const es = {
     guideStepOf: "Paso {i} / {n}",
     guideClose: "Cerrar guía",
     guideStart: "¡Empecemos!",
+
+    // Fox & Confidant — Joker mechanics
+    foxReveal: "🦊 Revelación del Zorro",
+    foxRevealDesc: "El Zorro revela públicamente los eventos nocturnos: suicidio inmediato. El confidente se convierte en el Comodín.",
+    foxRevealConfirm: "Confirmar revelación del Zorro",
+    confidantReveal: "📜 Revelación del Confidente",
+    confidantRevealDesc: "El confidente revela los secretos del Zorro: suicidio inmediato. El Zorro se convierte en el Comodín.",
+    confidantRevealConfirm: "Confirmar revelación del Confidente",
+    jokerAssignedToast: "¡{name} es ahora el Comodín!",
+    foxRevealDoneToast: "{name} (Zorro) eliminado: suicidio. {confidant} se convierte en el Comodín.",
+    confidantRevealDoneToast: "{name} (Confidente) eliminado: suicidio. {fox} se convierte en el Comodín.",
+
+    // GM Notes
+    gmNotesTitle: "Notas del Director",
+    gmNotesShow: "Mostrar",
+    gmNotesHide: "Ocultar",
+    gmNotesPlaceholder: "Toma tus notas aquí (ej: pistas, sospechas, alianzas)...",
+
+    // Guide modal — rules
+    guideRulesTitle: "Reglas y Consejos de Dirección",
+    guideRulesNight: "Noche: Sigue las llamadas de la pantalla en orden. Cada rol realiza su acción en secreto.",
+    guideRulesDawn: "Amanecer: Revela el informe nocturno y lanza la rueda de debate. Los jugadores hablan por turnos.",
+    guideRulesVote: "Votación: Sigue la dirección de la rueda para recoger la elección de cada aldeano con equidad.",
+    guideRulesUndo: "Botón Deshacer: Si cometes un error durante la noche o la votación, puedes retroceder.",
+    guideCloseBtn: "Cerrar",
+
+    // Defense timer
+    defenseTitle: "Tiempo de Defensa ({n} votos)",
+    defenseDesc: "¡{name} tiene un minuto para defenderse!",
+    pauseBtn: "Pausa",
+    startBtn: "Iniciar",
+    endDefense: "Terminar defensa",
+
+    // Penalty toasts
+    penaltyRemovedToast: "Penalización removida de {name}",
+    penaltyAddedToast: "Penalización de debate dada a {name}",
+
+    // Skip vote during first day voting
+    skipVoteDay1Vote: "Saltar votación (Día 1)",
+    penaltyBadgeHint: "Toque: +1 Penalización | Pulsación larga (0.5s): Quitar penalización",
     guideStep1Kicker: "Paso 1",
     guideStep1Title: "Configuración y Jugadores",
     guideStep1Body:

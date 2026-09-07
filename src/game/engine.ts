@@ -168,6 +168,8 @@ export interface GameState {
   events: GameEvent[];
   /** Rapport nocturne du Maître du Jeu (jetons de narration) — remis à zéro chaque nuit. */
   nightReport: string[];
+  /** ID du joueur devenu le Joker (mécanique Renard/Confident). */
+  jokerId?: string;
   winnerTeam?: "VILLAGE" | "WOLVES" | "OTHER";
   winner?: string;
 }
@@ -464,7 +466,7 @@ export function buildNightSteps(s: GameState): Step[] {
   // Renard — rapport nocturne vague + choix du confident (dernière nuit)
   {
     const renard = hasRole(s, "renard");
-    if (renard && !renard.powersDisabled) {
+    if (renard && !renard.powersDisabled && !renard.confidantId) {
       const isFinalNight = !canRenardReceiveReportNext(s);
       if (isFinalNight) {
         steps.push({
@@ -480,7 +482,7 @@ export function buildNightSteps(s: GameState): Step[] {
           key: `${s.night}-renard`,
           roleId: "renard",
           title: "Renard",
-          prompt: "Tu reçois un rapport vague des événements de la nuit.",
+          prompt: "Tu reçois un rapport vague des événements de la nuit. Tu peux aussi choisir ton confident maintenant (cela arrêtera tes rapports).",
           mode: "renard",
           optional: true,
           actorId: renard.id,
@@ -943,15 +945,17 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       if (s.round.mutedId) vague.push(nk("renardVagueSilence"));
       if (vague.length === 0) vague.push(nk("renardVagueNothing"));
 
+      // Toujours afficher et stocker le rapport
+      vague.forEach((v) => rep(s, v));
+
       if (target) {
-        // Dernière nuit : choix du confident
+        // Choix du confident — arrête définitivement les rapports futurs
         actor.confidantId = target.id;
         s.reveal = nk("renardConfidant", { name: target.name });
         s.log.push(nk("logRenardConfidant", { name: target.name }));
         rep(s, nk("repRenardConfidant", { name: target.name }));
       } else {
         s.reveal = vague.join(" ");
-        vague.forEach((v) => rep(s, v));
       }
       break;
     }
@@ -1250,6 +1254,44 @@ export function suicideReveal(state: GameState, targetId: string): GameState {
   return startNight(s);
 }
 
+/** Le Renard révèle publiquement les événements nocturnes pendant le débat :
+ *  il est éliminé (suicide) et son confident devient le Joker. */
+export function foxReveal(state: GameState, foxId: string): GameState {
+  const s = clone(state);
+  const fox = s.players.find((p) => p.id === foxId);
+  if (!fox || !fox.alive || !fox.confidantId) return state;
+  const confidant = s.players.find((p) => p.id === fox.confidantId);
+  if (!confidant || !confidant.alive) return state;
+
+  s.dawnSummary = [];
+  s.lastEliminated = [];
+  killPlayer(s, foxId, "SUICIDE_REVEAL");
+  s.jokerId = confidant.id;
+  s.log.push(nk("logFoxReveal", { name: fox.name, confidant: confidant.name }));
+  s.hunterPending = undefined;
+  s.captainSuccessionPending = undefined;
+  return checkVictory(s);
+}
+
+/** Le confident révèle publiquement les secrets du Renard pendant le débat :
+ *  il est éliminé (suicide) et le Renard devient le Joker. */
+export function confidantReveal(state: GameState, confidantId: string): GameState {
+  const s = clone(state);
+  const confidant = s.players.find((p) => p.id === confidantId);
+  if (!confidant || !confidant.alive) return state;
+  const fox = s.players.find((p) => p.confidantId === confidantId && p.alive);
+  if (!fox) return state;
+
+  s.dawnSummary = [];
+  s.lastEliminated = [];
+  killPlayer(s, confidantId, "SUICIDE_REVEAL");
+  s.jokerId = fox.id;
+  s.log.push(nk("logConfidantReveal", { name: confidant.name, fox: fox.name }));
+  s.hunterPending = undefined;
+  s.captainSuccessionPending = undefined;
+  return checkVictory(s);
+}
+
 export function assignCaptain(state: GameState, targetId: string): GameState {
   const s = clone(state);
   s.players.forEach((p) => {
@@ -1281,6 +1323,15 @@ export function submitVote(state: GameState, targetId: string, talkativeSpoke = 
 
   if (target && !target.immuneToDayVote) {
     const roleId = effectiveRoleId(target);
+    // Le Joker gagne s'il est éliminé par le vote du village
+    if (s.jokerId === target.id) {
+      s.dawnSummary = [];
+      killPlayer(s, target.id, "VILLAGE_VOTE");
+      s.phase = "FIN";
+      s.winnerTeam = "OTHER";
+      s.winner = nk("winJoker", { name: target.name });
+      return s;
+    }
     if (roleId === "ange" && s.day === 1) {
       s.phase = "FIN";
       s.winnerTeam = "OTHER";
@@ -1334,6 +1385,7 @@ export function eliminateTied(state: GameState, ids: string[], talkativeSpoke = 
   let s = clone(state);
   s.dawnSummary = [];
   s.lastEliminated = [];
+  const jokerEliminatedId = ids.find((id) => s.jokerId === id);
   ids.forEach((id) => {
     const p = s.players.find((x) => x.id === id);
     if (!p || !p.alive || p.immuneToDayVote) return;
@@ -1344,6 +1396,14 @@ export function eliminateTied(state: GameState, ids: string[], talkativeSpoke = 
       roleId: p.originalRoleId ?? effectiveRoleId(p),
     });
   });
+
+  if (jokerEliminatedId) {
+    const jokerName = s.players.find((p) => p.id === jokerEliminatedId)?.name ?? "";
+    s.phase = "FIN";
+    s.winnerTeam = "OTHER";
+    s.winner = nk("winJoker", { name: jokerName });
+    return s;
+  }
 
   if (!talkativeSpoke) {
     const talk = s.players.find((p) => p.alive && effectiveRoleId(p) === "loup-bavard");
@@ -1472,8 +1532,8 @@ export function canWitchHeal(s: GameState): boolean {
 
 export function canRenardReceiveReport(s: GameState): boolean {
   const initCount = s.initialPlayerCount ?? s.players.length;
-  if (initCount <= 10) return s.night <= 2;
-  if (initCount <= 13) return s.night <= 3;
+  if (initCount <= 10) return s.night <= 3;
+  if (initCount <= 13) return s.night <= 4;
   return true;
 }
 
@@ -1481,8 +1541,8 @@ export function canRenardReceiveReport(s: GameState): boolean {
 function canRenardReceiveReportNext(s: GameState): boolean {
   const initCount = s.initialPlayerCount ?? s.players.length;
   const nextNight = s.night + 1;
-  if (initCount <= 10) return nextNight <= 2;
-  if (initCount <= 13) return nextNight <= 3;
+  if (initCount <= 10) return nextNight <= 3;
+  if (initCount <= 13) return nextNight <= 4;
   return true;
 }
 

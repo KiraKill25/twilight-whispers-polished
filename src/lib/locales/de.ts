@@ -433,6 +433,45 @@ export const de = {
     guideStepOf: "Schritt {i} / {n}",
     guideClose: "Handbuch schließen",
     guideStart: "Los geht's!",
+
+    // Fox & Confidant — Joker mechanics
+    foxReveal: "🦊 Fuchs-Enthüllung",
+    foxRevealDesc: "Der Fuchs verrät die nächtlichen Ereignisse öffentlich: sofortiger Selbstmord. Der Vertraute wird zum Joker.",
+    foxRevealConfirm: "Fuchs-Enthüllung bestätigen",
+    confidantReveal: "📜 Vertrauten-Enthüllung",
+    confidantRevealDesc: "Der Vertraute verrät die Geheimnisse des Fuchses: sofortiger Selbstmord. Der Fuchs wird zum Joker.",
+    confidantRevealConfirm: "Vertrauten-Enthüllung bestätigen",
+    jokerAssignedToast: "{name} ist jetzt der Joker!",
+    foxRevealDoneToast: "{name} (Fuchs) eliminiert: Selbstmord. {confidant} wird zum Joker.",
+    confidantRevealDoneToast: "{name} (Vertrauter) eliminiert: Selbstmord. {fox} wird zum Joker.",
+
+    // GM Notes
+    gmNotesTitle: "Notizen des Spielleiters",
+    gmNotesShow: "Anzeigen",
+    gmNotesHide: "Verbergen",
+    gmNotesPlaceholder: "Notizen hier machen (z.B. Hinweise, Verdächtigungen, Allianzen)...",
+
+    // Guide modal — rules
+    guideRulesTitle: "Regeln & Spielleiter-Tipps",
+    guideRulesNight: "Nacht: Folgt den Bildschirm-Aufrufen in der Reihenfolge. Jede Rolle führt ihre Aktion heimlich aus.",
+    guideRulesDawn: "Morgendämmerung: Enthüllt den Nachtbericht und startet das Debattrad. Die Spieler sprechen reihum.",
+    guideRulesVote: "Abstimmung: Folgt der Richtung des Rads, um die Wahl jedes Dorfbewohners fair zu sammeln.",
+    guideRulesUndo: "Rückgängig-Button: Wenn ihr einen Eingabefehler macht, könnt ihr zurückkehren.",
+    guideCloseBtn: "Schließen",
+
+    // Defense timer
+    defenseTitle: "Verteidigungszeit ({n} Stimmen)",
+    defenseDesc: "{name} hat eine Minute, um sich zu verteidigen!",
+    pauseBtn: "Pause",
+    startBtn: "Start",
+    endDefense: "Verteidigung beenden",
+
+    // Penalty toasts
+    penaltyRemovedToast: "Strafe entfernt von {name}",
+    penaltyAddedToast: "Debatte-Strafe vergeben an {name}",
+
+    // Skip vote during first day voting
+    skipVoteDay1Vote: "Abstimmung überspringen (Tag 1)",
     guideStep1Kicker: "Schritt 1",
     guideStep1Title: "Setup & Spieler",
     guideStep1Body:

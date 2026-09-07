@@ -437,6 +437,46 @@ export const ar = {
     guideStepOf: "الخطوة {i} / {n}",
     guideClose: "إغلاق الدليل",
     guideStart: "لنبدأ!",
+
+    // Fox & Confidant — Joker mechanics
+    foxReveal: "🦊 كشف الثعلب",
+    foxRevealDesc: "يكشف الثعلب أحداث الليل علنًا: انتحار فوري. الواثق يصبح الجوكر.",
+    foxRevealConfirm: "تأكيد كشف الثعلب",
+    confidantReveal: "📜 كشف الواثق",
+    confidantRevealDesc: "يكشف الواثق أسرار الثعلب: انتحار فوري. الثعلب يصبح الجوكر.",
+    confidantRevealConfirm: "تأكيد كشف الواثق",
+    jokerAssignedToast: "{name} أصبح الجوكر!",
+    foxRevealDoneToast: "{name} (الثعلب) تم إقصاؤه: انتحار. {confidant} يصبح الجوكر.",
+    confidantRevealDoneToast: "{name} (الواثق) تم إقصاؤه: انتحار. {fox} يصبح الجوكر.",
+
+    // GM Notes
+    gmNotesTitle: "ملاحظات سيد اللعبة",
+    gmNotesShow: "إظهار",
+    gmNotesHide: "إخفاء",
+    gmNotesPlaceholder: "دون ملاحظاتك هنا (مثال: أدلة، شكوك، تحالفات)...",
+
+    // Guide modal — rules
+    guideRulesTitle: "القواعد ونصائح الإدارة",
+    guideRulesNight: "الليل: اتبع نداءات الشاشة بالترتيب. كل دور يقوم بفعله سرًا.",
+    guideRulesDawn: "الفجر: اكشف تقرير الليل وأطلق عجلة النقاش. اللاعبون يتحدثون بدورهم.",
+    guideRulesVote: "التصويت: اتبع اتجاه العجلة لجمع اختيارات كل قروي بعدالة.",
+    guideRulesUndo: "زر التراجع: إذا ارتكبت خطأ في الإدخال خلال الليل أو التصويت، يمكنك العودة.",
+    guideCloseBtn: "إغلاق",
+
+    // Defense timer
+    defenseTitle: "وقت الدفاع ({n} أصوات)",
+    defenseDesc: "{name} لديه دقيقة للدفاع عن نفسه!",
+    pauseBtn: "إيقاف",
+    startBtn: "بدء",
+    endDefense: "إنهاء الدفاع",
+
+    // Penalty toasts
+    penaltyRemovedToast: "تمت إزالة العقوبة من {name}",
+    penaltyAddedToast: "تم توقيع عقوبة النقاش على {name}",
+
+    // Skip vote during first day voting
+    skipVoteDay1Vote: "تجاوز التصويت (اليوم 1)",
+    penaltyBadgeHint: "نقر: +1 عقوبة | ضغطة طويلة (0.5ث): إزالة العقوبة",
     guideStep1Kicker: "الخطوة 1",
     guideStep1Title: "الإعداد واللاعبون",
     guideStep1Body:
