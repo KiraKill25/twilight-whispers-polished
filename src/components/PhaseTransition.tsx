@@ -166,7 +166,7 @@ export function PhaseTransition({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
-          className="text-3xl font-black tracking-tight"
+          className="font-horror text-4xl font-black tracking-tight"
           style={{ color: theme.text, textShadow: `0 0 24px ${theme.glow}` }}
         >
           {night ? tr("nightFalls") : tr("dayRises")}

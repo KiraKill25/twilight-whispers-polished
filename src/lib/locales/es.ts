@@ -488,6 +488,7 @@ export const es = {
     voleur: "Roba el rol de un jugador: se convertirá en un simple aldeano.",
     maniaque: "Designa a la víctima que ninguna protección puede detener.",
     marionnettiste: "Selecciona a tu títere. Si eres atacado, tu títere sufrirá el daño en tu lugar y quedarás en silencio durante el debate.",
+    renard: "Recibes un informe vago de los eventos de la noche.",
   } as Record<string, string>,
   teams: {
     VILLAGEOIS: "Aldea",
@@ -501,6 +502,11 @@ export const es = {
       name: "Titiritero",
       description: "Vinculas tu destino a un títere. Si eres atacado por la noche, tu títere sufrirá el daño en tu lugar y quedarás en silencio durante el debate matutino.",
       power: "Elige un títere. Si eres atacado, el títere recibe el golpe en tu lugar y quedas en silencio."
+    }
+    renard: {
+      name: "Zorro",
+      description: "El zorro merodeador del pueblo. Cada noche, recibe un informe nocturno vago del Director de Juego. En su última noche, debe elegir un confidente para compartir sus secretos.",
+      power: "Cada noche, el Director de Juego informa brevemente al Zorro de los eventos. En su última noche, designa un confidente. Si alguno revela públicamente esta información, es eliminado y el otro se convierte en el JOKER."
     }
   } as Record<string, { name: string; description: string; power: string }>,
 };

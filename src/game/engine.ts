@@ -89,6 +89,8 @@ export interface Player {
   stars: number;
   /** Pénalités de votes accumulées. */
   penaltyVotes?: number;
+  /** Renard : confident désigné lors de la dernière nuit d'information. */
+  confidantId?: string;
 }
 
 export interface Step {
@@ -106,7 +108,8 @@ export interface Step {
     | "bear"
     | "wolves"
     | "blackwolf"
-    | "threefaces";
+    | "threefaces"
+    | "renard";
   optional?: boolean;
   actorId?: string;
   /** Loup Noir est le seul loup actif — la sélection de victime est intégrée à cette étape. */
@@ -455,6 +458,34 @@ export function buildNightSteps(s: GameState): Step[] {
         optional: true,
         actorId: gen.id,
       });
+    }
+  }
+
+  // Renard — rapport nocturne vague + choix du confident (dernière nuit)
+  {
+    const renard = hasRole(s, "renard");
+    if (renard && !renard.powersDisabled) {
+      const isFinalNight = !canRenardReceiveReportNext(s);
+      if (isFinalNight) {
+        steps.push({
+          key: `${s.night}-renard-final`,
+          roleId: "renard",
+          title: "Renard — Dernière nuit",
+          prompt: "Tu reçois ton dernier rapport. Choisis ton confident pour lui transmettre tes secrets.",
+          mode: "renard",
+          actorId: renard.id,
+        });
+      } else {
+        steps.push({
+          key: `${s.night}-renard`,
+          roleId: "renard",
+          title: "Renard",
+          prompt: "Tu reçois un rapport vague des événements de la nuit.",
+          mode: "renard",
+          optional: true,
+          actorId: renard.id,
+        });
+      }
     }
   }
 
@@ -902,6 +933,28 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       }
       break;
     }
+    case "renard": {
+      // Construire un rapport vague basé sur l'état du tour actuel
+      const vague: string[] = [];
+      if (s.round.attackedId) vague.push(nk("renardVagueAttack"));
+      if (s.round.protectedId || s.round.villageShield) vague.push(nk("renardVagueProtect"));
+      if (s.round.poisonedId || s.round.facesPoisonedId) vague.push(nk("renardVaguePoison"));
+      if (s.round.maniacKillId) vague.push(nk("renardVagueManiac"));
+      if (s.round.mutedId) vague.push(nk("renardVagueSilence"));
+      if (vague.length === 0) vague.push(nk("renardVagueNothing"));
+
+      if (target) {
+        // Dernière nuit : choix du confident
+        actor.confidantId = target.id;
+        s.reveal = nk("renardConfidant", { name: target.name });
+        s.log.push(nk("logRenardConfidant", { name: target.name }));
+        rep(s, nk("repRenardConfidant", { name: target.name }));
+      } else {
+        s.reveal = vague.join(" ");
+        vague.forEach((v) => rep(s, v));
+      }
+      break;
+    }
   }
 
   s.stepIndex += 1;
@@ -926,15 +979,9 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
   if (!p || !p.alive) return;
 
   if (cause === "WOLVES" && p.lives > 1) {
+    // L'Ancien survécu naturellement à sa première attaque — pas de sauvetage
     p.lives -= 1;
     s.dawnSummary.push(nk("survivedAttack", { name: p.name }));
-    pushEvent(s, {
-      round: s.night,
-      phase: "NIGHT",
-      type: "RESCUE",
-      name: p.name,
-      bySavior: "ancien",
-    });
     return;
   }
 
@@ -1343,6 +1390,8 @@ export function startNight(state: GameState): GameState {
     p.disabledNightAbility = false;
     p.canVote = true;
     p.mutedForDay = false;
+    // Réinitialisation des pénalités de débat à chaque nouveau tour
+    p.penaltyVotes = 0;
   });
   s.steps = buildNightSteps(s);
   s.log.push(nk("nightHeader", { n: s.night }));
@@ -1419,10 +1468,19 @@ export function canWitchHeal(s: GameState): boolean {
   return true;
 }
 
-export function canCanardReceiveReport(s: GameState): boolean {
+export function canRenardReceiveReport(s: GameState): boolean {
   const initCount = s.initialPlayerCount ?? s.players.length;
   if (initCount <= 10) return s.night <= 2;
   if (initCount <= 13) return s.night <= 3;
+  return true;
+}
+
+/** Détermine si le Renard pourra encore recevoir un rapport la nuit suivante. */
+function canRenardReceiveReportNext(s: GameState): boolean {
+  const initCount = s.initialPlayerCount ?? s.players.length;
+  const nextNight = s.night + 1;
+  if (initCount <= 10) return nextNight <= 2;
+  if (initCount <= 13) return nextNight <= 3;
   return true;
 }
 

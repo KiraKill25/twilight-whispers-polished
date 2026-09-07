@@ -299,6 +299,28 @@ export const en = {
     // Undo
     undoLabel: "Undo",
     undoDoneToast: "Action undone",
+
+    // Vote announcement
+    proceedToVote: "Proceed to Vote",
+    skipVoteDay1: "Day 1: skip vote",
+    voteAnnounceTitle: "The debate is over",
+    voteAnnounceDesc: "The village must now decide. Each player will designate who they wish to eliminate.",
+    voteAnnounceContinue: "Launch the vote",
+    voteAnnounceSkip: "Skip announcement",
+    voteAnnounceMandatory: "The vote announcement is mandatory.",
+
+    // Renard
+    renardReportTitle: "Fox's Vague Report",
+    renardChooseConfidant: "Choose your confidant",
+    renardFinalNight: "Fox's Final Night",
+    renardConfidantPicked: "Confidant chosen: {name}",
+
+    // GM status reminders
+    gmStatusReminders: "Status reminders",
+    gmStatusAlive: "{n} players alive",
+    gmStatusMuted: "Silenced: {names}",
+    gmStatusProtected: "Protected tonight",
+    gmStatusNoMuted: "No silenced players",
     // Black Wolf — actions hub
     bwHubTitle: "Black Wolf — Actions",
     bwTabAttack: "Attack",
@@ -529,6 +551,7 @@ export const en = {
     voleur: "Steal role from player: they become simple villager.",
     maniaque: "Designate victim that no protection can stop.",
     marionnettiste: "Select your puppet. If you are attacked, your puppet takes the damage instead of you and you become muted during the debate.",
+    renard: "You receive a vague report of the night's events.",
   } as Record<string, string>,
   teams: {
     VILLAGEOIS: "Village",
@@ -542,6 +565,11 @@ export const en = {
       name: "Puppeteer",
       description: "You bind your fate to a puppet. If you are attacked at night, your puppet takes the damage in your place and you become muted during the morning debate.",
       power: "Choose a puppet. If you are attacked, the puppet takes the hit instead of you and you become muted."
+    },
+    renard: {
+      name: "Fox",
+      description: "The prowling fox of the village. Each night, they receive a vague night report from the Game Master. On their final night of information, they must choose a confidant to share their secrets with.",
+      power: "Each night, the Game Master briefly informs the Fox of events. On their final night, they designate a confidant. If either reveals this information publicly, they are eliminated and the other becomes the JOKER."
     }
   } as Record<string, { name: string; description: string; power: string }>,
 };

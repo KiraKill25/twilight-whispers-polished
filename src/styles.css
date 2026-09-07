@@ -514,3 +514,147 @@
 @utility animate-counter-pop { animation: counter-pop 0.35s ease-out; }
 
 @utility touch-callout-none { -webkit-touch-callout: none; }
+
+/* ─── Horror typography ─────────────────────────────────────────── */
+.font-horror {
+  font-family: "Creepster", "Cinzel", system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 0 8px oklch(0.589 0.239 359.7 / 60%),
+    0 0 20px oklch(0.589 0.239 359.7 / 30%),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.font-cinzel {
+  font-family: "Cinzel", system-ui, sans-serif;
+  letter-spacing: 0.06em;
+}
+
+/* Apply horror display font to key headings */
+h1.gradient-text,
+h2.font-black.uppercase,
+.phase-title {
+  font-family: "Cinzel", system-ui, sans-serif;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Wolf claw slash animation ────────────────────────────────── */
+@keyframes claw-slash {
+  0% {
+    opacity: 0;
+    transform: translateX(-30%) translateY(-20%) rotate(-25deg) scale(0.8);
+    clip-path: polygon(0 0, 0 0, 0 0, 0 0);
+  }
+  20% {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+  40% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+  }
+}
+@utility animate-claw-slash {
+  animation: claw-slash 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Claw slash overlay — decorative diagonal slash marks */
+.claw-slash-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.claw-slash-overlay::before,
+.claw-slash-overlay::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  left: -10%;
+  width: 120%;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.6 0.24 22 / 80%) 30%,
+    oklch(0.589 0.239 359.7 / 90%) 50%,
+    oklch(0.6 0.24 22 / 80%) 70%,
+    transparent
+  );
+  transform: rotate(-22deg);
+  filter: blur(0.5px);
+  pointer-events: none;
+  z-index: 1;
+}
+.claw-slash-overlay::before {
+  top: 25%;
+  animation: claw-streak 3s ease-in-out infinite;
+  animation-delay: 0s;
+}
+.claw-slash-overlay::after {
+  top: 55%;
+  animation: claw-streak 3s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+@keyframes claw-streak {
+  0%, 70% { opacity: 0; transform: rotate(-22deg) translateX(-60%); }
+  75% { opacity: 0.9; transform: rotate(-22deg) translateX(0%); }
+  85% { opacity: 0.7; transform: rotate(-22deg) translateX(20%); }
+  100% { opacity: 0; transform: rotate(-22deg) translateX(60%); }
+}
+
+/* ─── Glowing creature eye effects ─────────────────────────────── */
+@keyframes glowing-eyes {
+  0%, 100% {
+    opacity: 0.3;
+    box-shadow:
+      0 0 4px 1px oklch(0.634 0.254 17.6 / 40%),
+      0 0 8px 2px oklch(0.589 0.239 359.7 / 25%);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      0 0 8px 2px oklch(0.634 0.254 17.6 / 80%),
+      0 0 16px 4px oklch(0.589 0.239 359.7 / 50%),
+      0 0 24px 6px oklch(0.589 0.239 359.7 / 25%);
+  }
+}
+@utility animate-glowing-eyes {
+  animation: glowing-eyes 2.5s ease-in-out infinite;
+}
+
+/* Glowing eyes decorative element */
+.creature-eyes {
+  display: inline-flex;
+  gap: 8px;
+}
+.creature-eyes::before,
+.creature-eyes::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: oklch(0.634 0.254 17.6);
+  animation: glowing-eyes 2.5s ease-in-out infinite;
+}
+.creature-eyes::after {
+  animation-delay: 0.3s;
+}
+
+/* ─── Wolf phase transition — claw + eyes ───────────────────────── */
+.wolf-transition {
+  position: relative;
+}
+.wolf-transition::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 40%, oklch(0.634 0.254 17.6 / 15%) 0%, transparent 40%),
+    radial-gradient(ellipse at 70% 40%, oklch(0.589 0.239 359.7 / 15%) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}

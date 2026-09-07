@@ -488,6 +488,7 @@ export const de = {
     voleur: "Stiehl die Rolle eines Spielers: Er wird zu einem einfachen Dorfbewohner.",
     maniaque: "Bestimme das Opfer, das von keinem Schutz gerettet werden kann.",
     marionnettiste: "Bestimme deine Puppe. Wenn du angegriffen wirst, erleidet deine Puppe den Schaden an deiner Stelle und du verstummst während der Diskussion.",
+    renard: "Du erhältst einen vagen Bericht über die Ereignisse der Nacht.",
   } as Record<string, string>,
   teams: {
     VILLAGEOIS: "Dorf",
@@ -501,6 +502,11 @@ export const de = {
       name: "Puppenspieler",
       description: "Du bindest dein Schicksal an eine Puppe. Wenn du nachts angegriffen wirst, erleidet deine Puppe den Schaden an deiner Stelle und du verstummst während der Morgendiskussion.",
       power: "Wähle eine Puppe. Wirst du angegriffen, fängt die Puppe den Schlag an deiner Stelle ab und du verstummst."
+    }
+    renard: {
+      name: "Fuchs",
+      description: "Der streifende Fuchs des Dorfes. Jede Nacht erhält er einen vagen Nachtbericht vom Spielleiter. In seiner letzten Nacht muss er einen Vertrauten wählen, um seine Geheimnisse zu teilen.",
+      power: "Jede Nacht informiert der Spielleiter den Fuchs kurz über die Ereignisse. In seiner letzten Nacht ernennt er einen Vertrauten. Wenn einer die Informationen öffentlich preisgibt, wird er eliminiert und der andere wird zum JOKER."
     }
   } as Record<string, { name: string; description: string; power: string }>,
 };

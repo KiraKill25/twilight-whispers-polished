@@ -344,13 +344,13 @@ export const ROLES: RoleDef[] = [
     hasNightAction: true,
   },
   {
-    id: "canard",
-    name: "Canard",
+    id: "renard",
+    name: "Renard",
     team: "VILLAGEOIS",
     description:
-      "Le messager du village. Il reçoit un résumé des événements nocturnes du Maître de Jeu et choisit un allié de confiance pour transmettre ses secrets.",
+      "Le renard rôdeur du village. Chaque nuit, il reçoit un rapport nocturne vague du Maître du Jeu. Lors de sa dernière nuit d'information, il doit choisir un confiant à qui transmettre ses secrets.",
     power:
-      "Chaque nuit, le Maître du Jeu informe sommairement le Canard des événements survenus. Une fois par partie, il peut désigner un allié et lui transmettre ses secrets. Si l'un des deux révèle publiquement ces informations, il est éliminé et l'autre devient le JOKER (son élimination au vote fait gagner le Village).",
+      "Chaque nuit, le Maître du Jeu informe sommairement le Renard des événements survenus (rapport vague). Lors de sa dernière nuit d'information, il doit désigner un confiant et lui transmettre ses secrets. Si l'un des deux révèle publiquement ces informations, il est éliminé et l'autre devient le JOKER (son élimination au vote fait gagner le Village).",
     order: 22,
     hasNightAction: true,
   },

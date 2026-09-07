@@ -488,6 +488,7 @@ export const pt = {
     voleur: "Roube o papel de um jogador: ele tornar-se-á um simples aldeão.",
     maniaque: "Designe a vítima que nenhuma proteção pode deter.",
     marionnettiste: "Selecione a sua marioneta. Se fores atacado, a tua marioneta sofrerá o dano no teu lugar e ficarás em silêncio durante o debate.",
+    renard: "Recebes um relatório vago dos eventos da noite.",
   } as Record<string, string>,
   teams: {
     VILLAGEOIS: "Aldeia",
@@ -501,6 +502,11 @@ export const pt = {
       name: "Marionetista",
       description: "Ligas o teu destino a uma marioneta. Se fores atacado de noite, a tua marioneta sofre o dano no teu lugar e ficas em silêncio durante o debate da manhã.",
       power: "Escolhe uma marioneta. Se fores atacado, a marioneta recebe o golpe no teu lugar e ficas em silêncio."
+    }
+    renard: {
+      name: "Raposa",
+      description: "A raposa espreitadora da aldeia. Cada noite, recebe um relatório noturno vago do Mestre de Jogo. Na sua última noite, deve escolher um confidente para partilhar os seus segredos.",
+      power: "Cada noite, o Mestre de Jogo informa brevemente a Raposa dos eventos. Na sua última noite, designa um confidente. Se algum revelar publicamente esta informação, é eliminado e o outro torna-se o JOKER."
     }
   } as Record<string, { name: string; description: string; power: string }>,
 };

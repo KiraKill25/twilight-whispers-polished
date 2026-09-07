@@ -261,6 +261,28 @@ export const fr = {
     undoLabel: "Précédent",
     undoDoneToast: "Action annulée",
 
+    // Vote announcement
+    proceedToVote: "Passer au vote",
+    skipVoteDay1: "Jour 1 : passer le vote",
+    voteAnnounceTitle: "Le débat est terminé",
+    voteAnnounceDesc: "Le village doit maintenant se proncer. Chaque joueur va désigner celui qu'il souhaite éliminer.",
+    voteAnnounceContinue: "Lancer le vote",
+    voteAnnounceSkip: "Passer l'annonce",
+    voteAnnounceMandatory: "L'annonce du vote est obligatoire.",
+
+    // Renard
+    renardReportTitle: "Rapport vague du Renard",
+    renardChooseConfidant: "Choisis ton confident",
+    renardFinalNight: "Dernière nuit du Renard",
+    renardConfidantPicked: "Confident désigné : {name}",
+
+    // GM status reminders
+    gmStatusReminders: "Rappels de statut",
+    gmStatusAlive: "{n} joueurs en vie",
+    gmStatusMuted: "Muets : {names}",
+    gmStatusProtected: "Protégé cette nuit",
+    gmStatusNoMuted: "Aucun joueur muet",
+
     // Black Wolf — actions hub
     bwHubTitle: "Loup Noir — Actions",
     bwTabAttack: "Attaque",
@@ -489,6 +511,7 @@ export const fr = {
     voleur: "Vole le rôle d'un joueur : il devient Simple Villageois.",
     maniaque: "Désigne la victime que rien ne peut protéger.",
     marionnettiste: "Sur qui places-tu ta marionnette cette nuit ?",
+    renard: "Tu reçois un rapport vague des événements de la nuit.",
   } as Record<string, string>,
   teams: {
     VILLAGEOIS: "Village",
@@ -502,6 +525,11 @@ export const fr = {
       name: "Le Marionnettiste",
       description: "Artisan des ombres, il fabrique une marionnette bouclier lors de la 2ème nuit pour encaisser une attaque mortelle de loups-garous à sa place.",
       power: "Il s'éveille uniquement à la Nuit 2 pour équiper sa marionnette. S'il est attaqué par les loups, sa poupée absorbe le coup : il survit, mais le choc le rend définitivement muet."
+    },
+    renard: {
+      name: "Renard",
+      description: "Le renard rôdeur du village. Chaque nuit, il reçoit un rapport nocturne vague du Maître du Jeu. Lors de sa dernière nuit d'information, il doit choisir un confident à qui transmettre ses secrets.",
+      power: "Chaque nuit, le Maître du Jeu informe sommairement le Renard des événements survenus. Lors de sa dernière nuit, il désigne un confident. Si l'un des deux révèle publiquement ces informations, il est éliminé et l'autre devient le JOKER."
     }
   } as Record<string, { name: string; description: string; power: string }>,
 };

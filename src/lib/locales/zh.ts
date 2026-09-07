@@ -491,6 +491,7 @@ export const zh = {
     voleur: "偷取一名玩家的身份：该玩家将变为普通村民。",
     maniaque: "指定刺杀目标（任何守护技能均无法阻挡）。",
     marionnettiste: "选择绑定为傀儡的玩家。若你受到袭击，傀儡将替你承受伤害，且你在次日早晨将被禁言。",
+    renard: "你收到夜晚事件的模糊报告。",
   } as Record<string, string>,
   teams: {
     VILLAGEOIS: "好人阵营",
@@ -504,6 +505,11 @@ export const zh = {
       name: "傀儡师",
       description: "将自己的命运与一名傀儡绑定。若夜间受到袭击，傀儡将替你承受致命伤害，而你在次日早晨的讨论中将被禁言。",
       power: "选择一名傀儡。遭到袭击时由傀儡替伤，且你次日早晨无法发言。"
+    }
+    renard: {
+      name: "狐狸",
+      description: "村庄里潜行的狐狸。每晚从主持人那里收到模糊的夜间报告。在最后一晚，必须选择一个知己来分享秘密。",
+      power: "每晚主持人简要告知狐狸发生的事件。在最后一晚，指定知己。如果任何一方公开透露此信息，将被淘汰，另一方成为小丑。"
     }
   } as Record<string, { name: string; description: string; power: string }>,
 };
