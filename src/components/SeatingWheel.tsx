@@ -105,6 +105,7 @@ export function buildTurnQueue(
   captainId: string | undefined,
   direction: RotationDirection,
 ): Player[] {
+  if (!seating) return [];
   const alive = seating.filter((p) => p.alive);
   if (!alive.length) return [];
   const capIndex = seating.findIndex((p) => p.id === captainId);
@@ -130,6 +131,7 @@ function othersInDirection(
   captainId: string | undefined,
   direction: RotationDirection,
 ): Player[] {
+  if (!seating) return [];
   const alive = seating.filter((p) => p.alive);
   const capIndex = seating.findIndex((p) => p.id === captainId);
   if (capIndex < 0)
@@ -156,6 +158,7 @@ export function buildDebateQueue(
   captainId: string | undefined,
   direction: RotationDirection,
 ): { player: Player; role: "opening" | "normal" | "closing" }[] {
+  if (!seating) return [];
   const captain = seating.find((p) => p.id === captainId && p.alive);
   const others = othersInDirection(seating, captainId, direction);
   if (!captain)
@@ -174,6 +177,7 @@ export function buildVoteQueue(
   direction: RotationDirection,
   captainVotesFirst: boolean,
 ): Player[] {
+  if (!seating) return [];
   const captain = seating.find((p) => p.id === captainId && p.alive);
   const others = othersInDirection(seating, captainId, direction);
   if (!captain) return others;

@@ -497,7 +497,7 @@ export function buildNightSteps(s: GameState): Step[] {
 }
 
 export function currentStep(s: GameState): Step | undefined {
-  return s.steps[s.stepIndex];
+  return s.steps?.[s.stepIndex];
 }
 
 export function bearNeighbors(s: GameState, bearId: string) {
@@ -536,7 +536,7 @@ export interface StepPayload {
 
 export function submitStep(state: GameState, payload: StepPayload): GameState {
   const s = clone(state);
-  const step = s.steps[s.stepIndex];
+  const step = s.steps?.[s.stepIndex];
   if (!step) return resolveNight(s);
   const actor = s.players.find((p) => p.id === step.actorId)!;
   const target = payload.targetId ? s.players.find((p) => p.id === payload.targetId) : undefined;
@@ -975,7 +975,7 @@ function pushEvent(s: GameState, e: GameEvent) {
 }
 
 function killPlayer(s: GameState, id: string, cause: DeathCause) {
-  const p = s.players.find((x) => x.id === id);
+  const p = s.players?.find((x) => x.id === id);
   if (!p || !p.alive) return;
 
   if (cause === "WOLVES" && p.lives > 1) {
@@ -1046,7 +1046,9 @@ function killPlayer(s: GameState, id: string, cause: DeathCause) {
 
 function resolveNight(state: GameState): GameState {
   const s = clone(state);
+  if (!s.players) return s;
   s.dawnSummary = [];
+  if (!s.events) s.events = [];
 
   if (s.round.attackedId) {
     const victim = s.players.find((p) => p.id === s.round.attackedId)!;

@@ -1258,7 +1258,7 @@ function NightPanel({
               <p className="text-xs tracking-widest text-primary uppercase">{t("witchLifePotion")}</p>
               {actor.hasUsedLifePotion || actor.healUsed ? (
                 <p className="text-xs text-muted-foreground">{t("witchLifeUsed")}</p>
-              ) : attackedPlayerName ? (
+              ) : attackedPlayerName && canWitchHeal(state) ? (
                 <button
                   onClick={() => setHeal((v) => !v)}
                   className={`w-full rounded-2xl border p-4 text-sm font-bold transition ${
@@ -1609,9 +1609,23 @@ function DawnPanel({
       {setupDone && (
         <div className="space-y-4">
           <DebateWheel
-            players={state.players}
+            seating={state.players}
+            seconds={60}
+            armed
             direction={direction}
             captainId={state.villageCaptainId}
+            onFinish={onDebateDone}
+            onStar={(playerId, delta) =>
+              onChange({
+                ...state,
+                players: state.players.map((p) =>
+                  p.id === playerId
+                    ? { ...p, stars: Math.max(0, p.stars + delta) }
+                    : p
+                ),
+              })
+            }
+            onPenalty={(playerId) => onChange(addDebatePenalty(state, playerId))}
             onRemovePenalty={onRemovePenalty}
           />
           <div className="flex flex-col gap-2">

@@ -20,7 +20,7 @@ export function NightReportCard({
 }) {
   const { t } = useI18n();
   const narrate = useNarrate();
-  const lines = state.nightReport ?? [];
+  const lines = state?.nightReport ?? [];
   useScrollLock();
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function NightReportCard({
             {t("nightReportOutcomes")}
           </h3>
           <ul className="space-y-1">
-            {state.dawnSummary.map((line, i) => (
+            {(state?.dawnSummary ?? []).map((line, i) => (
               <li key={i} className="text-sm text-muted-foreground">
                 {narrate(line)}
               </li>
