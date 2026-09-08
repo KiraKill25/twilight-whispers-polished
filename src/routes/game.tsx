@@ -751,6 +751,7 @@ function NightPanel({
   canUndo?: boolean;
 }) {
   const { t, prompt, roleName } = useI18n();
+  const narrate = useNarrate();
   const step = currentStep(state);
   const [sel, setSel] = useState<string[]>([]);
   const [execute, setExecute] = useState(false);
