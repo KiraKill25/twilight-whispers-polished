@@ -9,6 +9,7 @@ import {
 } from "@/components/SeatingWheel";
 import type { Player } from "@/game/engine";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { NarratorCard } from "@/components/NarratorCard";
 
 /** Choix du capitaine en début de journée : sens du débat, sens du vote, ordre de son vote. */
 export interface CaptainSetup {
@@ -237,6 +238,7 @@ export function DebateWheel({
   captainId,
   direction,
   armed,
+  day,
   onFinish,
   onStar,
   onPenalty,
@@ -247,6 +249,7 @@ export function DebateWheel({
   captainId?: string;
   direction: RotationDirection;
   armed?: boolean;
+  day: number;
   onFinish: () => void;
   onStar?: (playerId: string, delta: number) => void;
   onPenalty?: (playerId: string) => void;
@@ -330,7 +333,10 @@ export function DebateWheel({
   const C = 2 * Math.PI * R;
 
   return (
-    <div className="space-y-4">
+    <NarratorCard
+      title={t("debateTitle", { n: day })}
+      text={t("debateText")}
+    >
       <p className="text-center text-[11px] tracking-[0.3em] text-muted-foreground uppercase">
         {t("speaker", { i: i + 1, n: queue.length })}
         {current.role !== "normal" && (
@@ -469,6 +475,6 @@ export function DebateWheel({
           {i + 1 < queue.length ? t("nextSpeaker") : t("endDebate")}
         </button>
       </div>
-    </div>
+    </NarratorCard>
   );
 }

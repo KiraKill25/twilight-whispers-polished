@@ -1632,6 +1632,7 @@ function DawnPanel({
             armed
             direction={direction}
             captainId={state.villageCaptainId}
+            day={state.day}
             onFinish={onDebateDone}
             onStar={(playerId, delta) =>
               onChange({
