@@ -39,7 +39,7 @@ export function TitleImage() {
               "drop-shadow(0 0 6px #FF2A85)",
             ],
           }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
       </motion.div>
 

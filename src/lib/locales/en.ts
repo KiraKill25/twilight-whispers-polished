@@ -319,6 +319,7 @@ export const en = {
     gmStatusReminders: "Status reminders",
     gmStatusAlive: "{n} players alive",
     gmStatusMuted: "Silenced: {names}",
+    gmStatusJailed: "Deprived of vote: {name}",
     gmStatusProtected: "Protected tonight",
     gmStatusNoMuted: "No silenced players",
     // Black Wolf — actions hub

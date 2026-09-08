@@ -30,7 +30,7 @@ import {
 import { OverlayCard } from "@/components/OverlayCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { MuteButton } from "@/components/MuteButton";
-import { ROLE_BY_ID, roleImage } from "@/data/roles";
+import { ROLE_BY_ID, roleEmoji } from "@/data/roles";
 import { NarratorCard } from "@/components/NarratorCard";
 import { PhaseTransition } from "@/components/PhaseTransition";
 import { SpeakButton } from "@/components/SpeakButton";
@@ -857,31 +857,25 @@ function NightPanel({
   const stepPrompt = prompt(step.roleId) || step.prompt;
   const stepTitle = `${roleName(step.roleId)}${step.soloKill ? t("soloPackSuffix") : ""}`;
 
-  const renardVague: string[] = [];
+  const renardVague: { emoji: string; text: string }[] = [];
   if (step.mode === "renard") {
-    if (state.round.attackedId) renardVague.push(nk("renardVagueAttack"));
-    if (state.round.protectedId || state.round.villageShield) renardVague.push(nk("renardVagueProtect"));
-    if (state.round.poisonedId || state.round.facesPoisonedId) renardVague.push(nk("renardVaguePoison"));
-    if (state.round.maniacKillId) renardVague.push(nk("renardVagueManiac"));
-    if (state.round.mutedId) renardVague.push(nk("renardVagueSilence"));
-    if (renardVague.length === 0) renardVague.push(nk("renardVagueNothing"));
+    if (state.round.attackedId) renardVague.push({ emoji: "🐺", text: nk("renardVagueAttack") });
+    if (state.round.protectedId || state.round.villageShield) renardVague.push({ emoji: "🛡️", text: nk("renardVagueProtect") });
+    if (state.round.poisonedId || state.round.facesPoisonedId) renardVague.push({ emoji: "☠️", text: nk("renardVaguePoison") });
+    if (state.round.maniacKillId) renardVague.push({ emoji: "🔪", text: nk("renardVagueManiac") });
+    if (state.round.mutedId) renardVague.push({ emoji: "🤐", text: nk("renardVagueSilence") });
+    if (renardVague.length === 0) renardVague.push({ emoji: "🌙", text: nk("renardVagueNothing") });
   }
 
   return (
     <div className="surface-card animate-rise-in neon-ring overflow-hidden rounded-3xl">
-      <div className="relative aspect-[16/10] overflow-hidden">
-        <img
-          src={roleImage(step.roleId)}
-          alt={t("stepWakeAlt", { role: stepTitle })}
-          width={640}
-          height={640}
-          loading="lazy"
-          className="animate-slow-zoom h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-        <p className="absolute bottom-3 left-4 text-lg font-black text-primary">
-          {stepTitle}
-        </p>
+      <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-primary/10 via-card to-card">
+        <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+          <span className="text-6xl">{roleEmoji(step.roleId)}</span>
+          <p className="text-lg font-black text-primary">
+            {stepTitle}
+          </p>
+        </div>
         <div className="absolute right-3 bottom-3 flex items-center gap-2">
           <SpeakButton text={stepTitle} />
         </div>
@@ -1402,12 +1396,13 @@ function NightPanel({
           <div className="space-y-3">
             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-center">
               <p className="text-[11px] tracking-[0.3em] text-amber-400 uppercase">
-                {t("renardReportTitle")}
+                🦊 {t("renardReportTitle")}
               </p>
               <ul className="mt-3 space-y-2">
                 {renardVague.map((v, i) => (
-                  <li key={i} className="text-sm text-muted-foreground leading-relaxed">
-                    {narrate(v)}
+                  <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground leading-relaxed">
+                    <span className="text-lg">{v.emoji}</span>
+                    {narrate(v.text)}
                   </li>
                 ))}
               </ul>
@@ -1603,27 +1598,15 @@ function DawnPanel({
 }) {
   const { t } = useI18n();
 
+  const mutedNames = state.players
+    .filter((p) => p.alive && p.mutedForDay)
+    .map((p) => p.name);
+  const jailedPlayer = state.round.jailedId
+    ? state.players.find((p) => p.id === state.round.jailedId)
+    : null;
+
   return (
-    <div className="surface-card animate-rise-in space-y-5 rounded-3xl p-5">
-      <div className="flex items-center gap-3 text-primary">
-        <Sparkles className="size-6" />
-        <h2 className="text-lg font-black uppercase">{t("dawnTitle", { n: state.day })}</h2>
-      </div>
-
-      <div className="space-y-2 rounded-2xl border border-border bg-card p-4">
-        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-          {t("nightReportTitle")}
-        </p>
-        <ul className="space-y-1.5 text-sm">
-          {state.dawnSummary.map((line, i) => (
-            <li key={i} className="flex items-center gap-2">
-              <span className="size-1.5 rounded-full bg-primary" />
-              <span>{line}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
+    <div className="space-y-4">
       {setupDone && (
         <div className="space-y-4">
           <DebateWheel
@@ -1647,6 +1630,20 @@ function DawnPanel({
             onPenalty={(playerId) => onChange(addDebatePenalty(state, playerId))}
             onRemovePenalty={onRemovePenalty}
           />
+          {(mutedNames.length > 0 || jailedPlayer) && (
+            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              {mutedNames.length > 0 && (
+                <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 font-semibold text-amber-400">
+                  🤐 {t("gmStatusMuted", { names: mutedNames.join(", ") })}
+                </span>
+              )}
+              {jailedPlayer && (
+                <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2.5 py-1 font-semibold text-blue-400">
+                  🔒 {t("gmStatusJailed", { name: jailedPlayer.name })}
+                </span>
+              )}
+            </div>
+          )}
           {(() => {
             const fox = state.players.find((p) => p.alive && effectiveRoleId(p) === "renard");
             const confidant = fox?.confidantId

@@ -280,6 +280,7 @@ export const fr = {
     gmStatusReminders: "Rappels de statut",
     gmStatusAlive: "{n} joueurs en vie",
     gmStatusMuted: "Muets : {names}",
+    gmStatusJailed: "Privé de vote : {name}",
     gmStatusProtected: "Protégé cette nuit",
     gmStatusNoMuted: "Aucun joueur muet",
 

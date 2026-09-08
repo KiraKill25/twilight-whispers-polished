@@ -19,6 +19,43 @@ export function roleImage(id: string): string {
   return `/images/roles/${id}.png`;
 }
 
+const ROLE_EMOJIS: Record<string, string> = {
+  "loup-garou": "🐺",
+  "loup-noir": "🐺‍⬛",
+  "loup-blanc": "🐺",
+  "loup-bavard": "🗣️",
+  "loup-matriarche": "🐺",
+  "simple-villageois": "👤",
+  "enfant-sauvage": "🧒",
+  "petite-fille": "👧",
+  "chaperon-rouge": "🔴",
+  "voyante": "🔮",
+  "sorciere": "⚗️",
+  "chasseur": "🎯",
+  "cupidon": "🏹",
+  "ancien": "👴",
+  "marionnettiste": "🎭",
+  "salvateur": "🛡️",
+  "idiot-du-village": "🤡",
+  "joueur-de-flute": "🎵",
+  "ange": "😇",
+  "tavernier": "🍺",
+  "corbeau": "🐦‍⬛",
+  "general": "⚔️",
+  "mime": "🤹",
+  "geolier": "🔒",
+  "montreur-dours": "🐻",
+  "juge": "⚖️",
+  "trois-faces": "🎲",
+  "voleur": "🥷",
+  "maniaque": "🔪",
+  "renard": "🦊",
+};
+
+export function roleEmoji(id: string): string {
+  return ROLE_EMOJIS[id] ?? "❓";
+}
+
 export function roleVideo(id: string): string | undefined {
   return `/videos/roles/${id}.mp4`;
 }
