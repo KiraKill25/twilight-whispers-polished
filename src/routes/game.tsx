@@ -48,6 +48,7 @@ import {
 } from "@/components/GameRecapCard";
 import { useI18n } from "@/lib/i18n";
 import { useNarrate } from "@/hooks/use-narrate";
+import { nk } from "@/lib/narration";
 import { NightReportCard } from "@/components/NightReportCard";
 import {
   clearBgm,
@@ -855,6 +856,16 @@ function NightPanel({
   const stepPrompt = prompt(step.roleId) || step.prompt;
   const stepTitle = `${roleName(step.roleId)}${step.soloKill ? t("soloPackSuffix") : ""}`;
 
+  const renardVague: string[] = [];
+  if (step.mode === "renard") {
+    if (state.round.attackedId) renardVague.push(nk("renardVagueAttack"));
+    if (state.round.protectedId || state.round.villageShield) renardVague.push(nk("renardVagueProtect"));
+    if (state.round.poisonedId || state.round.facesPoisonedId) renardVague.push(nk("renardVaguePoison"));
+    if (state.round.maniacKillId) renardVague.push(nk("renardVagueManiac"));
+    if (state.round.mutedId) renardVague.push(nk("renardVagueSilence"));
+    if (renardVague.length === 0) renardVague.push(nk("renardVagueNothing"));
+  }
+
   return (
     <div className="surface-card animate-rise-in neon-ring overflow-hidden rounded-3xl">
       <div className="relative aspect-[16/10] overflow-hidden">
@@ -1392,7 +1403,13 @@ function NightPanel({
               <p className="text-[11px] tracking-[0.3em] text-amber-400 uppercase">
                 {t("renardReportTitle")}
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">{stepPrompt}</p>
+              <ul className="mt-3 space-y-2">
+                {renardVague.map((v, i) => (
+                  <li key={i} className="text-sm text-muted-foreground leading-relaxed">
+                    {narrate(v)}
+                  </li>
+                ))}
+              </ul>
             </div>
             {!step.optional && (
               <p className="text-xs tracking-widest text-amber-400 uppercase">

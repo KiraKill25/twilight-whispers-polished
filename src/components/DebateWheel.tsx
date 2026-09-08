@@ -9,7 +9,6 @@ import {
 } from "@/components/SeatingWheel";
 import type { Player } from "@/game/engine";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
-import { GmVideoOverlay } from "@/components/GmVideoOverlay";
 
 /** Choix du capitaine en début de journée : sens du débat, sens du vote, ordre de son vote. */
 export interface CaptainSetup {
@@ -434,7 +433,6 @@ export function DebateWheel({
           </div>
         }
       />
-      <GmVideoOverlay />
       </div>
 
       <div className="grid grid-cols-2 gap-2">

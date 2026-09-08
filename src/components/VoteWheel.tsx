@@ -28,7 +28,7 @@ import {
   type GameState,
   type Player,
 } from "@/game/engine";
-import { GmVideoOverlay } from "@/components/GmVideoOverlay";
+
 
 const ABSTAIN = "__abstain__";
 
@@ -380,7 +380,6 @@ export function VoteWheel({
       )}
 
       <div className="relative">
-      <GmVideoOverlay />
       <SeatingWheel
         players={seating}
         activeId={currentVoter?.id}
