@@ -48,7 +48,7 @@ import {
 } from "@/components/GameRecapCard";
 import { useI18n } from "@/lib/i18n";
 import { useNarrate } from "@/hooks/use-narrate";
-import { nk } from "@/lib/narration";
+import { nk, nrole } from "@/lib/narration";
 import { NightReportCard } from "@/components/NightReportCard";
 import {
   clearBgm,
@@ -857,14 +857,47 @@ function NightPanel({
   const stepPrompt = prompt(step.roleId) || step.prompt;
   const stepTitle = `${roleName(step.roleId)}${step.soloKill ? t("soloPackSuffix") : ""}`;
 
-  const renardVague: { emoji: string; text: string }[] = [];
+  const renardVague: string[] = [];
   if (step.mode === "renard") {
-    if (state.round.attackedId) renardVague.push({ emoji: "🐺", text: nk("renardVagueAttack") });
-    if (state.round.protectedId || state.round.villageShield) renardVague.push({ emoji: "🛡️", text: nk("renardVagueProtect") });
-    if (state.round.poisonedId || state.round.facesPoisonedId) renardVague.push({ emoji: "☠️", text: nk("renardVaguePoison") });
-    if (state.round.maniacKillId) renardVague.push({ emoji: "🔪", text: nk("renardVagueManiac") });
-    if (state.round.mutedId) renardVague.push({ emoji: "🤐", text: nk("renardVagueSilence") });
-    if (renardVague.length === 0) renardVague.push({ emoji: "🌙", text: nk("renardVagueNothing") });
+    if (state.round.attackedId) {
+      const v = state.players.find((p) => p.id === state.round.attackedId);
+      renardVague.push(nk("renardReportAttack", { name: v?.name ?? "?" }));
+    }
+    if (state.round.blackWolfConvert) {
+      const infected = state.players.find((p) => p.id === state.round.infectedId);
+      renardVague.push(nk("renardReportInfect", { name: infected?.name ?? "?" }));
+    }
+    if (state.round.healed) {
+      const saved = state.players.find((p) => p.id === state.round.healedId);
+      if (saved) renardVague.push(nk("renardReportHeal", { name: saved.name }));
+    }
+    if (state.round.poisonedId) {
+      const p = state.players.find((pp) => pp.id === state.round.poisonedId);
+      renardVague.push(nk("renardReportPoison", { name: p?.name ?? "?" }));
+    }
+    if (state.round.facesPoisonedId) {
+      const p = state.players.find((pp) => pp.id === state.round.facesPoisonedId);
+      renardVague.push(nk("renardReportPoison", { name: p?.name ?? "?" }));
+    }
+    if (state.round.seerCheckTargetId && state.round.seerCheckResultRole) {
+      const seerTarget = state.players.find((p) => p.id === state.round.seerCheckTargetId);
+      renardVague.push(nk("renardReportSeer", { name: seerTarget?.name ?? "?", role: nrole(state.round.seerCheckResultRole) }));
+    }
+    if (state.round.villageShield) {
+      renardVague.push(nk("renardReportShield"));
+    } else if (state.round.protectedId) {
+      const prot = state.players.find((p) => p.id === state.round.protectedId);
+      renardVague.push(nk("renardReportProtect", { name: prot?.name ?? "?" }));
+    }
+    if (state.round.maniacKillId) {
+      const m = state.players.find((p) => p.id === state.round.maniacKillId);
+      renardVague.push(nk("renardReportManiac", { name: m?.name ?? "?" }));
+    }
+    if (state.round.mutedId) {
+      const muted = state.players.find((p) => p.id === state.round.mutedId);
+      renardVague.push(nk("renardReportSilence", { name: muted?.name ?? "?" }));
+    }
+    if (renardVague.length === 0) renardVague.push(nk("renardReportNothing"));
   }
 
   return (
@@ -1406,9 +1439,8 @@ function NightPanel({
               </p>
               <ul className="mt-3 space-y-2">
                 {renardVague.map((v, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground leading-relaxed">
-                    <span className="text-lg">{v.emoji}</span>
-                    {narrate(v.text)}
+                  <li key={i} className="text-sm text-muted-foreground leading-relaxed">
+                    {narrate(v)}
                   </li>
                 ))}
               </ul>

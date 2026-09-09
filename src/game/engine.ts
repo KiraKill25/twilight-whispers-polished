@@ -143,6 +143,14 @@ export interface RoundState {
   maniacKillId?: string;
   /** 3 faces : cible empoisonnée par le visage « potion de mort ». */
   facesPoisonedId?: string;
+  /** Voyante : cible inspectée cette nuit. */
+  seerCheckTargetId?: string;
+  /** Voyante : rôle découvert de la cible. */
+  seerCheckResultRole?: string;
+  /** Sorcière / 3 faces : joueur sauvé par la potion de vie. */
+  healedId?: string;
+  /** Loup Noir : joueur contaminé (rejoint la meute au lieu de mourir). */
+  infectedId?: string;
 }
 
 export interface GameState {
@@ -598,6 +606,8 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
     case "voyante": {
       if (target) {
         const seenId = seenRoleId(target);
+        s.round.seerCheckTargetId = target.id;
+        s.round.seerCheckResultRole = seenId;
         s.reveal = nk("seerSees", { name: target.name, role: nrole(seenId) });
         rep(
           s,
@@ -655,6 +665,8 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           rep(s, nk("repFaces", { power: nk("repFacePower_protect"), name: target.name }));
         } else if (power === "inspect" && target) {
           const seenId = seenRoleId(target);
+          s.round.seerCheckTargetId = target.id;
+          s.round.seerCheckResultRole = seenId;
           actor.facesUsed.push("inspect");
           s.reveal = nk("facesInspectMsg", { name: target.name, role: nrole(seenId) });
           rep(
@@ -667,6 +679,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
           );
         } else if (power === "life" && canWitchHeal(s)) {
           const saved = s.players.find((p) => p.id === s.round.attackedId);
+          s.round.healedId = s.round.attackedId;
           s.round.attackedId = undefined;
           s.round.healed = true;
           actor.facesUsed.push("potion");
@@ -812,6 +825,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         victim.isConvertedToWolf = true;
         victim.retainsOriginalPowers = true;
         victim.team = "WEREWOLVES";
+        s.round.infectedId = s.round.attackedId;
         s.round.attackedId = undefined;
         s.round.blackWolfConvert = true;
         actor.abilityUsed = true;
@@ -859,6 +873,7 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       if (payload.healUsed && s.round.attackedId && canWitchHeal(s)) {
         const saved = s.players.find((p) => p.id === s.round.attackedId);
         s.round.healed = true;
+        s.round.healedId = s.round.attackedId;
         s.round.attackedId = undefined;
         actor.healUsed = true;
         actor.hasUsedLifePotion = true;
@@ -936,14 +951,47 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       break;
     }
     case "renard": {
-      // Construire un rapport vague basé sur l'état du tour actuel
+      // Construire un rapport détaillé basé sur l'état du tour actuel
       const vague: string[] = [];
-      if (s.round.attackedId) vague.push(nk("renardVagueAttack"));
-      if (s.round.protectedId || s.round.villageShield) vague.push(nk("renardVagueProtect"));
-      if (s.round.poisonedId || s.round.facesPoisonedId) vague.push(nk("renardVaguePoison"));
-      if (s.round.maniacKillId) vague.push(nk("renardVagueManiac"));
-      if (s.round.mutedId) vague.push(nk("renardVagueSilence"));
-      if (vague.length === 0) vague.push(nk("renardVagueNothing"));
+      if (s.round.attackedId) {
+        const victim = s.players.find((p) => p.id === s.round.attackedId);
+        vague.push(nk("renardReportAttack", { name: victim?.name ?? "?" }));
+      }
+      if (s.round.blackWolfConvert) {
+        const infected = s.players.find((p) => p.id === s.round.infectedId);
+        vague.push(nk("renardReportInfect", { name: infected?.name ?? "?" }));
+      }
+      if (s.round.healed) {
+        const saved = s.players.find((p) => p.id === s.round.healedId);
+        if (saved) vague.push(nk("renardReportHeal", { name: saved.name }));
+      }
+      if (s.round.poisonedId) {
+        const poisoned = s.players.find((p) => p.id === s.round.poisonedId);
+        vague.push(nk("renardReportPoison", { name: poisoned?.name ?? "?" }));
+      }
+      if (s.round.facesPoisonedId) {
+        const poisoned = s.players.find((p) => p.id === s.round.facesPoisonedId);
+        vague.push(nk("renardReportPoison", { name: poisoned?.name ?? "?" }));
+      }
+      if (s.round.seerCheckTargetId && s.round.seerCheckResultRole) {
+        const seerTarget = s.players.find((p) => p.id === s.round.seerCheckTargetId);
+        vague.push(nk("renardReportSeer", { name: seerTarget?.name ?? "?", role: nrole(s.round.seerCheckResultRole) }));
+      }
+      if (s.round.villageShield) {
+        vague.push(nk("renardReportShield"));
+      } else if (s.round.protectedId) {
+        const prot = s.players.find((p) => p.id === s.round.protectedId);
+        vague.push(nk("renardReportProtect", { name: prot?.name ?? "?" }));
+      }
+      if (s.round.maniacKillId) {
+        const maniacVictim = s.players.find((p) => p.id === s.round.maniacKillId);
+        vague.push(nk("renardReportManiac", { name: maniacVictim?.name ?? "?" }));
+      }
+      if (s.round.mutedId) {
+        const muted = s.players.find((p) => p.id === s.round.mutedId);
+        vague.push(nk("renardReportSilence", { name: muted?.name ?? "?" }));
+      }
+      if (vague.length === 0) vague.push(nk("renardReportNothing"));
 
       // Toujours afficher et stocker le rapport
       vague.forEach((v) => rep(s, v));
