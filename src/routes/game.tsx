@@ -30,7 +30,7 @@ import {
 import { OverlayCard } from "@/components/OverlayCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { MuteButton } from "@/components/MuteButton";
-import { ROLE_BY_ID, roleEmoji } from "@/data/roles";
+import { ROLE_BY_ID, roleImage } from "@/data/roles";
 import { NarratorCard } from "@/components/NarratorCard";
 import { PhaseTransition } from "@/components/PhaseTransition";
 import { SpeakButton } from "@/components/SpeakButton";
@@ -869,13 +869,19 @@ function NightPanel({
 
   return (
     <div className="surface-card animate-rise-in neon-ring overflow-hidden rounded-3xl">
-      <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-primary/10 via-card to-card">
-        <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-          <span className="text-6xl">{roleEmoji(step.roleId)}</span>
-          <p className="text-lg font-black text-primary">
-            {stepTitle}
-          </p>
-        </div>
+      <div className="relative aspect-[16/10] overflow-hidden">
+        <img
+          src={roleImage(step.roleId)}
+          alt={t("stepWakeAlt", { role: stepTitle })}
+          width={640}
+          height={640}
+          loading="lazy"
+          className="animate-slow-zoom h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+        <p className="absolute bottom-3 left-4 text-lg font-black text-primary">
+          {stepTitle}
+        </p>
         <div className="absolute right-3 bottom-3 flex items-center gap-2">
           <SpeakButton text={stepTitle} />
         </div>
