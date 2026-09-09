@@ -25,11 +25,6 @@ const REPORT_ROLE_MAP: Record<string, string> = {
   repThief: "voleur",
   repFaces: "trois-faces",
   repRenardConfidant: "renard",
-  renardVagueAttack: "loup-garou",
-  renardVagueProtect: "salvateur",
-  renardVaguePoison: "sorciere",
-  renardVagueManiac: "maniaque",
-  renardVagueSilence: "loup-noir",
 };
 
 /** Extrait l'ID du rôle illustrant une ligne de rapport nocturne. */

@@ -951,47 +951,38 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
       break;
     }
     case "renard": {
-      // Construire un rapport détaillé basé sur l'état du tour actuel
+      // Construire un rapport anonyme basé sur l'état du tour actuel
       const vague: string[] = [];
       if (s.round.attackedId) {
-        const victim = s.players.find((p) => p.id === s.round.attackedId);
-        vague.push(nk("renardReportAttack", { name: victim?.name ?? "?" }));
+        vague.push(nk("renardVagueAttack"));
       }
       if (s.round.blackWolfConvert) {
-        const infected = s.players.find((p) => p.id === s.round.infectedId);
-        vague.push(nk("renardReportInfect", { name: infected?.name ?? "?" }));
+        vague.push(nk("renardVagueInfect"));
       }
       if (s.round.healed) {
-        const saved = s.players.find((p) => p.id === s.round.healedId);
-        if (saved) vague.push(nk("renardReportHeal", { name: saved.name }));
+        vague.push(nk("renardVagueHeal"));
       }
       if (s.round.poisonedId) {
-        const poisoned = s.players.find((p) => p.id === s.round.poisonedId);
-        vague.push(nk("renardReportPoison", { name: poisoned?.name ?? "?" }));
+        vague.push(nk("renardVaguePoison"));
       }
       if (s.round.facesPoisonedId) {
-        const poisoned = s.players.find((p) => p.id === s.round.facesPoisonedId);
-        vague.push(nk("renardReportPoison", { name: poisoned?.name ?? "?" }));
+        vague.push(nk("renardVaguePoison"));
       }
       if (s.round.seerCheckTargetId && s.round.seerCheckResultRole) {
-        const seerTarget = s.players.find((p) => p.id === s.round.seerCheckTargetId);
-        vague.push(nk("renardReportSeer", { name: seerTarget?.name ?? "?", role: nrole(s.round.seerCheckResultRole) }));
+        vague.push(nk("renardVagueSeer"));
       }
       if (s.round.villageShield) {
-        vague.push(nk("renardReportShield"));
+        vague.push(nk("renardVagueShield"));
       } else if (s.round.protectedId) {
-        const prot = s.players.find((p) => p.id === s.round.protectedId);
-        vague.push(nk("renardReportProtect", { name: prot?.name ?? "?" }));
+        vague.push(nk("renardVagueProtect"));
       }
       if (s.round.maniacKillId) {
-        const maniacVictim = s.players.find((p) => p.id === s.round.maniacKillId);
-        vague.push(nk("renardReportManiac", { name: maniacVictim?.name ?? "?" }));
+        vague.push(nk("renardVagueManiac"));
       }
       if (s.round.mutedId) {
-        const muted = s.players.find((p) => p.id === s.round.mutedId);
-        vague.push(nk("renardReportSilence", { name: muted?.name ?? "?" }));
+        vague.push(nk("renardVagueSilence"));
       }
-      if (vague.length === 0) vague.push(nk("renardReportNothing"));
+      if (vague.length === 0) vague.push(nk("renardVagueNothing"));
 
       // Toujours afficher et stocker le rapport
       vague.forEach((v) => rep(s, v));

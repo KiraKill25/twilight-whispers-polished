@@ -48,7 +48,7 @@ import {
 } from "@/components/GameRecapCard";
 import { useI18n } from "@/lib/i18n";
 import { useNarrate } from "@/hooks/use-narrate";
-import { nk, nrole } from "@/lib/narration";
+import { nk } from "@/lib/narration";
 import { NightReportCard } from "@/components/NightReportCard";
 import {
   clearBgm,
@@ -418,7 +418,10 @@ function GamePage() {
           direction={direction}
           setupDone={directionDay === state.day}
           debateDone={debateDoneDay === state.day}
-          onDebateDone={() => setDebateDoneDay(state.day)}
+          onDebateDone={() => {
+            setDebateDoneDay(state.day);
+            setVoteAnnounce(true);
+          }}
           onChange={updateState}
           onRemovePenalty={removePenalty}
           onUndo={undo}
@@ -860,44 +863,35 @@ function NightPanel({
   const renardVague: string[] = [];
   if (step.mode === "renard") {
     if (state.round.attackedId) {
-      const v = state.players.find((p) => p.id === state.round.attackedId);
-      renardVague.push(nk("renardReportAttack", { name: v?.name ?? "?" }));
+      renardVague.push(nk("renardVagueAttack"));
     }
     if (state.round.blackWolfConvert) {
-      const infected = state.players.find((p) => p.id === state.round.infectedId);
-      renardVague.push(nk("renardReportInfect", { name: infected?.name ?? "?" }));
+      renardVague.push(nk("renardVagueInfect"));
     }
     if (state.round.healed) {
-      const saved = state.players.find((p) => p.id === state.round.healedId);
-      if (saved) renardVague.push(nk("renardReportHeal", { name: saved.name }));
+      renardVague.push(nk("renardVagueHeal"));
     }
     if (state.round.poisonedId) {
-      const p = state.players.find((pp) => pp.id === state.round.poisonedId);
-      renardVague.push(nk("renardReportPoison", { name: p?.name ?? "?" }));
+      renardVague.push(nk("renardVaguePoison"));
     }
     if (state.round.facesPoisonedId) {
-      const p = state.players.find((pp) => pp.id === state.round.facesPoisonedId);
-      renardVague.push(nk("renardReportPoison", { name: p?.name ?? "?" }));
+      renardVague.push(nk("renardVaguePoison"));
     }
     if (state.round.seerCheckTargetId && state.round.seerCheckResultRole) {
-      const seerTarget = state.players.find((p) => p.id === state.round.seerCheckTargetId);
-      renardVague.push(nk("renardReportSeer", { name: seerTarget?.name ?? "?", role: nrole(state.round.seerCheckResultRole) }));
+      renardVague.push(nk("renardVagueSeer"));
     }
     if (state.round.villageShield) {
-      renardVague.push(nk("renardReportShield"));
+      renardVague.push(nk("renardVagueShield"));
     } else if (state.round.protectedId) {
-      const prot = state.players.find((p) => p.id === state.round.protectedId);
-      renardVague.push(nk("renardReportProtect", { name: prot?.name ?? "?" }));
+      renardVague.push(nk("renardVagueProtect"));
     }
     if (state.round.maniacKillId) {
-      const m = state.players.find((p) => p.id === state.round.maniacKillId);
-      renardVague.push(nk("renardReportManiac", { name: m?.name ?? "?" }));
+      renardVague.push(nk("renardVagueManiac"));
     }
     if (state.round.mutedId) {
-      const muted = state.players.find((p) => p.id === state.round.mutedId);
-      renardVague.push(nk("renardReportSilence", { name: muted?.name ?? "?" }));
+      renardVague.push(nk("renardVagueSilence"));
     }
-    if (renardVague.length === 0) renardVague.push(nk("renardReportNothing"));
+    if (renardVague.length === 0) renardVague.push(nk("renardVagueNothing"));
   }
 
   return (
@@ -1648,7 +1642,7 @@ function DawnPanel({
       {setupDone && (
         <div className="space-y-4">
           <DebateWheel
-            seating={state.players}
+            seating={state.players.filter((p) => p.alive)}
             seconds={60}
             armed
             direction={direction}
@@ -1716,22 +1710,7 @@ function DawnPanel({
               </div>
             );
           })()}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => onProceedToVote()}
-              className="w-full rounded-full bg-primary py-3 font-bold text-primary-foreground shadow-lg transition active:scale-95"
-            >
-              {t("proceedToVote")}
-            </button>
-            {state.day === 1 && (
-              <button
-                onClick={() => onChange(skipVote(state))}
-                className="w-full rounded-full border border-border py-2.5 text-xs font-semibold text-muted-foreground"
-              >
-                {t("skipVoteDay1")}
-              </button>
-            )}
-          </div>
+
         </div>
       )}
     </div>
