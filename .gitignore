@@ -20,6 +20,17 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Android / Capacitor
+android/app/build/
+android/.gradle/
+android/captures/
+android/local.properties
+android/cordova-android-plugins/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+*.keystore
+!debug.keystore
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
