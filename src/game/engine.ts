@@ -429,6 +429,29 @@ export function buildNightSteps(s: GameState): Step[] {
     }
   }
 
+  // Loup infecté : si tous les loups originaux sont éliminés, l'infecté obtient un kill
+  if (!packStepExists && !killerRoleId) {
+    const infected = s.players.find(
+      (p) =>
+        p.alive &&
+        p.isConvertedToWolf &&
+        !p.powersDisabled &&
+        !p.disabledNightAbility,
+    );
+    if (infected) {
+      s.log.push(nk("infectedFallback", { n: s.night }));
+      steps.push({
+        key: `${s.night}-loup-infecte`,
+        roleId: "loup-garou",
+        title: "Loup Infecté",
+        prompt:
+          "Tous les loups originaux ont été éliminés. Tu es le seul loup restant — désigne ta victime pour cette nuit.",
+        mode: "one",
+        actorId: infected.id,
+      });
+    }
+  }
+
   push("sorciere", "Sorcière", "Utilise tes potions.", "witch", true);
 
   {
@@ -779,7 +802,9 @@ export function submitStep(state: GameState, payload: StepPayload): GameState {
         s.reveal = nk("packDisagree");
       } else if (target) {
         s.round.attackedId = target.id;
-        s.reveal = nk("packChose", { name: target.name });
+        s.reveal = actor.isConvertedToWolf
+          ? nk("infectedKill", { name: target.name })
+          : nk("packChose", { name: target.name });
         rep(s, nk("repWolvesTarget", { name: target.name }));
       }
       break;
